@@ -1,0 +1,13 @@
+*~
+*.pyc
+__pycache__
+/static
+/media
+*.log
+.DS_Store
+*.sqlite3
+secure_settings.py
+/logs
+dump.rdb
+*.pid
+celerybeat-schedule

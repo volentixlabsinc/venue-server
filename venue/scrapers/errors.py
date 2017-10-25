@@ -1,0 +1,2 @@
+class ScraperError(Exception):
+    pass
