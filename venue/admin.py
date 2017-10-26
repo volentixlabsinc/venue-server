@@ -16,25 +16,57 @@ admin_site = MyAdminSite()
 admin_site.register(User)
 admin_site.register(ForumSite)
 admin_site.register(Signature)
-admin_site.register(UptimeBatch)
-admin_site.register(PointsCalculation)
-admin_site.register(GlobalStats)
+
+class UptimeBatchAdmin(admin.ModelAdmin):
+    list_display = ['user', 'forum_profile', 'batch_number', 'active', 'date_started', 'date_ended']
+    
+    def user(self, obj):
+        return obj.forum_profile.user_profile.user.username
+        
+    def forum_profile(self, obj):
+        return obj.forum_profile
+        
+    def batch_number(self, obj):
+        return obj.get_batch_number()
+    
+admin_site.register(UptimeBatch, UptimeBatchAdmin)
+
+class PointsCalculationAdmin(admin.ModelAdmin):
+    list_display = ['uptime_batch', 'signature_check', 'post_points', 
+        'post_days_points', 'influence_points', 'date_calculated']
+        
+admin_site.register(PointsCalculation, PointsCalculationAdmin)
+
+class GlobalStatsAdmin(admin.ModelAdmin):
+    list_display = ['total_posts', 'total_posts_with_sig', 'total_days', 'date_updated']
+    
+admin_site.register(GlobalStats, GlobalStatsAdmin)
 
 class SignatureCheckAdmin(admin.ModelAdmin):
-    list_display = ['forum_site', 'forum_user_id', 
-        'uptime_batch', 'total_posts', 'signature_found']
+    list_display = ['user', 'forum_profile', 
+        'uptime_batch', 'total_posts', 'signature_found', 'date_checked']
         
-    def forum_site(self, obj):
-        return obj.uptime_batch.forum_profile.forum
+    def user(self, obj):
+        return obj.uptime_batch.forum_profile.user_profile.user.username
         
-    def forum_user_id(self, obj):
-        return obj.uptime_batch.forum_profile.user_profile
+    def forum_profile(self, obj):
+        return obj.uptime_batch.forum_profile
     
 admin_site.register(SignatureCheck, SignatureCheckAdmin)
 
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'total_points', 'total_tokens']
-    
+    list_display = ['user', 'total_posts', 'total_posts_with_sig', 
+        'total_post_days', 'total_points', 'total_tokens']
+        
+    def total_posts(self, obj):
+        return obj.get_total_posts()
+        
+    def total_posts_with_sig(self, obj):
+        return obj.get_total_posts_with_sig()
+        
+    def total_post_days(self, obj):
+        return obj.get_total_days()
+        
     def total_points(self, obj):
         return obj.get_total_points()
         
@@ -44,6 +76,6 @@ class UserProfileAdmin(admin.ModelAdmin):
 admin_site.register(UserProfile, UserProfileAdmin)
 
 class ForumProfileAdmin(admin.ModelAdmin):
-    list_display = ['forum_user_id', 'forum']
+    list_display = ['user_profile', 'forum', 'forum_user_id']
     
 admin_site.register(ForumProfile, ForumProfileAdmin)

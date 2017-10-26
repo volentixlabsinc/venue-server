@@ -3,10 +3,6 @@ from .models import UserProfile, UptimeBatch, GlobalStats, PointsCalculation
 from celery import shared_task
 
 @shared_task
-def add(x, y):
-    return x + y
-    
-@shared_task
 def update_global_stats():
     users = UserProfile.objects.all()
     total_posts = 0
