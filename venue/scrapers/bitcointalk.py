@@ -13,7 +13,13 @@ class BitcoinTalk(object):
         
     def get_total_posts(self):
         row = self.soup.select('div#bodyarea tr')[4]
-        return row.text.split()[-1]
+        return int(row.text.split()[-1])
         
     def check_signature(self, signature_code):
-        pass
+        return True
+        
+def execute(user_id, signature_code):
+    scraper = BitcoinTalk()
+    scraper.get_profile(user_id)
+    data = (scraper.get_total_posts(), scraper.check_signature(signature_code))
+    return data

@@ -17,7 +17,6 @@ class Signature(models.Model):
     """ Signature types per forum site """
     name = models.CharField(max_length=30)
     forum_site = models.ForeignKey(ForumSite, related_name='signature_types')
-    code = models.TextField()
     active = models.BooleanField(default=True)
     
     def __str__(self):
@@ -73,6 +72,8 @@ class ForumProfile(models.Model):
     forum = models.ForeignKey(ForumSite, null=True, blank=True, related_name='users')
     forum_user_id = models.CharField(max_length=50)
     signature = models.ForeignKey(Signature, null=True, blank=True, related_name='users')
+    signature_code = models.CharField(max_length=40)
+    active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
     
     def __str__(self):
@@ -134,6 +135,7 @@ class UptimeBatch(models.Model):
 
 class SignatureCheck(models.Model):
     """ Results of regular scraping from forum profile pages """
+    forum_profile = models.ForeignKey(ForumProfile, related_name='regular_checks')
     uptime_batch = models.ForeignKey(UptimeBatch, related_name='regular_checks')
     date_checked = models.DateTimeField(default=timezone.now)
     total_posts = models.IntegerField(default=0)
@@ -141,6 +143,25 @@ class SignatureCheck(models.Model):
     
     def __str__(self):
         return str(self.id)
+        
+    def save(self, *args, **kwargs):
+        if self._state.adding == True:
+            # Automatically assign to old or new uptime batch
+            batches = self.forum_profile.uptime_batches.filter(active=True)
+            if batches.count():
+                latest_batch = batches.last()
+                if self.signature_found:
+                    self.uptime_batch = latest_batch
+                else:
+                    latest_batch.active = False
+                    latest_batch.date_ended = timezone.now()
+                    latest_batch.save()
+            else:
+                if self.signature_found:
+                    batch = UptimeBatch(forum_profile=self.forum_profile)
+                    batch.save()
+                    self.uptime_batch = batch
+        super(SignatureCheck, self).save(*args, **kwargs)
 
 class PointsCalculation(models.Model):
     """ Results of calculations of points for the given uptime batch.
@@ -172,11 +193,27 @@ class PointsCalculation(models.Model):
             self.total_points += decimal.Decimal(self.post_days_points)
             self.total_points += decimal.Decimal(self.influence_points)
         super(PointsCalculation, self).save(*args, **kwargs)
-
-class ScrapeRun(models.Model):
-    """ Record details about the execution run of scrapers """
-    date_started = models.DateTimeField(default=timezone.now)
-    forum_site = models.ForeignKey(ForumSite, related_name='scrape_runs')
-    success = models.BooleanField(default=True)
-    date_completed = models.DateTimeField(default=timezone.now)
+        
+class ScrapingError(models.Model):
+    """ Record of scraping errors """
+    forum = models.ForeignKey(ForumSite, related_name='scraping_errors')
+    forum_profile = models.ForeignKey(ForumProfile, related_name='scraping_errors')
+    error_type = models.CharField(max_length=30)
     traceback = models.TextField()
+    resolved = models.BooleanField(default=False)
+    date_created = models.DateTimeField(default=timezone.now)
+    date_resolved = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return str(self.id)
+    
+class DataUpdateTask(models.Model):
+    """ Record details about the execution run of scraping and data update tasks """
+    task_id = models.CharField(max_length=35)
+    date_started = models.DateTimeField(default=timezone.now)
+    success = models.NullBooleanField(null=True)
+    date_completed = models.DateTimeField(null=True, blank=True)
+    scraping_errors = models.ManyToManyField(ScrapingError)
+    
+    def __str__(self):
+        return str(self.id)

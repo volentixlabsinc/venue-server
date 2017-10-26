@@ -1,4 +1,4 @@
-from venue.models import ForumSite, Signature, UserProfile, ForumProfile, UptimeBatch, SignatureCheck, PointsCalculation, GlobalStats
+from venue.models import ForumSite, Signature, UserProfile, ForumProfile, UptimeBatch, SignatureCheck, PointsCalculation, GlobalStats, DataUpdateTask, ScrapingError
 from django.utils.translation import ugettext_lazy
 from django.contrib.auth.models import User
 from django.contrib import admin
@@ -16,6 +16,11 @@ admin_site = MyAdminSite()
 admin_site.register(User)
 admin_site.register(ForumSite)
 admin_site.register(Signature)
+
+class ScrapingErrorAdmin(admin.ModelAdmin):
+    list_display = ['error_type', 'forum_profile', 'date_created']
+    
+admin_site.register(ScrapingError, ScrapingErrorAdmin)
 
 class UptimeBatchAdmin(admin.ModelAdmin):
     list_display = ['user', 'forum_profile', 'batch_number', 'active', 'date_started', 'date_ended']
@@ -79,3 +84,11 @@ class ForumProfileAdmin(admin.ModelAdmin):
     list_display = ['user_profile', 'forum', 'forum_user_id']
     
 admin_site.register(ForumProfile, ForumProfileAdmin)
+
+class DataUpdateTaskAdmin(admin.ModelAdmin):
+    list_display = ['task_id', 'date_started', 'success', 'date_completed', 'errors_count']
+    
+    def errors_count(self, obj):
+        return obj.scraping_errors.all().count()
+        
+admin_site.register(DataUpdateTask, DataUpdateTaskAdmin)
