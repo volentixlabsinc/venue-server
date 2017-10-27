@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
+class ScraperError(Exception): pass
+
 class BitcoinTalk(object):
     
     def __init__(self):
@@ -13,10 +15,20 @@ class BitcoinTalk(object):
         
     def get_total_posts(self):
         row = self.soup.select('div#bodyarea tr')[4]
-        return int(row.text.split()[-1])
+        if 'Posts' in row.text:
+            return int(row.text.split()[-1])
+        else:
+            raise ScraperError('Page has changed')
         
     def check_signature(self, signature_code):
-        return True
+        sig = self.soup.select('div#bodyarea tr')[25]
+        sig_found = False
+        if 'Signature' in sig.text:
+            if signature_code in sig.parent.text:
+                sig_found = True
+        else:
+            raise ScraperError('Page has changed')
+        return sig_found
         
 def execute(user_id, signature_code):
     scraper = BitcoinTalk()
