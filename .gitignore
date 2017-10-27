@@ -11,3 +11,4 @@ secure_settings.py
 dump.rdb
 *.pid
 celerybeat-schedule
+node_modules/
