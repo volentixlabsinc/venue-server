@@ -11,7 +11,7 @@
       <p>
         VENUE tracks and displays sophisticated user rankings and accurate payout information LIVE.
       </p>
-      <b-btn variant="primary">Sign Up</b-btn>
+      <b-btn variant="primary" v-if="!$store.state.apiToken">Sign Up</b-btn>
       <b-btn variant="dark"
         v-b-modal.modal1 v-if="!$store.state.apiToken">
         Login

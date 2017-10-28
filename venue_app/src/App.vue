@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" v-cloak>
     <top-navigation></top-navigation>
     <b-container fluid>
       <router-view></router-view>
@@ -25,4 +25,5 @@ export default {
   display: block;
   color: red;
 }
+[v-cloak] { display:none; }
 </style>
