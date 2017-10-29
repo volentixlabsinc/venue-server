@@ -18,9 +18,9 @@
     "bootstrap-vue": "^1.0.0-beta.9",
     "vee-validate": "^2.0.0-rc.19",
     "vue": "^2.5.2",
-    "vue-cookies": "^1.5.4",
     "vue-router": "^3.0.1",
-    "vuex": "^3.0.0"
+    "vuex": "^3.0.0",
+    "vuex-persistedstate": "^2.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

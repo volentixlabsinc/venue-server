@@ -24,10 +24,15 @@ class CustomObtainAuthToken(ObtainAuthToken):
 @csrf_exempt
 def get_user(request):
     data = json.loads(request.body)
-    token = get_object_or_404(Token, key=data['token'])
-    data = {
-        'token': token.key, 
-        'username': token.user.username, 
-        'email': token.user.email
-    }
+    token = Token.objects.filter(key=data['token'])
+    if token.exists():
+        token = token.first()
+        data = {
+            'found': True,
+            'token': token.key, 
+            'username': token.user.username, 
+            'email': token.user.email
+        }
+    else:
+        data = {'found': False}
     return JsonResponse(data)

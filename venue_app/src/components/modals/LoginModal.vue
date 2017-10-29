@@ -1,6 +1,6 @@
 <template>
   <!-- Login Modal -->
-  <b-modal id="modal1" title="Login Form" v-if="!$store.state.apiToken" ref="login-modal" hide-footer>
+  <b-modal id="modal1" title="Login Form" v-if="!$store.state.apiToken" ref="loginModal" hide-footer>
     <b-form @submit="login($event)" @click="clearLoginError()">
       <b-form-group label="Username">
         <b-form-input v-model.trim="username" v-validate="{ required: true }" name="username" placeholder="Enter username"></b-form-input>
@@ -48,7 +48,6 @@ export default {
     setUser (data) {
       this.$store.commit('updateApiToken', data.token)
       this.$store.commit('updateUser', data.username, data.email)
-      this.$cookies.set('apiToken', data.token)
     },
     login (event) {
       event.preventDefault()
@@ -56,8 +55,13 @@ export default {
         username: this.username,
         password: this.password
       }).then(response => {
+        // Set user data
         this.password = ''
         this.setUser(response.data)
+        // Fix the authorization header for all HTTP requests
+        var authHeader = 'Token ' + this.$store.state.apiToken
+        axios.defaults.headers.common['Authorization'] = authHeader
+        // Redirect to dashboard
         this.$router.push('/dashboard')
       }).catch(e => {
         this.loginError = true
@@ -65,11 +69,12 @@ export default {
     }
   },
   created () {
-    var apiTokenCookie = this.$cookies.get('apiToken')
     axios.post('/get-user/', {
-      token: apiTokenCookie
+      token: this.$store.state.apiToken
     }).then(response => {
-      this.setUser(response.data)
+      if (response.data.found === true) {
+        this.setUser(response.data)
+      }
     })
   }
 }

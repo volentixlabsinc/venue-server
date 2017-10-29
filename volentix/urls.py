@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from venue.views import frontend_app, get_user, CustomObtainAuthToken
-from venue.serializers import UserViewSet
+from venue.serializers import UserViewSet, ForumSiteViewSet
 from django.views.static import serve
 from django.conf.urls import url, include
 from django.conf import settings
@@ -24,6 +24,7 @@ from rest_framework import routers
 # API Routes
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
+router.register(r'forum-sites', ForumSiteViewSet)
 
 urlpatterns = [
     url(r'^$', frontend_app),
@@ -31,7 +32,10 @@ urlpatterns = [
     url(r'^api/', include(router.urls)),
     url(r'^get-user/', get_user),
     url(r'^authenticate/', CustomObtainAuthToken.as_view()),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+]
+
+urlpatterns += [
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
 
 if settings.DEBUG:

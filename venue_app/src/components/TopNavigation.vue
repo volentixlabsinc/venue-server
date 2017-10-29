@@ -38,6 +38,7 @@
 
 <script>
 import LoginModal from '@/components/modals/LoginModal'
+import axios from 'axios'
 
 export default {
   name: 'TopNavigation',
@@ -46,7 +47,7 @@ export default {
     logout () {
       this.$store.commit('updateApiToken', '')
       this.$store.commit('updateUser', null)
-      this.$cookies.remove('apiToken')
+      axios.defaults.headers.common['Authorization'] = ''
       this.$router.push('/')
     }
   }
