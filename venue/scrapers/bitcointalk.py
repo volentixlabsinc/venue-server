@@ -30,8 +30,11 @@ class BitcoinTalk(object):
             raise ScraperError('Page has changed')
         return sig_found
         
-def execute(user_id, signature_code):
+def execute(user_id, signature_code, test_mode=False):
     scraper = BitcoinTalk()
     scraper.get_profile(user_id)
-    data = (scraper.get_total_posts(), scraper.check_signature(signature_code))
+    if test_mode:
+        data = (scraper.get_total_posts(), True)
+    else:
+        data = (scraper.get_total_posts(), scraper.check_signature(signature_code))
     return data

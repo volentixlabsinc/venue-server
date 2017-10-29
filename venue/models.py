@@ -17,7 +17,9 @@ class Signature(models.Model):
     """ Signature types per forum site """
     name = models.CharField(max_length=30)
     forum_site = models.ForeignKey(ForumSite, related_name='signature_types')
+    code = models.TextField()
     active = models.BooleanField(default=True)
+    date_added = models.DateTimeField(default=timezone.now)
     
     def __str__(self):
         return self.name

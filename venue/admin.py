@@ -1,26 +1,22 @@
-from venue.models import ForumSite, Signature, UserProfile, ForumProfile, UptimeBatch, SignatureCheck, PointsCalculation, GlobalStats, DataUpdateTask, ScrapingError
-from django.utils.translation import ugettext_lazy
-from django.contrib.auth.models import User
+from venue.models import (
+    ForumSite, Signature, UserProfile, ForumProfile, 
+    UptimeBatch, SignatureCheck, PointsCalculation, 
+    GlobalStats, DataUpdateTask, ScrapingError
+)
 from django.contrib import admin
 
-class MyAdminSite(admin.AdminSite):
-    # Text to put at the end of each page's <title>.
-    site_title = ugettext_lazy('Volentix administration')
-    # Text to put in each page's <h1> (and above login form).
-    site_header = ugettext_lazy('Volentix administration')
-    # Text to put at the top of the admin index page.
-    index_title = ugettext_lazy('Apps and Data')
+# Customize the titles in the headers
+admin.site.site_title = 'Volentix administration'
+admin.site.site_header = 'Volentix administration'
+admin.site.index_title = 'Apps and Data'
 
-admin_site = MyAdminSite()
-
-admin_site.register(User)
-admin_site.register(ForumSite)
-admin_site.register(Signature)
+admin.site.register(ForumSite)
+admin.site.register(Signature)
 
 class ScrapingErrorAdmin(admin.ModelAdmin):
     list_display = ['error_type', 'forum_profile', 'date_created']
     
-admin_site.register(ScrapingError, ScrapingErrorAdmin)
+admin.site.register(ScrapingError, ScrapingErrorAdmin)
 
 class UptimeBatchAdmin(admin.ModelAdmin):
     list_display = ['user', 'forum_profile', 'batch_number', 'active', 'date_started', 'date_ended']
@@ -34,18 +30,18 @@ class UptimeBatchAdmin(admin.ModelAdmin):
     def batch_number(self, obj):
         return obj.get_batch_number()
     
-admin_site.register(UptimeBatch, UptimeBatchAdmin)
+admin.site.register(UptimeBatch, UptimeBatchAdmin)
 
 class PointsCalculationAdmin(admin.ModelAdmin):
     list_display = ['uptime_batch', 'signature_check', 'post_points', 
         'post_days_points', 'influence_points', 'date_calculated']
         
-admin_site.register(PointsCalculation, PointsCalculationAdmin)
+admin.site.register(PointsCalculation, PointsCalculationAdmin)
 
 class GlobalStatsAdmin(admin.ModelAdmin):
     list_display = ['total_posts', 'total_posts_with_sig', 'total_days', 'date_updated']
     
-admin_site.register(GlobalStats, GlobalStatsAdmin)
+admin.site.register(GlobalStats, GlobalStatsAdmin)
 
 class SignatureCheckAdmin(admin.ModelAdmin):
     list_display = ['user', 'forum_profile', 
@@ -57,7 +53,7 @@ class SignatureCheckAdmin(admin.ModelAdmin):
     def forum_profile(self, obj):
         return obj.uptime_batch.forum_profile
     
-admin_site.register(SignatureCheck, SignatureCheckAdmin)
+admin.site.register(SignatureCheck, SignatureCheckAdmin)
 
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'total_posts', 'total_posts_with_sig', 
@@ -78,12 +74,12 @@ class UserProfileAdmin(admin.ModelAdmin):
     def total_tokens(self, obj):
         return obj.get_total_tokens()
         
-admin_site.register(UserProfile, UserProfileAdmin)
+admin.site.register(UserProfile, UserProfileAdmin)
 
 class ForumProfileAdmin(admin.ModelAdmin):
     list_display = ['user_profile', 'forum', 'forum_user_id']
     
-admin_site.register(ForumProfile, ForumProfileAdmin)
+admin.site.register(ForumProfile, ForumProfileAdmin)
 
 class DataUpdateTaskAdmin(admin.ModelAdmin):
     list_display = ['task_id', 'date_started', 'success', 'date_completed', 'errors_count']
@@ -91,4 +87,4 @@ class DataUpdateTaskAdmin(admin.ModelAdmin):
     def errors_count(self, obj):
         return obj.scraping_errors.all().count()
         
-admin_site.register(DataUpdateTask, DataUpdateTaskAdmin)
+admin.site.register(DataUpdateTask, DataUpdateTaskAdmin)

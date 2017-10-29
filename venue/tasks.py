@@ -76,7 +76,7 @@ def update_data():
     task_id = update_data.request.id
     data_update = DataUpdateTask(task_id=task_id)
     data_update.save()
-    # Execute the scraping of forum profiles
+    # Create a bakcground tasks workflow as a chain
     forum_profiles = ForumProfile.objects.filter(active=True)
     scraping_tasks = scrape_forum_profile.starmap([(fp.id, task_id) for fp in forum_profiles])
     workflow = chain(
@@ -85,4 +85,5 @@ def update_data():
         calculate_points.si(task_id), # Execute task to calculate points
         mark_master_task_complete.si(task_id) # Mark the data update run as complete
     )
+    # Send to the workflow to the queue
     workflow.apply_async()
