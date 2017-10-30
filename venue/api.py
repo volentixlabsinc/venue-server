@@ -1,6 +1,5 @@
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-from django.contrib.auth.models import User
-from rest_framework import serializers, viewsets
+from rest_framework import serializers, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 from .models import (ForumSite, Signature, UserProfile)
 
@@ -8,24 +7,13 @@ class CustomViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
     
-#----------
-# Users API
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    password = serializers.CharField(write_only=True)
-    
-    class Meta:
-        model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'password')
-        
-class UserViewSet(CustomViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    
 #------------------
 # User Profiles API
 
 class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
+    username = serializers.ReadOnlyField(source='user.username')
+    first_name = serializers.ReadOnlyField(source='user.first_name')
+    last_name = serializers.ReadOnlyField(source='user.last_name')
     total_posts = serializers.ReadOnlyField(source='get_total_posts')
     total_posts_with_sig = serializers.ReadOnlyField(source='get_total_posts_with_sig')
     total_days = serializers.ReadOnlyField(source='get_total_days')
@@ -34,7 +22,7 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
     
     class Meta:
         model = UserProfile
-        fields = ('user', 'total_posts', 'total_posts_with_sig', 
+        fields = ('username', 'first_name', 'last_name', 'total_posts', 'total_posts_with_sig', 
             'total_days', 'total_points', 'total_tokens')
             
 class UserProfileViewSet(CustomViewSet):

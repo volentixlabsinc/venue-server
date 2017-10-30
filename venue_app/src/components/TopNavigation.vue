@@ -12,19 +12,26 @@
         
         <b-nav is-nav-bar class="ml-auto">
           
-          <b-button size="sm" 
-            class="my-2 my-sm-0" 
-            v-b-modal.modal1 v-if="!$store.state.apiToken">
-            Login
-          </b-button>
+          <b-nav-item-dropdown :text="$i18n.t('language')" right>
+            <b-dropdown-item @click="setLanguage('en')">English</b-dropdown-item>
+            <b-dropdown-item @click="setLanguage('fr')">French</b-dropdown-item>
+          </b-nav-item-dropdown>
           
+          <b-nav-form>
+            <b-button size="sm" 
+              class="my-2 my-sm-0" 
+              v-b-modal.login-modal v-if="!$store.state.apiToken">
+              {{ $t('login') }}
+            </b-button>
+          </b-nav-form>
+        
           <b-nav-item-dropdown right v-if="$store.state.apiToken">
             <!-- Using button-content slot -->
             <template slot="button-content">
               <em>{{ $store.state.user.userName }}</em>
             </template>
             <b-dropdown-item href="#">Profile</b-dropdown-item>
-            <b-dropdown-item href="#" @click="logout()">Logout</b-dropdown-item>
+            <b-dropdown-item href="#" @click="logout()">{{ $t('logout') }}</b-dropdown-item>
           </b-nav-item-dropdown>
         </b-nav>
         
@@ -49,6 +56,9 @@ export default {
       this.$store.commit('updateUser', null)
       axios.defaults.headers.common['Authorization'] = ''
       this.$router.push('/')
+    },
+    setLanguage (lang) {
+      this.$i18n.locale = lang
     }
   }
 }

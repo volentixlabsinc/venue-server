@@ -2,7 +2,7 @@
   <div class="dashboard">
     <b-row>
       <b-col>
-        <h2>Dashboard</h2>
+        <h2>{{ $t('dashboard') }}</h2>
       </b-col>
     </b-row>
   </div>

@@ -13,9 +13,9 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from venue.views import frontend_app, get_user, CustomObtainAuthToken
-from venue.serializers import (
-    UserViewSet, ForumSiteViewSet, SignatureViewSet, UserProfileViewSet
+from venue.views import frontend_app, get_user, create_user, CustomObtainAuthToken
+from venue.api import (
+    ForumSiteViewSet, SignatureViewSet, UserProfileViewSet
 )
 from django.views.static import serve
 from django.conf.urls import url, include
@@ -25,7 +25,6 @@ from rest_framework import routers
 
 # API Routes
 router = routers.DefaultRouter()
-router.register(r'users', UserViewSet)
 router.register(r'user-profiles', UserProfileViewSet)
 router.register(r'forum-sites', ForumSiteViewSet)
 router.register(r'signatures', SignatureViewSet),
@@ -35,6 +34,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(router.urls)),
     url(r'^get-user/', get_user),
+    url(r'^create-user/', create_user),
     url(r'^authenticate/', CustomObtainAuthToken.as_view()),
 ]
 

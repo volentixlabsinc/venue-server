@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.contrib.auth.models import User
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+from venue.models import UserProfile
 import json
 
 def frontend_app(request):
@@ -38,3 +40,29 @@ def get_user(request):
     else:
         data = {'found': False}
     return JsonResponse(data)
+    
+@csrf_exempt
+def create_user(request):
+    data = json.loads(request.body)
+    user_check = User.objects.filter(email=data['email'])
+    response = {}
+    try:
+        if user_check.exists():
+            response['status'] = 'exists'
+            user = user_check.first()
+        else:
+            user = User.objects.create_user(**data)
+            response['status'] = 'created'
+        token = Token.objects.create(user=user)
+        user_data = {
+            'username': user.username,
+            'email': user.email,
+            'token': token.key
+        }
+        response['user'] = user_data
+        user_profile = UserProfile(user=user)
+        user_profile.save()
+    except Exception as exc:
+        response['status'] = 'error'
+        response['message'] = exc.msg
+    return JsonResponse(response)

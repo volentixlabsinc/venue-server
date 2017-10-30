@@ -8,14 +8,23 @@ import BootstrapVue from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import VeeValidate from 'vee-validate'
+import VueI18n from 'vue-i18n'
+import messages from '@/translations'
 
+Vue.use(VueI18n)
 Vue.use(VeeValidate)
 Vue.use(BootstrapVue)
 Vue.config.productionTip = false
 
+const i18n = new VueI18n({
+  locale: 'en',
+  messages
+})
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
+  i18n,
   store,
   router,
   template: '<App/>',

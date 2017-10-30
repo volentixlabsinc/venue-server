@@ -5,24 +5,32 @@
         VENUE
       </template>
       <template slot="lead">
-        Autonomous Signature Campaign Tracking
+        {{ $t('venue_title') }}
       </template>
       <hr class="my-4">
       <p>
-        VENUE tracks and displays sophisticated user rankings and accurate payout information LIVE.
+        {{ $t('venue_description') }}
       </p>
-      <b-btn variant="primary" v-if="!$store.state.apiToken">Sign Up</b-btn>
+      <b-btn variant="primary"
+        v-b-modal.signup-modal v-if="!$store.state.apiToken">
+        {{ $t('signup') }}
+      </b-btn>
       <b-btn variant="dark"
-        v-b-modal.modal1 v-if="!$store.state.apiToken">
-        Login
+        v-b-modal.login-modal v-if="!$store.state.apiToken">
+        {{ $t('login') }}
       </b-btn>
     </b-jumbotron>
+    
+    <sign-up-modal></sign-up-modal>
   </div>
 </template>
 
 <script>
+import SignUpModal from '@/components/modals/SignUpModal'
+
 export default {
-  name: 'Home'
+  name: 'Home',
+  components: { SignUpModal }
 }
 </script>
 
