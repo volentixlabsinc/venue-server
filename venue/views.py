@@ -5,7 +5,6 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 import json
 
 def frontend_app(request):

@@ -35,24 +35,21 @@ class UserProfile(models.Model):
         total_per_forum = []
         for site in self.forum_profiles.all():
             latest_batch = site.uptime_batches.last()
-            if latest_batch.active:
-                total_per_forum.append(latest_batch.get_total_posts())
+            total_per_forum.append(latest_batch.get_total_posts())
         return sum(total_per_forum)
         
     def get_total_posts_with_sig(self):
         total_per_forum = []
         for site in self.forum_profiles.all():
             latest_batch = site.uptime_batches.last()
-            if latest_batch.active:
-                total_per_forum.append(latest_batch.get_total_posts_with_sig())
+            total_per_forum.append(latest_batch.get_total_posts_with_sig())
         return sum(total_per_forum)
         
     def get_total_days(self):
         total_per_forum = []
         for site in self.forum_profiles.all():
             latest_batch = site.uptime_batches.last()
-            if latest_batch.active:
-                total_per_forum.append(latest_batch.get_total_days())
+            total_per_forum.append(latest_batch.get_total_days())
         return sum(total_per_forum)
         
     def get_total_points(self):

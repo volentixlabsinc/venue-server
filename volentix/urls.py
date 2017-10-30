@@ -14,7 +14,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from venue.views import frontend_app, get_user, CustomObtainAuthToken
-from venue.serializers import (UserViewSet, ForumSiteViewSet, SignatureViewSet)
+from venue.serializers import (
+    UserViewSet, ForumSiteViewSet, SignatureViewSet, UserProfileViewSet
+)
 from django.views.static import serve
 from django.conf.urls import url, include
 from django.conf import settings
@@ -23,9 +25,10 @@ from rest_framework import routers
 
 # API Routes
 router = routers.DefaultRouter()
-router.register(r'signatures', SignatureViewSet),
 router.register(r'users', UserViewSet)
+router.register(r'user-profiles', UserProfileViewSet)
 router.register(r'forum-sites', ForumSiteViewSet)
+router.register(r'signatures', SignatureViewSet),
 
 urlpatterns = [
     url(r'^$', frontend_app),
