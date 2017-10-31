@@ -1,6 +1,6 @@
 <template>
   <!-- Sign Up Modal -->
-  <b-modal id='signup-modal' title="Sign Up Form" v-if="!$store.state.apiToken" ref="signUpModal" hide-footer>
+  <b-modal id='signup-modal' :title="$i18n.t('sign_up_form')" v-if="!$store.state.apiToken" ref="signUpModal" hide-footer>
     <b-form @submit="register($event)" @click="clearSignUpError()">
       <b-form-group label="Email">
         <b-form-input v-model.trim="email" v-validate="{ required: true, email: true }" name="email" placeholder="Enter email address"></b-form-input>
@@ -27,7 +27,9 @@
         </span>
       </b-form-group>
       <b-form-group>
-        <b-button type="submit" variant="primary" :disabled="disableSignUpSubmit">Submit</b-button>
+        <b-button type="submit" variant="primary" :disabled="disableSignUpSubmit">
+          {{ $t('submit') }}
+        </b-button>
         <span v-show="signUpError" class="help is-danger" style="margin-top: 15px;">
           Sign up failed: A problem was encountered!
         </span>

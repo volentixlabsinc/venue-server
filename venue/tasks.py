@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumProfile
 from django.utils import timezone
 from celery import shared_task
+from constance import config
 from celery import chain
 import traceback
 
@@ -16,7 +17,9 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
     try:
         scraper = load_scraper(forum_profile.forum.scraper_name)
         total_posts, signature_found = scraper.execute(
-            forum_profile.forum_user_id, forum_profile.signature_code)
+            forum_profile.forum_user_id, 
+            forum_profile.signature_code,
+            test_mode=config.TEST_MODE)
         sigcheck = SignatureCheck(
             forum_profile=forum_profile,
             total_posts=total_posts,

@@ -2,6 +2,8 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Home from '@/components/Home'
 import Dashboard from '@/components/Dashboard'
+import Signatures from '@/components/Signatures'
+import Settings from '@/components/Settings'
 import store from '@/store'
 
 Vue.use(Router)
@@ -17,6 +19,18 @@ const router = new Router({
       path: '/dashboard',
       name: 'Dashboard',
       component: Dashboard,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/signatures',
+      name: 'Signatures',
+      component: Signatures,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/settings',
+      name: 'Settings',
+      component: Settings,
       meta: { requiresAuth: true }
     }
   ]

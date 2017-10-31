@@ -56,7 +56,8 @@ REST_FRAMEWORK = {
 }
 
 CONSTANCE_CONFIG = {
-    'VTX_AVAILABLE': (120000, 'Total VTX tokens available')
+    'VTX_AVAILABLE': (120000, 'Total VTX tokens available'),
+    'TEST_MODE': (False, 'Test mode for scraping and points calculations. Signatures are always marked as found under test mode.')
 }
 
 MIDDLEWARE = [

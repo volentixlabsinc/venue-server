@@ -2,7 +2,7 @@
   <div class="page-container">
     <b-row>
       <b-col>
-        <h2>{{ $t('dashboard') }}</h2>
+        <h2>{{ $t('settings') }}</h2>
       </b-col>
     </b-row>
   </div>
@@ -10,7 +10,7 @@
 
 <script>
 export default {
-  name: 'Dashboard'
+  name: 'Settings'
 }
 </script>
 

@@ -11,7 +11,7 @@
       <b-collapse is-nav id="nav_collapse">
         
         <b-nav is-nav-bar class="ml-auto">
-          
+        
           <b-nav-item-dropdown :text="$i18n.t('language')" right>
             <b-dropdown-item @click="setLanguage('en')">English</b-dropdown-item>
             <b-dropdown-item @click="setLanguage('fr')">French</b-dropdown-item>
@@ -24,15 +24,22 @@
               {{ $t('login') }}
             </b-button>
           </b-nav-form>
-        
-          <b-nav-item-dropdown right v-if="$store.state.apiToken">
-            <!-- Using button-content slot -->
-            <template slot="button-content">
-              <em>{{ $store.state.user.userName }}</em>
-            </template>
-            <b-dropdown-item href="#">Profile</b-dropdown-item>
-            <b-dropdown-item href="#" @click="logout()">{{ $t('logout') }}</b-dropdown-item>
-          </b-nav-item-dropdown>
+          
+          <b-nav-item v-if="$store.state.apiToken" to="/dashboard">
+            {{ $t('dashboard') }}
+          </b-nav-item>
+          
+          <b-nav-item v-if="$store.state.apiToken" to="/signatures">
+            {{ $t('signatures') }}
+          </b-nav-item>
+          
+          <b-nav-item v-if="$store.state.apiToken" to="/settings">
+            {{ $t('settings') }}
+          </b-nav-item>
+          
+          <b-nav-item v-if="$store.state.apiToken" @click="logout()">
+            {{ $t('logout') }}
+          </b-nav-item>
         </b-nav>
         
       </b-collapse>

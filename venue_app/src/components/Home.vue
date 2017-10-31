@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div>
     <b-jumbotron>
       <template slot="header">
         VENUE
