@@ -15,7 +15,7 @@ Including another URLconf
 """
 from venue.views import frontend_app, get_user, create_user, CustomObtainAuthToken
 from venue.api import (
-    ForumSiteViewSet, SignatureViewSet, UserProfileViewSet
+    ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
 )
 from django.views.static import serve
 from django.conf.urls import url, include
@@ -27,7 +27,8 @@ from rest_framework import routers
 router = routers.DefaultRouter()
 router.register(r'user-profiles', UserProfileViewSet)
 router.register(r'forum-sites', ForumSiteViewSet)
-router.register(r'signatures', SignatureViewSet),
+router.register(r'signatures', SignatureViewSet)
+router.register(r'forum-profiles', ForumProfileViewSet)
 
 urlpatterns = [
     url(r'^$', frontend_app),

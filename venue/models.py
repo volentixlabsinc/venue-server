@@ -72,7 +72,9 @@ class ForumProfile(models.Model):
     forum_user_id = models.CharField(max_length=50)
     signature = models.ForeignKey(Signature, null=True, blank=True, related_name='users')
     signature_code = models.CharField(max_length=40)
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=False)
+    verified = models.BooleanField(default=False)
+    date_verified = models.DateTimeField(null=True, blank=True)
     date_joined = models.DateTimeField(default=timezone.now)
     
     def __str__(self):

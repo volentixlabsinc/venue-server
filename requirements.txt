@@ -10,6 +10,7 @@ decorator==4.1.2
 Django==1.11.6
 django-constance==2.0.0
 django-picklefield==1.0.0
+djangorestframework==3.7.1
 flower==0.9.2
 gunicorn==19.7.1
 idna==2.6

@@ -2,22 +2,22 @@
   <!-- Login Modal -->
   <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" hide-footer>
     <b-form @submit="login($event)" @click="clearLoginError()">
-      <b-form-group label="Username">
-        <b-form-input v-model.trim="username" v-validate="{ required: true }" name="username" placeholder="Enter username"></b-form-input>
+      <b-form-group :label="$i18n.t('username')">
+        <b-form-input v-model.trim="username" v-validate="{ required: true }" name="username" :placeholder="$i18n.t('enter_username')"></b-form-input>
         <span v-show="errors.has('username')" class="help is-danger">
           {{ errors.first('username') }}
         </span>
       </b-form-group>
-      <b-form-group label="Password">
-        <b-form-input type="password" v-model.trim="password" v-validate="{ required: true }" name="password" placeholder="Enter password"></b-form-input>
+      <b-form-group :label="$i18n.t('password')">
+        <b-form-input type="password" v-model.trim="password" v-validate="{ required: true }" name="password" :placeholder="$i18n.t('enter_password')"></b-form-input>
         <span v-show="errors.has('password')" class="help is-danger">
           {{ errors.first('password') }}
         </span>
       </b-form-group>
       <b-form-group>
-        <b-button type="submit" variant="primary" :disabled="disableLoginSubmit">Submit</b-button>
+        <b-button type="submit" variant="primary" :disabled="disableLoginSubmit">{{ $t('submit') }}</b-button>
         <span v-show="loginError" class="help is-danger" style="margin-top: 15px;">
-          The username or password you entered was incorrect!
+          {{ $t('login_error') }}
         </span>
       </b-form-group>
     </b-form>

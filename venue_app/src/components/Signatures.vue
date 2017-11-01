@@ -7,25 +7,30 @@
     </b-row>
     <b-row>
       <b-col>
-        <b-row v-for="site in forumSites" key="site.name">
-          <b-col>
-            <p>{{ site.name }}</p>
-            <p>Verification Code: 861539273</p>
-            <p>
-              UserID: <input type="text" :name="site.name + 'userId'">
-              <b-button variant="primary">Verify</b-button>
-            </p>
-          </b-col>
-        </b-row>
+        <b-form>
+          <b-row>
+            <b-col md="4" sm="12">
+              <b-form-group 
+                id="forum-site-select-group" 
+                label="Select forum site:" 
+                label-for="forum-site-select">
+                <b-form-select id="forum-site-select"
+                  :options="forumSites" 
+                  v-model="form.forumSite">
+                </b-form-select>
+              </b-form-group>
+            </b-col>
+            <b-col></b-col>
+          </b-row>
+        </b-form>
       </b-col>
+    </b-row>
+    <b-row v-for="signature in signatures">
       <b-col>
-        <b-row>
-          <b-col>
-            <p>Step 1: Place "Verfication Code" in your forum signature</p>
-            <p>Step 2: Enter your forum UserID (found in the URL of your forum profile)</p>
-            <p>Step 3: Click "Verify"</p>
-          </b-col>
-        </b-row>
+        <h5>{{ signature.name }}</h5>
+        <div class="signature-banner">
+          <img src="https://dummyimage.com/600x90/baa6ba/989bba">
+        </div>
       </b-col>
     </b-row>
   </div>
@@ -38,18 +43,30 @@ export default {
   name: 'Signatures',
   data () {
     return {
-      forumSites: []
+      form: {
+        forumSite: 1
+      },
+      forumSites: [],
+      signatures: [
+        {name: 'Hero', code: 'sample code'},
+        {name: 'Superhero', code: 'sample code'}
+      ]
     }
   },
   created () {
+    // Get forum sites
     axios.get('/api/forum-sites/').then(response => {
-      console.log(response.data)
-      this.forumSites = response.data
+      for (var elem of response.data) {
+        this.forumSites.push({value: elem.id, text: elem.name})
+      }
     })
   }
 }
 </script>
 
 <style scoped>
-
+  .signature-banner {
+    padding-bottom: 10px;
+    padding-left: 30px;
+  }
 </style>

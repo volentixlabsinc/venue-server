@@ -1,5 +1,10 @@
 const messages = {
   'en': {
+    'username': 'Username',
+    'enter_username': 'Enter username',
+    'password': 'Password',
+    'enter_password': 'Enter password',
+    'login_error': 'The username or password you entered was incorrect!',
     'language': 'Language',
     'login': 'Login',
     'logout': 'Logout',
@@ -14,6 +19,11 @@ const messages = {
     'submit': 'Submit'
   },
   'fr': {
+    'username': "Nom d'utilisateur",
+    'enter_username': "Entrez le nom d'utilisateur",
+    'password': 'Mot de passe',
+    'enter_password': 'Entrer le mot de passe',
+    'login_error': "Le nom d'utilisateur ou le mot de passe que vous avez entré était erroné!",
     'language': 'La langue',
     'signup': "S'inscrire",
     'login': 'Se Connecter',
