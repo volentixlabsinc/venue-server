@@ -58,13 +58,21 @@ class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
 class SignatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Signature
-        fields = ('name', 'forum_site', 'code', 'active')
+        fields = ('id', 'name', 'forum_site', 'code', 'active')
         
 class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
     queryset = Signature.objects.all()
     serializer_class = SignatureSerializer
+    
+    def get_queryset(self):
+        queryset = self.queryset
+        # Annotate the queryset
+        forum_site_id = self.request.query_params.get('forum_site_id', None)
+        if forum_site_id:
+            queryset = queryset.filter(forum_site_id=forum_site_id) 
+        return queryset
     
 #-------------------
 # Forum Profiles API
