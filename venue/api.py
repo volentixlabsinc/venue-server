@@ -58,7 +58,7 @@ class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
 class SignatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Signature
-        fields = ('id', 'name', 'forum_site', 'code', 'active')
+        fields = ('id', 'name', 'forum_site', 'code', 'image', 'active')
         
 class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)

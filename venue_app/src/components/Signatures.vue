@@ -67,7 +67,7 @@
                 :value="signature.id">
             </div>
             <div class="signature-banner">
-              <img src="https://dummyimage.com/876x53/7a797a/fff">
+              <img :src="signature.image">
             </div>
           </b-col>
         </b-row>

@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.db import models
 from constance import config
 import decimal
+import os
 
 class ForumSite(models.Model):
     """ Forum site names and addresses """
@@ -12,12 +13,18 @@ class ForumSite(models.Model):
     
     def __str__(self):
         return self.name
-
+        
+def image_file_name(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = "signature_%s.%s" % (instance.id, ext)
+    return os.path.join('uploads', filename)
+    
 class Signature(models.Model):
     """ Signature types per forum site """
     name = models.CharField(max_length=30)
     forum_site = models.ForeignKey(ForumSite, related_name='signature_types')
     code = models.TextField()
+    image = models.ImageField(upload_to=image_file_name, blank=True)
     active = models.BooleanField(default=True)
     date_added = models.DateTimeField(default=timezone.now)
     
