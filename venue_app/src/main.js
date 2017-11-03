@@ -10,7 +10,11 @@ import 'bootstrap-vue/dist/bootstrap-vue.css'
 import VeeValidate from 'vee-validate'
 import VueI18n from 'vue-i18n'
 import messages from '@/translations'
+import VueClipboards from 'vue-clipboards'
+import VueSwal from 'vue-swal'
 
+Vue.use(VueSwal)
+Vue.use(VueClipboards)
 Vue.use(VueI18n)
 Vue.use(VeeValidate)
 Vue.use(BootstrapVue)

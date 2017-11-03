@@ -21,7 +21,8 @@ class CustomObtainAuthToken(ObtainAuthToken):
         data = {
             'token': token.key, 
             'username': token.user.username, 
-            'email': token.user.email
+            'email': token.user.email,
+            'user_profile_id': token.user.profiles.first().id 
         }
         return Response(data)
         

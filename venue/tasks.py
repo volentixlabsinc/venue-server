@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumProfile
+from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumSite, ForumProfile
 from django.utils import timezone
 from celery import shared_task
 from constance import config
@@ -37,7 +37,14 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
             )
             scrape_error.save()
             data_update.scraping_errors.add(scrape_error)
-        
+            
+@shared_task
+def verify_profile_signature(forum_site_id, profile_url):
+    forum = ForumSite.objects.get(id=forum_site_id)
+    scraper = load_scraper(forum.scraper_name)
+    verified = scraper.verify_profile_signature(profile_url)
+    return verified
+    
 @shared_task
 def update_global_stats(master_task_id):
     users = UserProfile.objects.all()

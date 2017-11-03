@@ -5,6 +5,7 @@ import Dashboard from '@/components/Dashboard'
 import Signatures from '@/components/Signatures'
 import Settings from '@/components/Settings'
 import store from '@/store'
+import axios from 'axios'
 
 Vue.use(Router)
 
@@ -37,6 +38,11 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
+  if (to.path !== '/') {
+    // Fix the authorization header for all HTTP requests
+    var authHeader = 'Token ' + store.state.apiToken
+    axios.defaults.headers.common['Authorization'] = authHeader
+  }
   if (to.matched.some(record => record.meta.requiresAuth)) {
     // this route requires auth, check if logged in
     // if not, redirect to login page.

@@ -33,7 +33,7 @@ class Signature(models.Model):
 
 class UserProfile(models.Model):
     """ Custom internal user profiles """
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, related_name='profiles')
     
     def __str__(self):
         return self.user.username
@@ -76,16 +76,27 @@ class ForumProfile(models.Model):
     """ Record of forum profile details per user """
     user_profile = models.ForeignKey(UserProfile, related_name='forum_profiles')
     forum = models.ForeignKey(ForumSite, null=True, blank=True, related_name='users')
-    forum_user_id = models.CharField(max_length=50)
+    forum_user_id = models.CharField(max_length=50, blank=True)
+    profile_url = models.CharField(max_length=200)
     signature = models.ForeignKey(Signature, null=True, blank=True, related_name='users')
-    signature_code = models.CharField(max_length=40)
     active = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
     date_verified = models.DateTimeField(null=True, blank=True)
-    date_joined = models.DateTimeField(default=timezone.now)
+    date_added = models.DateTimeField(default=timezone.now)
     
     def __str__(self):
         return '%s @ %s' % (self.forum_user_id, self.forum.name)
+        
+    def save(self, *args, **kwargs):
+        if self._state.adding == True:
+            # Extract forum user ID
+            if 'bitcointalk.org' in self.profile_url:
+                # https://bitcointalk.org/index.php?action=profile;u=1250294
+                self.forum_user_id = self.profile_url.split('u=')[-1]
+        super(ForumProfile, self).save(*args, **kwargs)
+        
+    class Meta:
+        unique_together = ('user_profile', 'forum_user_id')
 
 class GlobalStats(models.Model):
     """ Records the sitewide or global stats """

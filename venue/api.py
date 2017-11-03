@@ -1,7 +1,10 @@
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.authentication import TokenAuthentication
 from rest_framework import serializers, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 from .models import (ForumSite, ForumProfile, Signature, UserProfile)
+from rest_framework.fields import CurrentUserDefault
+from django.db import IntegrityError
+from .tasks import verify_profile_signature
 from rest_framework import generics
 
 #------------------
@@ -23,7 +26,7 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
             'total_days', 'total_points', 'total_tokens')
             
 class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
@@ -39,7 +42,7 @@ class ForumSiteSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'name', 'address', 'used')
         
 class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     queryset = ForumSite.objects.all()
     serializer_class = ForumSiteSerializer
@@ -61,7 +64,7 @@ class SignatureSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'name', 'forum_site', 'code', 'image', 'active')
         
 class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     queryset = Signature.objects.all()
     serializer_class = SignatureSerializer
@@ -80,10 +83,26 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
 class ForumProfileSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ForumProfile
-        fields = '__all__'
+        fields = ('profile_url', 'signature', 'forum')
         
 class ForumProfileViewSet(viewsets.ModelViewSet):
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     queryset = ForumProfile.objects.all()
     serializer_class = ForumProfileSerializer
+    
+    def perform_create(self, serializer):
+        user_profile = UserProfile.objects.get(user=self.request.user)
+        signature = Signature.objects.get(id=self.request.data['signature_id'])
+        forum_id = self.request.data['forum_id']
+        forum = ForumSite.objects.get(id=forum_id)
+        profile_check = ForumProfile.objects.filter(user_profile=user_profile, forum=forum, active=True)
+        if profile_check.exists():
+            raise serializers.ValidationError("Your profile already contains our signature.")
+        else:
+            verified = verify_profile_signature(forum_id, self.request.data['profile_url'])
+            if verified:
+                serializer.save(user_profile=user_profile, signature=signature, forum=forum, active=True)
+            else:
+                raise serializers.ValidationError("The signature was not found in the profile page.")
+            

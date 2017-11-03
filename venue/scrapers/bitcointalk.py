@@ -38,3 +38,7 @@ def execute(user_id, signature_code, test_mode=False):
     else:
         data = (scraper.get_total_posts(), scraper.check_signature(signature_code))
     return data
+    
+def verify_profile_signature(profile_url):
+    # TODO -- Check for the presence of our signature in the given profile page
+    return True

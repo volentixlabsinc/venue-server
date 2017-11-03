@@ -24,12 +24,20 @@
                 label="Profile URL:" label-for="profile-url-input">
                 <b-form-input 
                   id="profile-url-input" 
-                  type="text" v-model="profileUrl" 
-                  placeholder="Enter forum profile URL"
-                ></b-form-input>
+                  name="profileUrl" 
+                  type="text" v-model.trim="profileUrl" 
+                  placeholder="Enter forum profile URL" 
+                  data-vv-as="profile URL" 
+                  :class="{'input': true, 'is-danger': errors.has('profileUrl') }" 
+                  v-validate="{ required: true, url: true }"
+                  @blur.native="$validator.validateAll()">
+                </b-form-input>
+                <span v-show="errors.has('profileUrl')" class="help is-danger">
+                  {{ errors.first('profileUrl') }}
+                </span>
               </b-form-group>
             </b-col>
-            <b-col v-if="selectedSignature">
+            <b-col v-if="selectedSignature && !errors.has('profileUrl')">
               <b-row>
                 <b-col>
                   <b-form-group 
@@ -46,8 +54,12 @@
               </b-row>
               <b-row>
                 <b-col>
-                  <b-button :disabled="profileUrl.length === 0">Copy</b-button>
-                  <b-button variant="primary" :disabled="profileUrl.length === 0">Verify</b-button>
+                  <b-button 
+                    v-clipboard="signatureCode" 
+                    @success="signatureCopySuccess">
+                    Copy
+                  </b-button>
+                  <b-button variant="primary" @click="verify()">Verify</b-button>
                 </b-col>
               </b-row>
             </b-col>
@@ -96,6 +108,66 @@ export default {
       axios.get('/api/signatures/?forum_site_id=' + forumId).then(response => {
         this.signatures = response.data
       })
+    },
+    signatureCopySuccess () {
+      this.$swal({
+        title: 'Copied to clipboard!',
+        text: 'Paste the copied code to your profile signature.',
+        icon: 'success',
+        button: {
+          text: 'OK',
+          className: 'btn-primary',
+          closeModal: true
+        }
+      })
+    },
+    verify () {
+      var payload = {
+        profile_url: this.profileUrl,
+        signature_id: this.selectedSignature,
+        forum_id: this.forumSite
+      }
+      axios.post('/api/forum-profiles/', payload).then(response => {
+        if (response.status === 201) {
+          this.$swal({
+            title: 'Signature update verified!',
+            text: 'Live stats are displayed on your dashboard.',
+            icon: 'success',
+            button: {
+              text: 'OK',
+              className: 'btn-primary',
+              closeModal: true
+            }
+          })
+        }
+      }).catch(error => {
+        var alreadyExists = error.response.data[0].includes('already contains')
+        if (error.response.status === 400 && alreadyExists) {
+          this.$swal({
+            title: 'Already Onboard!',
+            text: error.response.data[0],
+            icon: 'info',
+            button: {
+              text: 'OK',
+              className: 'btn-primary',
+              closeModal: true
+            }
+          })
+        }
+        var signatureNotFound = error.response.data[0].includes('signature was not found')
+        if (error.response.status === 400 && signatureNotFound) {
+          this.$swal({
+            title: 'Verification Failed!',
+            text: error.response.data[0],
+            icon: 'error',
+            button: {
+              text: 'OK',
+              className: 'btn-primary',
+              closeModal: true
+            }
+          })
+        }
+      })
     }
   },
   computed: {
@@ -110,6 +182,11 @@ export default {
     forumSite: function (newForumSite) {
       this.getSignatures(newForumSite)
       this.selectedSignature = null
+    },
+    selectedSignature: function (newSig) {
+      if (newSig !== null) {
+        this.$validator.validateAll()
+      }
     }
   },
   created () {
@@ -136,5 +213,8 @@ export default {
   }
   #signatures-list {
     padding-top: 10px;
+  }
+  input.is-danger {
+    border:1px solid red;
   }
 </style>
