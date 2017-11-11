@@ -1,5 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
+from django.conf import settings
+from hashids import Hashids
 
 class ScraperError(Exception): pass
 
@@ -18,7 +20,22 @@ class BitcoinTalk(object):
         if 'Posts' in row.text:
             return int(row.text.split()[-1])
         else:
-            raise ScraperError('Page has changed')
+            raise ScraperError('Cannot get total posts')
+            
+    def get_user_position(self):
+        row = soup.select('div#bodyarea tr')[5]
+        if 'Position' in row.text:
+            return row.text.strip().split()[-1]
+        else:
+            return ScrapingError('Cannot get user position')
+            
+    def verify_code(self, code, forum_profile_id, forum_user_id):
+        hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
+        numbers = hashids.decode(code)
+        verified = False
+        if numbers == (forum_profile_id, forum_user_id):
+            verified = True
+        return verified
         
     def check_signature(self, signature_code):
         sig = self.soup.select('div#bodyarea tr')[25]

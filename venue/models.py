@@ -1,7 +1,9 @@
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.conf import settings
 from django.db import models
 from constance import config
+from hashids import Hashids
 import decimal
 import os
 
@@ -10,6 +12,13 @@ class ForumSite(models.Model):
     name = models.CharField(max_length=30)
     address = models.CharField(max_length=50)
     scraper_name = models.CharField(max_length=30)
+    
+    def __str__(self):
+        return self.name
+        
+class ForumUserRank(models.Model):
+    """ Names of forum user ranks/positions """
+    name = models.CharField(max_length=30)
     
     def __str__(self):
         return self.name
@@ -79,9 +88,11 @@ class ForumProfile(models.Model):
     """ Record of forum profile details per user """
     user_profile = models.ForeignKey(UserProfile, related_name='forum_profiles')
     forum = models.ForeignKey(ForumSite, null=True, blank=True, related_name='users')
+    forum_rank = models.ForeignKey(ForumUserRank, null=True, blank=True, related_name='users')
     forum_user_id = models.CharField(max_length=50, blank=True)
     profile_url = models.CharField(max_length=200)
     signature = models.ForeignKey(Signature, null=True, blank=True, related_name='users')
+    verification_code = models.CharField(max_length=10, blank=True)
     active = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
     date_verified = models.DateTimeField(null=True, blank=True)
@@ -97,6 +108,12 @@ class ForumProfile(models.Model):
                 # https://bitcointalk.org/index.php?action=profile;u=1250294
                 self.forum_user_id = self.profile_url.split('u=')[-1]
         super(ForumProfile, self).save(*args, **kwargs)
+        if not self.verification_code:
+            if self.id and self.forum_user_id:
+                hashids = Hashids(min_length=6, salt=settings.SECRET_KEY)
+                forum_profile_id, forum_user_id = self.id, self.forum_user_id
+                self.verification_code = hashids.encode(forum_profile_id, forum_user_id)
+                self.save()
         
     class Meta:
         unique_together = ('user_profile', 'forum_user_id')

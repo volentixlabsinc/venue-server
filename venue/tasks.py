@@ -18,7 +18,7 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
         scraper = load_scraper(forum_profile.forum.scraper_name)
         total_posts, signature_found = scraper.execute(
             forum_profile.forum_user_id, 
-            forum_profile.signature_code,
+            forum_profile.signature.code,
             test_mode=config.TEST_MODE)
         sigcheck = SignatureCheck(
             forum_profile=forum_profile,

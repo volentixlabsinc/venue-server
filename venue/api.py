@@ -1,4 +1,4 @@
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework import serializers, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 from .models import (ForumSite, ForumProfile, Signature, UserProfile)
@@ -26,7 +26,7 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
             'total_days', 'total_points', 'total_tokens')
             
 class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
@@ -42,7 +42,7 @@ class ForumSiteSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'name', 'address', 'used')
         
 class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
     queryset = ForumSite.objects.all()
     serializer_class = ForumSiteSerializer
@@ -64,7 +64,7 @@ class SignatureSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'name', 'forum_site', 'code', 'image', 'active')
         
 class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
     queryset = Signature.objects.all()
     serializer_class = SignatureSerializer
@@ -86,7 +86,7 @@ class ForumProfileSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('profile_url', 'signature', 'forum')
         
 class ForumProfileViewSet(viewsets.ModelViewSet):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
     queryset = ForumProfile.objects.all()
     serializer_class = ForumProfileSerializer

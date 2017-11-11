@@ -5,10 +5,11 @@ from venue.models import (
 )
 from django.contrib import admin
 
-# Customize the titles in the headers
-admin.site.site_title = 'Volentix administration'
-admin.site.site_header = 'Volentix administration'
+# Customize the titles in the headers and index template
+admin.site.site_title = 'Volentix Venue Administration'
+admin.site.site_header = 'Volentix Venue Administration'
 admin.site.index_title = 'Apps and Data'
+admin.site.index_template = 'admin/custom_index.html'
 
 admin.site.register(ForumSite)
 admin.site.register(Signature)
@@ -56,8 +57,31 @@ class SignatureCheckAdmin(admin.ModelAdmin):
 admin.site.register(SignatureCheck, SignatureCheckAdmin)
 
 class UserProfileAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/userprofile_change_list.html'
     list_display = ['user', 'total_posts', 'total_posts_with_sig', 
         'total_post_days', 'total_points', 'total_tokens']
+    search_fields = ['user__username']
+    
+    def changelist_view(self, request, extra_context=None):
+        user_profiles = UserProfile.objects.all()
+        sum_posts = sum([float(x.get_total_posts()) for x in user_profiles])
+        sum_posts_with_sig = sum([float(x.get_total_posts_with_sig()) for x in user_profiles])
+        sum_post_days = sum([float(x.get_total_days()) for x in user_profiles])
+        sum_points = sum([float(x.get_total_points()) for x in user_profiles])
+        sum_vtx = sum([float(x.get_total_tokens()) for x in user_profiles])
+        dashboard_cards = [
+            {'name': 'Total Users', 'value': user_profiles.count()},
+            {'name': 'Total Posts', 'value': int(sum_posts)},
+            {'name': 'Total Posts With Sig', 'value': int(sum_posts_with_sig)},
+            {'name': 'Total Post Days', 'value': int(sum_post_days)},
+            {'name': 'Total Points', 'value': int(sum_points)},
+            {'name': 'Total VTX', 'value': int(round(sum_vtx, 0))}
+        ]
+        response = super().changelist_view(
+            request,
+            extra_context={'dashboard_cards': dashboard_cards},
+        )
+        return response
         
     def total_posts(self, obj):
         return obj.get_total_posts()
