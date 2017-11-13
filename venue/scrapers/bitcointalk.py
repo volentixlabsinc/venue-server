@@ -9,9 +9,14 @@ class BitcoinTalk(object):
     
     def __init__(self):
         self.base_url = 'https://bitcointalk.org'
-    
+        
+    def set_params(self, forum_profile_id, forum_user_id, expected_links):
+        self.forum_profile_id = forum_profile_id
+        self.forum_user_id = forum_user_id
+        self.expected_links = expected_links
+        
     def get_profile(self, user_id):
-        profile_url = self.base_url + '/index.php?action=profile;u=' + user_id
+        profile_url = self.base_url + '/index.php?action=profile;u=' + str(user_id)
         resp = requests.get(profile_url)
         self.soup = BeautifulSoup(resp.content, 'html.parser')
         
@@ -23,11 +28,12 @@ class BitcoinTalk(object):
             raise ScraperError('Cannot get total posts')
             
     def get_user_position(self):
-        row = soup.select('div#bodyarea tr')[5]
+        row = self.soup.select('div#bodyarea tr')[6]
         if 'Position' in row.text:
-            return row.text.strip().split()[-1]
+            pos_td = row.find_all('td')[1]
+            return pos_td.text.strip()
         else:
-            return ScrapingError('Cannot get user position')
+            return ScraperError('Cannot get user position')
             
     def verify_code(self, code, forum_profile_id, forum_user_id):
         hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -37,25 +43,49 @@ class BitcoinTalk(object):
             verified = True
         return verified
         
-    def check_signature(self, signature_code):
+    def verify_links(self, scraped_links, expected_links):
+        verified = False
+        vcode = None
+        if scraped_links:
+            links = []
+            for link in links:
+                code_check = x.split('vcode=')
+                if len(code_check) == 2:
+                    vcode = code_check[1].split('&')[0]
+            if set(links) == set(expected_links):
+                verified = True
+        return (verified, vcode)
+        
+    def check_signature(self):
         sig = self.soup.select('div#bodyarea tr')[25]
+        # Find links and check their integrity
+        links = sig.find_all('a')
+        if links:
+            links = [x.attrs['href'] for x in links]
+        links_verified, vcode = self.verify_links(links, self.expected_links)
+        # Read the vcodes and verify
+        code_verified = self.verify_code(vcode, self.forum_profile_id, self.forum_user_id)
         sig_found = False
-        if 'Signature' in sig.text:
-            if signature_code in sig.parent.text:
-                sig_found = True
-        else:
-            raise ScraperError('Page has changed')
+        if links_verified and code_verified:
+            sig_found = True
         return sig_found
         
-def execute(user_id, signature_code, test_mode=False):
+def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode=False):
     scraper = BitcoinTalk()
-    scraper.get_profile(user_id)
+    scraper.set_params(forum_profile_id, forum_user_id, expected_links)
+    scraper.get_profile(forum_user_id)
     if test_mode:
-        data = (scraper.get_total_posts(), True)
+        data = (True, scraper.get_total_posts())
     else:
-        data = (scraper.get_total_posts(), scraper.check_signature(signature_code))
+        verified = scraper.check_signature()
+        posts = None
+        if verified:
+            posts = scraper.get_total_posts()
+        data = (verified, posts)
     return data
     
-def verify_profile_signature(profile_url):
-    # TODO -- Check for the presence of our signature in the given profile page
-    return True
+def get_user_position(forum_user_id):
+    scraper = BitcoinTalk()
+    scraper.get_profile(forum_user_id)
+    position = scraper.get_user_position()
+    return position.strip()

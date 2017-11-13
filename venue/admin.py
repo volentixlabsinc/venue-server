@@ -1,7 +1,7 @@
 from venue.models import (
     ForumSite, Signature, UserProfile, ForumProfile, 
     UptimeBatch, SignatureCheck, PointsCalculation, 
-    GlobalStats, DataUpdateTask, ScrapingError
+    GlobalStats, ForumUserRank, DataUpdateTask, ScrapingError
 )
 from django.contrib import admin
 
@@ -100,8 +100,13 @@ class UserProfileAdmin(admin.ModelAdmin):
         
 admin.site.register(UserProfile, UserProfileAdmin)
 
+class ForumUserRankAdmin(admin.ModelAdmin):
+    list_display = ['name', 'forum_site']
+
+admin.site.register(ForumUserRank, ForumUserRankAdmin)
+
 class ForumProfileAdmin(admin.ModelAdmin):
-    list_display = ['user_profile', 'forum', 'forum_user_id']
+    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_rank']
     
 admin.site.register(ForumProfile, ForumProfileAdmin)
 

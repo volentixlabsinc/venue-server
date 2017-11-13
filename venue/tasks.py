@@ -16,9 +16,10 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     try:
         scraper = load_scraper(forum_profile.forum.scraper_name)
-        total_posts, signature_found = scraper.execute(
-            forum_profile.forum_user_id, 
-            forum_profile.signature.code,
+        signature_found, total_posts = scraper.verify_and_scrape(
+            forum_profile.id,
+            forum_profile.forum_user_id,
+            forum_profile.signature.expected_links.splitlines(),
             test_mode=config.TEST_MODE)
         sigcheck = SignatureCheck(
             forum_profile=forum_profile,
@@ -39,11 +40,22 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
             data_update.scraping_errors.add(scrape_error)
             
 @shared_task
-def verify_profile_signature(forum_site_id, profile_url):
+def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
+    forum = ForumSite.objects.get(id=forum_site_id)
+    signature = Signature.objects.get(id=signature_id)
+    expected_links = signature.expected.links.splitlines()
+    scraper = load_scraper(forum.scraper_name)
+    verified, posts = scraper.verify_and_scrape(
+        forum_profile_id, 
+        forum.forum_user_id, 
+        expected_links)
+    return verified
+    
+@shared_task
+def get_user_position(forum_site_id, forum_user_id):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
-    verified = scraper.verify_profile_signature(profile_url)
-    return verified
+    return scraper.get_user_position(forum_user_id)
     
 @shared_task
 def update_global_stats(master_task_id):

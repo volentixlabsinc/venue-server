@@ -1,10 +1,10 @@
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework import serializers, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
-from .models import (ForumSite, ForumProfile, Signature, UserProfile)
+from .models import (ForumSite, ForumProfile, Signature, UserProfile, ForumUserRank)
+from .tasks import verify_profile_signature, get_user_position
 from rest_framework.fields import CurrentUserDefault
 from django.db import IntegrityError
-from .tasks import verify_profile_signature
 from rest_framework import generics
 
 #------------------
@@ -54,14 +54,16 @@ class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
         for obj in queryset:
             obj.used = user_forum_profiles.filter(forum_id=obj.id).exists()
         return queryset
-    
+        
 #---------------
 # Signatures API
 
 class SignatureSerializer(serializers.HyperlinkedModelSerializer):
+    user_ranks = serializers.StringRelatedField(many=True)
+    
     class Meta:
         model = Signature
-        fields = ('id', 'name', 'forum_site', 'code', 'image', 'active')
+        fields = ('id', 'name', 'forum_site', 'user_ranks', 'code', 'image', 'active')
         
 class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
@@ -102,7 +104,14 @@ class ForumProfileViewSet(viewsets.ModelViewSet):
         else:
             verified = verify_profile_signature(forum_id, self.request.data['profile_url'])
             if verified:
-                serializer.save(user_profile=user_profile, signature=signature, forum=forum, active=True)
+                position = get_user_position(forum_id)
+                rank, created = ForumUserRank.objects.get_or_create(name=position, forum_site=forum)
+                serializer.save(
+                    user_profile=user_profile, 
+                    signature=signature, 
+                    forum=forum, 
+                    forum_rank=rank,
+                    active=True)
             else:
                 raise serializers.ValidationError("The signature was not found in the profile page.")
             

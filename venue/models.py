@@ -18,7 +18,9 @@ class ForumSite(models.Model):
         
 class ForumUserRank(models.Model):
     """ Names of forum user ranks/positions """
+    forum_site = models.ForeignKey(ForumSite, related_name='ranks')
     name = models.CharField(max_length=30)
+    allowed = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
@@ -32,7 +34,9 @@ class Signature(models.Model):
     """ Signature types per forum site """
     name = models.CharField(max_length=30)
     forum_site = models.ForeignKey(ForumSite, related_name='signature_types')
+    user_ranks = models.ManyToManyField(ForumUserRank, related_name='signatures')
     code = models.TextField()
+    expected_links = models.TextField(blank=True)
     image = models.ImageField(upload_to=image_file_name, blank=True)
     active = models.BooleanField(default=True)
     date_added = models.DateTimeField(default=timezone.now)
