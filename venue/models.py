@@ -106,18 +106,12 @@ class ForumProfile(models.Model):
         return '%s @ %s' % (self.forum_user_id, self.forum.name)
         
     def save(self, *args, **kwargs):
-        if self._state.adding == True:
-            # Extract forum user ID
-            if 'bitcointalk.org' in self.profile_url:
-                # https://bitcointalk.org/index.php?action=profile;u=1250294
-                self.forum_user_id = self.profile_url.split('u=')[-1]
         super(ForumProfile, self).save(*args, **kwargs)
         if not self.verification_code:
-            if self.id and self.forum_user_id:
-                hashids = Hashids(min_length=6, salt=settings.SECRET_KEY)
-                forum_profile_id, forum_user_id = self.id, self.forum_user_id
-                self.verification_code = hashids.encode(forum_profile_id, forum_user_id)
-                self.save()
+            hashids = Hashids(min_length=6, salt=settings.SECRET_KEY)
+            forum_profile_id, forum_user_id = self.id, self.forum_user_id
+            verification_code = hashids.encode(forum_profile_id, forum_user_id)
+            ForumProfile.objects.filter(id=self.id).update(verification_code=verification_code)
         
     class Meta:
         unique_together = ('user_profile', 'forum_user_id')

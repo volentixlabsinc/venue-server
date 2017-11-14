@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumSite, ForumProfile, GlobalStats
+from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumSite, ForumProfile, GlobalStats, Signature
 from django.utils import timezone
 from celery import shared_task
 from constance import config
@@ -42,21 +42,30 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
             
 @shared_task
 def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
-    forum = ForumSite.objects.get(id=forum_site_id)
+    forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     signature = Signature.objects.get(id=signature_id)
-    expected_links = signature.expected.links.splitlines()
+    expected_links = signature.expected_links.splitlines()
+    forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
     verified, posts = scraper.verify_and_scrape(
         forum_profile_id, 
-        forum.forum_user_id, 
-        expected_links)
+        forum_profile.forum_user_id, 
+        expected_links,
+        test_mode=config.TEST_MODE)
     return verified
     
 @shared_task
-def get_user_position(forum_site_id, forum_user_id):
+def get_user_position(forum_site_id, profile_url):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
-    return scraper.get_user_position(forum_user_id)
+    forum_user_id = scraper.extract_user_id(profile_url)
+    status_code, position = scraper.get_user_position(forum_user_id)
+    result = {
+        'status_code': status_code,
+        'position': position,
+        'forum_user_id': forum_user_id
+    }
+    return result
     
 @shared_task
 def update_global_stats(master_task_id):

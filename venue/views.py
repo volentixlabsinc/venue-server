@@ -6,7 +6,8 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from venue.models import UserProfile
+from venue.models import UserProfile, ForumSite
+from venue.tasks import get_user_position
 import json
 
 def frontend_app(request):
@@ -66,4 +67,16 @@ def create_user(request):
     except Exception as exc:
         response['status'] = 'error'
         response['message'] = exc.msg
+    return JsonResponse(response)
+    
+@csrf_exempt
+def check_profile(request):
+    data = json.loads(request.body)
+    forum = ForumSite.objects.get(id=data['forum'])
+    response = {'found': False}
+    info = get_user_position(forum.id, data['forum_profile'])
+    if info['status_code'] == 200 and info['position']:
+        response['position'] = info['position']
+        response['found'] = True
+    response['status_code'] = info['status_code']
     return JsonResponse(response)

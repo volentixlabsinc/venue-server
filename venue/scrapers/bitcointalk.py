@@ -16,9 +16,12 @@ class BitcoinTalk(object):
         self.expected_links = expected_links
         
     def get_profile(self, user_id):
-        profile_url = self.base_url + '/index.php?action=profile;u=' + str(user_id)
-        resp = requests.get(profile_url)
-        self.soup = BeautifulSoup(resp.content, 'html.parser')
+        if user_id.startswith('http'):
+            profile_url = user_id
+        else:
+            profile_url = self.base_url + '/index.php?action=profile;u=' + str(user_id)
+        self.response = requests.get(profile_url)
+        self.soup = BeautifulSoup(self.response.content, 'html.parser')
         
     def get_total_posts(self):
         row = self.soup.select('div#bodyarea tr')[4]
@@ -28,12 +31,15 @@ class BitcoinTalk(object):
             raise ScraperError('Cannot get total posts')
             
     def get_user_position(self):
-        row = self.soup.select('div#bodyarea tr')[6]
-        if 'Position' in row.text:
-            pos_td = row.find_all('td')[1]
-            return pos_td.text.strip()
-        else:
-            return ScraperError('Cannot get user position')
+        try:
+            row = self.soup.select('div#bodyarea tr')[6]
+            if 'Position' in row.text:
+                pos_td = row.find_all('td')[1]
+                return pos_td.text.strip()
+            else:
+                raise ScraperError('Cannot get user position')
+        except IndexError:
+            return ''
             
     def verify_code(self, code, forum_profile_id, forum_user_id):
         hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -88,4 +94,7 @@ def get_user_position(forum_user_id):
     scraper = BitcoinTalk()
     scraper.get_profile(forum_user_id)
     position = scraper.get_user_position()
-    return position.strip()
+    return (scraper.response.status_code, position)
+    
+def extract_user_id(profile_url):
+    return profile_url.split('profile;u=')[-1].strip()

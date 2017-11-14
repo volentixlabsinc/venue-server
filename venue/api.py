@@ -97,21 +97,22 @@ class ForumProfileViewSet(viewsets.ModelViewSet):
         user_profile = UserProfile.objects.get(user=self.request.user)
         signature = Signature.objects.get(id=self.request.data['signature_id'])
         forum_id = self.request.data['forum_id']
+        profile_url = self.request.data['profile_url']
         forum = ForumSite.objects.get(id=forum_id)
         profile_check = ForumProfile.objects.filter(user_profile=user_profile, forum=forum, active=True)
         if profile_check.exists():
             raise serializers.ValidationError("Your profile already contains our signature.")
         else:
-            verified = verify_profile_signature(forum_id, self.request.data['profile_url'])
-            if verified:
-                position = get_user_position(forum_id)
-                rank, created = ForumUserRank.objects.get_or_create(name=position, forum_site=forum)
-                serializer.save(
-                    user_profile=user_profile, 
-                    signature=signature, 
-                    forum=forum, 
-                    forum_rank=rank,
-                    active=True)
-            else:
+            info = get_user_position(forum_id, profile_url)
+            rank, created = ForumUserRank.objects.get_or_create(name=info['position'], forum_site=forum)
+            forum_profile = serializer.save(
+                user_profile=user_profile, 
+                forum_user_id=info['forum_user_id'],
+                signature=signature, 
+                forum=forum, 
+                forum_rank=rank,
+                active=True)
+            verified = verify_profile_signature(forum_id, forum_profile.id, signature.id)
+            if not verified:
                 raise serializers.ValidationError("The signature was not found in the profile page.")
             

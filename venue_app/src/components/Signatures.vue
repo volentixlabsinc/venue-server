@@ -21,20 +21,32 @@
               </b-form-group>
               <b-form-group 
                 id="profile-url" 
-                label="Profile URL:" label-for="profile-url-input">
+                label="Profile URL or Forum User ID:" label-for="profile-url-input">
                 <b-form-input 
                   id="profile-url-input" 
                   name="profileUrl" 
                   type="text" v-model.trim="profileUrl" 
-                  placeholder="Enter forum profile URL" 
+                  placeholder="Enter forum profile URL or forum user ID" 
                   data-vv-as="profile URL" 
-                  :class="{'input': true, 'is-danger': errors.has('profileUrl') }" 
-                  v-validate="{ required: true, url: true }"
+                  :disabled="showCheckSpinner || profileChecked" 
+                  :class="{'input': true, 'is-danger': errors.has('profileUrl')}" 
+                  v-validate="{ required: true }"
                   @blur.native="$validator.validateAll()">
                 </b-form-input>
+                <span id="profile-found-notice" v-if="profileChecked">Profile found!</span>
                 <span v-show="errors.has('profileUrl')" class="help is-danger">
                   {{ errors.first('profileUrl') }}
                 </span>
+              </b-form-group>
+              <b-form-group>
+                <b-button 
+                  variant="primary" 
+                  @click="checkProfile()" 
+                  v-if="!profileChecked" 
+                  :disabled="profileUrl.length == 0 || errors.has('profileUrl') || showCheckSpinner">
+                  Check Profile
+                </b-button>
+                <img v-if="showCheckSpinner" src="../assets/animated_spinner.gif" height="50">
               </b-form-group>
             </b-col>
             <b-col v-if="selectedSignature && !errors.has('profileUrl')">
@@ -59,7 +71,13 @@
                     @success="signatureCopySuccess">
                     Copy
                   </b-button>
-                  <b-button variant="primary" @click="verify()">Verify</b-button>
+                  <b-button 
+                    :disabled="showVerifySpinner || signitureVerified" 
+                    variant="primary" 
+                    @click="verify()">
+                    Verify
+                  </b-button>
+                  <img v-if="showVerifySpinner" src="../assets/animated_spinner.gif" height="50">
                 </b-col>
               </b-row>
             </b-col>
@@ -67,8 +85,9 @@
         </b-form>
       </b-col>
     </b-row>
-    <b-row>
+    <b-row v-if="profileChecked">
       <b-col id="signatures-list">
+        <p>Select signature:</p>
         <b-row v-for="signature in signatures">
           <b-col>
             <h5>{{ signature.name }}</h5>
@@ -99,7 +118,12 @@ export default {
       forumSites: [],
       signatures: [],
       selectedSignature: null,
-      profileUrl: ''
+      profileUrl: '',
+      profileChecked: false,
+      signitureVerified: false,
+      forumUserPosition: '',
+      showCheckSpinner: false,
+      showVerifySpinner: false
     }
   },
   methods: {
@@ -121,13 +145,62 @@ export default {
         }
       })
     },
+    flashCheckProfileError () {
+      this.$swal({
+        title: 'Checking error!',
+        text: 'The forum site is inaccessible or profile URL is wrong.',
+        icon: 'error',
+        button: {
+          text: 'OK',
+          className: 'btn-primary',
+          closeModal: true
+        }
+      })
+    },
+    checkProfile () {
+      this.showCheckSpinner = true
+      var payload = {
+        forum: this.forumSite,
+        forum_profile: this.profileUrl
+      }
+      axios.post('/check-profile/', payload).then(response => {
+        if (response.data.status_code === 200) {
+          if (response.data.found === true) {
+            this.forumUserPosition = response.data.position
+            this.showCheckSpinner = false
+            this.profileChecked = true
+          } else {
+            this.$swal({
+              title: 'Does not exist!',
+              text: 'The profile does not exist in the forum',
+              icon: 'error',
+              button: {
+                text: 'OK',
+                className: 'btn-primary',
+                closeModal: true
+              }
+            })
+          }
+        } else {
+          this.flashCheckProfileError()
+        }
+      }).catch(error => {
+        console.log(error.response.data)
+        this.flashCheckProfileError()
+      })
+    },
     verify () {
+      this.showVerifySpinner = true
       var payload = {
         profile_url: this.profileUrl,
         signature_id: this.selectedSignature,
         forum_id: this.forumSite
       }
+      // TODO -- Forum profile should already be created when profile is checked
+      // so that the verification code is already generated prior to the selection
+      // of signature
       axios.post('/api/forum-profiles/', payload).then(response => {
+        this.showVerifySpinner = false
         if (response.status === 201) {
           this.$swal({
             title: 'Signature update verified!',
@@ -139,8 +212,10 @@ export default {
               closeModal: true
             }
           })
+          this.signitureVerified = true
         }
       }).catch(error => {
+        this.showVerifySpinner = false
         var alreadyExists = error.response.data[0].includes('already contains')
         if (error.response.status === 400 && alreadyExists) {
           this.$swal({
@@ -211,8 +286,11 @@ export default {
     position: relative;
     top: 18px;
   }
-  #signatures-list {
-    padding-top: 10px;
+  #signatures-list p {
+    font-size: 1rem;
+  }
+  #profile-found-notice {
+    color: green;
   }
   input.is-danger {
     border:1px solid red;
