@@ -1,9 +1,10 @@
 from __future__ import absolute_import, unicode_literals
-from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumSite, ForumProfile
+from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumSite, ForumProfile, GlobalStats
 from django.utils import timezone
 from celery import shared_task
 from constance import config
 from celery import chain
+import pandas as pd
 import traceback
 
 def load_scraper(name):
@@ -79,19 +80,37 @@ def calculate_points(master_task_id):
     batches = UptimeBatch.objects.filter(active=True)
     for batch in batches:
         for check in batch.regular_checks.all():
-            calc = PointsCalculation(
-                uptime_batch=batch,
-                signature_check=check
-            )
-            calc.save()
-            
+            if not check.points_calculations.count():
+                calc = PointsCalculation(
+                    uptime_batch=batch,
+                    signature_check=check
+                )
+                calc.save()
+                
+@shared_task
+def database_cleanup():
+    uptime_batches = UptimeBatch.objects.all()
+    dt = timezone.now().date()
+    # Delete the regular signature checks, retain only the last one per day
+    # This also deletes the point calculations for each deleted signature check
+    for batch in uptime_batches:
+        checks = batch.regular_checks.all()
+        df = pd.DataFrame(list(checks.values('id', 'date_checked')))
+        dfs = df.groupby([df['date_checked'].dt.date]).agg('max')
+        checks.exclude(id__in=list(dfs['id'])).delete()
+    # Retain only the latest row in global stats
+    stats = GlobalStats.objects.all()
+    df = pd.DataFrame(list(stats.values('id', 'date_updated')))
+    dfs = df.groupby([df['date_updated'].dt.date]).agg('max')
+    stats.exclude(id__in=list(dfs['id'])).delete()
+        
 @shared_task
 def mark_master_task_complete(master_task_id):
     master_task = DataUpdateTask.objects.get(task_id=master_task_id)
     master_task.date_completed = timezone.now()
     master_task.success = True
     master_task.save()
-            
+    
 @shared_task
 def update_data():
     # Save this data update task
@@ -105,7 +124,8 @@ def update_data():
         scraping_tasks, # Execute scraping tasks
         update_global_stats.si(task_id), # Execute task to update global stats
         calculate_points.si(task_id), # Execute task to calculate points
-        mark_master_task_complete.si(task_id) # Mark the data update run as complete
+        mark_master_task_complete.si(task_id), # Mark the data update run as complete
+        database_cleanup.si() # Trigger the database cleanup task
     )
     # Send to the workflow to the queue
     workflow.apply_async()
