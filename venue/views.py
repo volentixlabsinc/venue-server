@@ -1,13 +1,15 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.contrib.auth.models import User
+from venue.models import UserProfile, ForumSite, ForumProfile, Signature
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
+from .tasks import verify_profile_signature
 from rest_framework.response import Response
-from venue.models import UserProfile, ForumSite
+from django.contrib.auth.models import User
 from venue.tasks import get_user_position
+from django.utils import timezone
+from django.shortcuts import render
+from django.http import JsonResponse
 import json
 
 def frontend_app(request):
@@ -74,9 +76,31 @@ def check_profile(request):
     data = json.loads(request.body)
     forum = ForumSite.objects.get(id=data['forum'])
     response = {'found': False}
-    info = get_user_position(forum.id, data['forum_profile'])
+    info = get_user_position(forum.id, data['profile_url'], request.user.id)
     if info['status_code'] == 200 and info['position']:
         response['position'] = info['position']
         response['found'] = True
+        response['exists'] = info['exists']
+        if info['exists']:
+            response['own'] = info['own']
+            response['with_signature'] = info['with_signature']
+            response['forum_profile_id'] = info['forum_profile_id']
     response['status_code'] = info['status_code']
+    return JsonResponse(response)
+    
+@csrf_exempt
+def save_signature(request):
+    data = json.loads(request.body)
+    forum_profile = ForumProfile.objects.get(id=data['forum_profile_id'])
+    signature = Signature.objects.get(id=data['signature_id'])
+    forum_profile.signature = signature
+    forum_profile.save()
+    response = {'success': True}
+    verified = verify_profile_signature(forum_profile.forum.id, forum_profile.id, signature.id)
+    if verified:
+        forum_profile.verified = True
+        forum_profile.date_verified = timezone.now()
+        forum_profile.save()
+    else:
+        raise Exception("The signature was not found in the profile page.")
     return JsonResponse(response)

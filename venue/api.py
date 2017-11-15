@@ -2,7 +2,7 @@ from rest_framework.authentication import TokenAuthentication, SessionAuthentica
 from rest_framework import serializers, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 from .models import (ForumSite, ForumProfile, Signature, UserProfile, ForumUserRank)
-from .tasks import verify_profile_signature, get_user_position
+from .tasks import get_user_position
 from rest_framework.fields import CurrentUserDefault
 from django.db import IntegrityError
 from rest_framework import generics
@@ -76,7 +76,7 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
         # Annotate the queryset
         forum_site_id = self.request.query_params.get('forum_site_id', None)
         if forum_site_id:
-            queryset = queryset.filter(forum_site_id=forum_site_id) 
+            queryset = queryset.filter(forum_site_id=forum_site_id)
         return queryset
     
 #-------------------
@@ -85,7 +85,7 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
 class ForumProfileSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ForumProfile
-        fields = ('profile_url', 'signature', 'forum')
+        fields = ('id', 'profile_url', 'signature', 'forum')
         
 class ForumProfileViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
@@ -95,24 +95,23 @@ class ForumProfileViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         user_profile = UserProfile.objects.get(user=self.request.user)
-        signature = Signature.objects.get(id=self.request.data['signature_id'])
         forum_id = self.request.data['forum_id']
         profile_url = self.request.data['profile_url']
         forum = ForumSite.objects.get(id=forum_id)
-        profile_check = ForumProfile.objects.filter(user_profile=user_profile, forum=forum, active=True)
+        profile_check = ForumProfile.objects.filter(forum_user_id=forum_id, forum=forum, 
+            active=True, verified=True)
         if profile_check.exists():
-            raise serializers.ValidationError("Your profile already contains our signature.")
+            fp = profile_check.last()
+            print('Here: %s' % fp.id)
+            if fp.signature:
+                raise serializers.ValidationError("Your profile already contains our signature.")
         else:
-            info = get_user_position(forum_id, profile_url)
+            info = get_user_position(forum_id, profile_url, self.request.user.id)
             rank, created = ForumUserRank.objects.get_or_create(name=info['position'], forum_site=forum)
             forum_profile = serializer.save(
                 user_profile=user_profile, 
                 forum_user_id=info['forum_user_id'],
-                signature=signature, 
                 forum=forum, 
                 forum_rank=rank,
                 active=True)
-            verified = verify_profile_signature(forum_id, forum_profile.id, signature.id)
-            if not verified:
-                raise serializers.ValidationError("The signature was not found in the profile page.")
             

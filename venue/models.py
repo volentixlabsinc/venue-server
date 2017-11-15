@@ -110,7 +110,7 @@ class ForumProfile(models.Model):
         if not self.verification_code:
             hashids = Hashids(min_length=6, salt=settings.SECRET_KEY)
             forum_profile_id, forum_user_id = self.id, self.forum_user_id
-            verification_code = hashids.encode(forum_profile_id, forum_user_id)
+            verification_code = hashids.encode(forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(verification_code=verification_code)
         
     class Meta:

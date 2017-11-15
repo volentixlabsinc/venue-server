@@ -106,7 +106,7 @@ class ForumUserRankAdmin(admin.ModelAdmin):
 admin.site.register(ForumUserRank, ForumUserRankAdmin)
 
 class ForumProfileAdmin(admin.ModelAdmin):
-    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_rank']
+    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_rank', 'verified', 'active']
     
 admin.site.register(ForumProfile, ForumProfileAdmin)
 

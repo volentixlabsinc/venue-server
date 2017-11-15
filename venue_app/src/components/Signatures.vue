@@ -40,6 +40,7 @@
               </b-form-group>
               <b-form-group>
                 <b-button 
+                  ref="check-button" 
                   variant="primary" 
                   @click="checkProfile()" 
                   v-if="!profileChecked" 
@@ -123,12 +124,13 @@ export default {
       signitureVerified: false,
       forumUserPosition: '',
       showCheckSpinner: false,
-      showVerifySpinner: false
+      showVerifySpinner: false,
+      forumProfileId: null
     }
   },
   methods: {
+    // Gets signatures for the given forum site
     getSignatures (forumId) {
-      // Get signatures for the default forum site
       axios.get('/api/signatures/?forum_site_id=' + forumId).then(response => {
         this.signatures = response.data
       })
@@ -145,7 +147,7 @@ export default {
         }
       })
     },
-    flashCheckProfileError () {
+    flashCheckProfileError (vueThis) {
       this.$swal({
         title: 'Checking error!',
         text: 'The forum site is inaccessible or profile URL is wrong.',
@@ -155,30 +157,72 @@ export default {
           className: 'btn-primary',
           closeModal: true
         }
+      }).then(() => {
+        vueThis.showCheckSpinner = false
+        vueThis.$refs['check-button'].attr('disabled', false)
+      })
+    },
+    flashAlreadyExistsNotice (vueThis, message) {
+      this.$swal({
+        title: 'Profile Already Exists!',
+        text: message,
+        icon: 'warning',
+        button: {
+          text: 'OK',
+          className: 'btn-primary',
+          closeModal: true
+        }
+      }).then(() => {
+        vueThis.showCheckSpinner = false
+        vueThis.$refs['check-button'].attr('disabled', false)
       })
     },
     checkProfile () {
       this.showCheckSpinner = true
       var payload = {
         forum: this.forumSite,
-        forum_profile: this.profileUrl
+        profile_url: this.profileUrl
       }
       axios.post('/check-profile/', payload).then(response => {
+        var self = this // To refer to `this` that's bound to vue instance
+        console.log(response.data)
         if (response.data.status_code === 200) {
           if (response.data.found === true) {
             this.forumUserPosition = response.data.position
+            this.forumProfileId = response.data.forum_profile_id
             this.showCheckSpinner = false
-            this.profileChecked = true
+            if (response.data.exists === true) {
+              if (response.data.own === true) {
+                if (response.data.with_signature === true) {
+                  this.flashAlreadyExistsNotice(self, 'You already placed a signature on that profile.')
+                }
+              } else {
+                this.flashAlreadyExistsNotice(self, 'Somebody else already claimed that profile.')
+              }
+            } else {
+              this.profileChecked = true
+              // Create the forum profile
+              var payload = {
+                profile_url: this.profileUrl,
+                forum_id: this.forumSite
+              }
+              axios.post('/api/forum-profiles/', payload).then(response => {
+                this.forumProfileId = response.data.id
+              })
+            }
           } else {
             this.$swal({
               title: 'Does not exist!',
-              text: 'The profile does not exist in the forum',
+              text: 'The profile does not exist in the selected forum site.',
               icon: 'error',
               button: {
                 text: 'OK',
                 className: 'btn-primary',
                 closeModal: true
               }
+            }).then(() => {
+              self.showCheckSpinner = false
+              self.$refs['check-button'].attr('disabled', false)
             })
           }
         } else {
@@ -186,31 +230,29 @@ export default {
         }
       }).catch(error => {
         console.log(error.response.data)
-        this.flashCheckProfileError()
+        this.flashCheckProfileError(this)
       })
     },
     verify () {
       this.showVerifySpinner = true
       var payload = {
-        profile_url: this.profileUrl,
         signature_id: this.selectedSignature,
-        forum_id: this.forumSite
+        forum_profile_id: this.forumProfileId
       }
-      // TODO -- Forum profile should already be created when profile is checked
-      // so that the verification code is already generated prior to the selection
-      // of signature
-      axios.post('/api/forum-profiles/', payload).then(response => {
+      axios.post('/save-signature/', payload).then(response => {
         this.showVerifySpinner = false
-        if (response.status === 201) {
+        if (response.status === 200) {
           this.$swal({
-            title: 'Signature update verified!',
-            text: 'Live stats are displayed on your dashboard.',
+            title: 'Signature placement verified!',
+            text: 'Thank you for participating in our signature campaign.',
             icon: 'success',
             button: {
               text: 'OK',
               className: 'btn-primary',
               closeModal: true
             }
+          }).then(() => {
+            window.location.href = '/#/dashboard'
           })
           this.signitureVerified = true
         }

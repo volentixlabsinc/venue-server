@@ -55,7 +55,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     return verified
     
 @shared_task
-def get_user_position(forum_site_id, profile_url):
+def get_user_position(forum_site_id, profile_url, user_id):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
     forum_user_id = scraper.extract_user_id(profile_url)
@@ -65,6 +65,18 @@ def get_user_position(forum_site_id, profile_url):
         'position': position,
         'forum_user_id': forum_user_id
     }
+    fp_check = ForumProfile.objects.filter(forum=forum, forum_user_id=forum_user_id, 
+        active=True, verified=True)
+    result['exists'] = fp_check.exists()
+    if fp_check.exists():
+        fp = fp_check.last()
+        result['forum_profile_id'] = fp.id
+        result['own'] = False
+        if fp.user_profile.user.id == user_id:
+            result['own'] = True
+        result['with_signature'] = False
+        if fp.signature:
+            result['with_signature'] = True
     return result
     
 @shared_task
@@ -127,7 +139,7 @@ def update_data():
     data_update = DataUpdateTask(task_id=task_id)
     data_update.save()
     # Create a bakcground tasks workflow as a chain
-    forum_profiles = ForumProfile.objects.filter(active=True)
+    forum_profiles = ForumProfile.objects.filter(active=True, verified=True)
     scraping_tasks = scrape_forum_profile.starmap([(fp.id, task_id) for fp in forum_profiles])
     workflow = chain(
         scraping_tasks, # Execute scraping tasks
