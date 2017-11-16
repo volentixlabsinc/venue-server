@@ -192,13 +192,27 @@ export default {
             this.forumProfileId = response.data.forum_profile_id
             this.showCheckSpinner = false
             if (response.data.exists === true) {
-              if (response.data.own === true) {
-                if (response.data.with_signature === true) {
-                  this.flashAlreadyExistsNotice(self, 'You already placed a signature on that profile.')
+              if (response.data.verified === true) {
+                if (response.data.own === true) {
+                  if (response.data.with_signature === true) {
+                    this.flashAlreadyExistsNotice(self, 'You already placed a signature on that profile.')
+                  }
+                } else {
+                  this.flashAlreadyExistsNotice(self, 'Somebody else already claimed that profile.')
                 }
-              } else {
-                this.flashAlreadyExistsNotice(self, 'Somebody else already claimed that profile.')
               }
+              // Get the forum profile
+              var params = {
+                forum_id: response.data.forum_id,
+                forum_user_id: response.data.forum_user_id
+              }
+              axios.get('/api/forum-profiles/', {params: params}).then(response => {
+                console.log(response)
+                if (response.data.length > 0) {
+                  this.profileChecked = true
+                  this.forumProfileId = response.data[0].id
+                }
+              })
             } else {
               this.profileChecked = true
               // Create the forum profile
@@ -226,7 +240,7 @@ export default {
             })
           }
         } else {
-          this.flashCheckProfileError()
+          this.flashCheckProfileError(this)
         }
       }).catch(error => {
         console.log(error.response.data)
@@ -242,19 +256,32 @@ export default {
       axios.post('/save-signature/', payload).then(response => {
         this.showVerifySpinner = false
         if (response.status === 200) {
-          this.$swal({
-            title: 'Signature placement verified!',
-            text: 'Thank you for participating in our signature campaign.',
-            icon: 'success',
-            button: {
-              text: 'OK',
-              className: 'btn-primary',
-              closeModal: true
-            }
-          }).then(() => {
-            window.location.href = '/#/dashboard'
-          })
-          this.signitureVerified = true
+          if (response.data.success === true) {
+            this.$swal({
+              title: 'Signature placement verified!',
+              text: 'Thank you for participating in our signature campaign.',
+              icon: 'success',
+              button: {
+                text: 'OK',
+                className: 'btn-primary',
+                closeModal: true
+              }
+            }).then(() => {
+              window.location.href = '/#/dashboard'
+            })
+            this.signitureVerified = true
+          } else {
+            this.$swal({
+              title: 'Signature not found!',
+              text: response.data.message,
+              icon: 'error',
+              button: {
+                text: 'OK',
+                className: 'btn-primary',
+                closeModal: true
+              }
+            })
+          }
         }
       }).catch(error => {
         this.showVerifySpinner = false

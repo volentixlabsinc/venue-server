@@ -54,25 +54,31 @@ class UserProfile(models.Model):
     def get_total_posts(self):
         total_per_forum = []
         for site in self.forum_profiles.all():
-            latest_batch = site.uptime_batches.last()
-            if latest_batch:
-                total_per_forum.append(latest_batch.get_total_posts())
+            #latest_batch = site.uptime_batches.last()
+            #if latest_batch:
+            #    total_per_forum.append(latest_batch.get_total_posts())
+            for batch in site.uptime_batches.all():
+                total_per_forum.append(batch.get_total_posts())
         return sum(total_per_forum)
         
     def get_total_posts_with_sig(self):
         total_per_forum = []
         for site in self.forum_profiles.all():
-            latest_batch = site.uptime_batches.last()
-            if latest_batch:
-                total_per_forum.append(latest_batch.get_total_posts_with_sig())
+            #latest_batch = site.uptime_batches.last()
+            #if latest_batch:
+            #    total_per_forum.append(latest_batch.get_total_posts_with_sig())
+            for batch in site.uptime_batches.all():
+                total_per_forum.append(batch.get_total_posts_with_sig())
         return sum(total_per_forum)
         
     def get_total_days(self):
         total_per_forum = []
         for site in self.forum_profiles.all():
-            latest_batch = site.uptime_batches.last()
-            if latest_batch:
-                total_per_forum.append(latest_batch.get_total_days())
+            #latest_batch = site.uptime_batches.last()
+            #if latest_batch:
+            #    total_per_forum.append(latest_batch.get_total_days())
+            for batch in site.uptime_batches.all():
+                total_per_forum.append(batch.get_total_days())
         return sum(total_per_forum)
         
     def get_total_points(self):
@@ -101,11 +107,13 @@ class ForumProfile(models.Model):
     verified = models.BooleanField(default=False)
     date_verified = models.DateTimeField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
+    date_updated = models.DateTimeField(default=timezone.now)
     
     def __str__(self):
         return '%s @ %s' % (self.forum_user_id, self.forum.name)
         
     def save(self, *args, **kwargs):
+        self.date_updated = timezone.now()
         super(ForumProfile, self).save(*args, **kwargs)
         if not self.verification_code:
             hashids = Hashids(min_length=6, salt=settings.SECRET_KEY)
@@ -114,7 +122,7 @@ class ForumProfile(models.Model):
             ForumProfile.objects.filter(id=self.id).update(verification_code=verification_code)
         
     class Meta:
-        unique_together = ('user_profile', 'forum_user_id')
+        unique_together = ('forum', 'forum_user_id', 'verified')
 
 class GlobalStats(models.Model):
     """ Records the sitewide or global stats """
@@ -165,7 +173,10 @@ class UptimeBatch(models.Model):
         
     def get_total_points(self):
         latest_calc = self.points_calculations.last()
-        return latest_calc.total_points
+        if latest_calc:
+            return latest_calc.total_points
+        else:
+            return 0
         
     def get_first_check(self):
         return self.regular_checks.first()
@@ -173,7 +184,7 @@ class UptimeBatch(models.Model):
 class SignatureCheck(models.Model):
     """ Results of regular scraping from forum profile pages """
     forum_profile = models.ForeignKey(ForumProfile, related_name='regular_checks')
-    uptime_batch = models.ForeignKey(UptimeBatch, related_name='regular_checks')
+    uptime_batch = models.ForeignKey(UptimeBatch, related_name='regular_checks', null=True, blank=True)
     date_checked = models.DateTimeField(default=timezone.now)
     total_posts = models.IntegerField(default=0)
     signature_found = models.BooleanField(default=True)
@@ -182,6 +193,7 @@ class SignatureCheck(models.Model):
         return str(self.id)
         
     def save(self, *args, **kwargs):
+        proceed_save = False
         if self._state.adding == True:
             # Automatically assign to old or new uptime batch
             batches = self.forum_profile.uptime_batches.filter(active=True)
@@ -193,12 +205,17 @@ class SignatureCheck(models.Model):
                     latest_batch.active = False
                     latest_batch.date_ended = timezone.now()
                     latest_batch.save()
+                proceed_save = True
             else:
                 if self.signature_found:
                     batch = UptimeBatch(forum_profile=self.forum_profile)
                     batch.save()
                     self.uptime_batch = batch
-        super(SignatureCheck, self).save(*args, **kwargs)
+                    proceed_save = True
+        else:
+            proceed_save = True
+        if proceed_save:
+            super(SignatureCheck, self).save(*args, **kwargs)
 
 class PointsCalculation(models.Model):
     """ Results of calculations of points for the given uptime batch.
@@ -217,14 +234,23 @@ class PointsCalculation(models.Model):
             batch = self.uptime_batch
             latest_gs = GlobalStats.objects.last()
             # Calculate points for posts with sig
-            self.post_points = decimal.Decimal(batch.get_total_posts_with_sig() * 6000) 
-            self.post_points /= latest_gs.total_posts_with_sig
+            if batch.get_total_posts_with_sig():
+                self.post_points = decimal.Decimal(batch.get_total_posts_with_sig() * 6000) 
+                self.post_points /= latest_gs.total_posts_with_sig
+            else:
+                self.post_points = 0
             # Calculate post days points
-            self.post_days_points = decimal.Decimal(batch.get_total_days() * 3800)
-            self.post_days_points /= latest_gs.total_days
+            if batch.get_total_days():
+                self.post_days_points = decimal.Decimal(batch.get_total_days() * 3800)
+                self.post_days_points /= latest_gs.total_days
+            else:
+                self.post_days_points = 0
             # Calculate influence points
-            self.influence_points = decimal.Decimal(batch.get_total_posts() * 200) 
-            self.influence_points /= latest_gs.total_posts
+            if batch.get_total_posts():
+                self.influence_points = decimal.Decimal(batch.get_total_posts() * 200) 
+                self.influence_points /= latest_gs.total_posts
+            else:
+                self.influence_points = 0
             # Calculate total points
             self.total_points = decimal.Decimal(self.post_points)
             self.total_points += decimal.Decimal(self.post_days_points)

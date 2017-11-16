@@ -75,13 +75,15 @@ def create_user(request):
 def check_profile(request):
     data = json.loads(request.body)
     forum = ForumSite.objects.get(id=data['forum'])
-    response = {'found': False}
+    response = {'found': False, 'forum_id': data['forum']}
     info = get_user_position(forum.id, data['profile_url'], request.user.id)
     if info['status_code'] == 200 and info['position']:
         response['position'] = info['position']
+        response['forum_user_id'] = info['forum_user_id']
         response['found'] = True
         response['exists'] = info['exists']
         if info['exists']:
+            response['verified'] = info['verified']
             response['own'] = info['own']
             response['with_signature'] = info['with_signature']
             response['forum_profile_id'] = info['forum_profile_id']
@@ -102,5 +104,6 @@ def save_signature(request):
         forum_profile.date_verified = timezone.now()
         forum_profile.save()
     else:
-        raise Exception("The signature was not found in the profile page.")
+        response['success'] = False
+        response['message'] = 'The signature could not be found in the profile page.'
     return JsonResponse(response)

@@ -65,8 +65,7 @@ def get_user_position(forum_site_id, profile_url, user_id):
         'position': position,
         'forum_user_id': forum_user_id
     }
-    fp_check = ForumProfile.objects.filter(forum=forum, forum_user_id=forum_user_id, 
-        active=True, verified=True)
+    fp_check = ForumProfile.objects.filter(forum=forum, forum_user_id=forum_user_id)
     result['exists'] = fp_check.exists()
     if fp_check.exists():
         fp = fp_check.last()
@@ -74,6 +73,7 @@ def get_user_position(forum_site_id, profile_url, user_id):
         result['own'] = False
         if fp.user_profile.user.id == user_id:
             result['own'] = True
+        result['verified'] = fp.verified
         result['with_signature'] = False
         if fp.signature:
             result['with_signature'] = True
@@ -124,7 +124,7 @@ def database_cleanup():
     df = pd.DataFrame(list(stats.values('id', 'date_updated')))
     dfs = df.groupby([df['date_updated'].dt.date]).agg('max')
     stats.exclude(id__in=list(dfs['id'])).delete()
-        
+    
 @shared_task
 def mark_master_task_complete(master_task_id):
     master_task = DataUpdateTask.objects.get(task_id=master_task_id)

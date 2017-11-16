@@ -45,7 +45,7 @@ class BitcoinTalk(object):
         hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
         numbers = hashids.decode(code)
         verified = False
-        if numbers == (forum_profile_id, forum_user_id):
+        if numbers == (forum_profile_id, int(forum_user_id)):
             verified = True
         return verified
         
@@ -54,10 +54,13 @@ class BitcoinTalk(object):
         vcode = None
         if scraped_links:
             links = []
-            for link in links:
-                code_check = x.split('vcode=')
-                if len(code_check) == 2:
-                    vcode = code_check[1].split('&')[0]
+            for link in scraped_links:
+                try:
+                    clean_link, vcode = link.split('vcode=')
+                    vcode = vcode.split('&')[0]
+                    links.append(clean_link.replace('?', ''))
+                except ValueError:
+                    pass
             if set(links) == set(expected_links):
                 verified = True
         return (verified, vcode)
@@ -68,9 +71,13 @@ class BitcoinTalk(object):
         links = sig.find_all('a')
         if links:
             links = [x.attrs['href'] for x in links]
+        else:
+            links = sig.text.strip().splitlines() 
         links_verified, vcode = self.verify_links(links, self.expected_links)
-        # Read the vcodes and verify
-        code_verified = self.verify_code(vcode, self.forum_profile_id, self.forum_user_id)
+        if vcode:
+            code_verified = self.verify_code(vcode.strip(), self.forum_profile_id, self.forum_user_id)
+        else:
+            code_verified = False
         sig_found = False
         if links_verified and code_verified:
             sig_found = True
@@ -84,7 +91,7 @@ def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode
         data = (True, scraper.get_total_posts())
     else:
         verified = scraper.check_signature()
-        posts = None
+        posts = 0
         if verified:
             posts = scraper.get_total_posts()
         data = (verified, posts)

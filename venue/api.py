@@ -6,6 +6,7 @@ from .tasks import get_user_position
 from rest_framework.fields import CurrentUserDefault
 from django.db import IntegrityError
 from rest_framework import generics
+from django.utils import timezone
 
 #------------------
 # User Profiles API
@@ -93,20 +94,27 @@ class ForumProfileViewSet(viewsets.ModelViewSet):
     queryset = ForumProfile.objects.all()
     serializer_class = ForumProfileSerializer
     
+    def get_queryset(self):
+        queryset = self.queryset
+        forum_id = self.request.query_params.get('forum_id', None)
+        forum_user_id = self.request.query_params.get('forum_user_id', None)
+        if forum_id and forum_user_id:
+            queryset = queryset.filter(forum_id=forum_id, forum_user_id=forum_user_id)
+        return queryset
+    
     def perform_create(self, serializer):
         user_profile = UserProfile.objects.get(user=self.request.user)
         forum_id = self.request.data['forum_id']
         profile_url = self.request.data['profile_url']
         forum = ForumSite.objects.get(id=forum_id)
-        profile_check = ForumProfile.objects.filter(forum_user_id=forum_id, forum=forum, 
-            active=True, verified=True)
+        info = get_user_position(forum_id, profile_url, self.request.user.id)
+        profile_check = ForumProfile.objects.filter(forum_user_id=info['forum_user_id'], forum=forum)
         if profile_check.exists():
-            fp = profile_check.last()
-            print('Here: %s' % fp.id)
-            if fp.signature:
+            fps = profile_check.filter(active=True, verified=True)
+            fp = fps.last()
+            if fp and fp.signature:
                 raise serializers.ValidationError("Your profile already contains our signature.")
         else:
-            info = get_user_position(forum_id, profile_url, self.request.user.id)
             rank, created = ForumUserRank.objects.get_or_create(name=info['position'], forum_site=forum)
             forum_profile = serializer.save(
                 user_profile=user_profile, 
@@ -114,4 +122,3 @@ class ForumProfileViewSet(viewsets.ModelViewSet):
                 forum=forum, 
                 forum_rank=rank,
                 active=True)
-            
