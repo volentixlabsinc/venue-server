@@ -15,7 +15,7 @@ Including another URLconf
 """
 from venue.views import (
     frontend_app, get_user, create_user, CustomObtainAuthToken, check_profile,
-    save_signature
+    save_signature, get_site_configs
 )
 from venue.api import (
     ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
@@ -41,6 +41,7 @@ urlpatterns = [
     url(r'^check-profile/', check_profile),
     url(r'^save-signature/', save_signature),
     url(r'^create-user/', create_user),
+    url(r'^get-site-configs/', get_site_configs),
     url(r'^authenticate/', CustomObtainAuthToken.as_view()),
 ]
 

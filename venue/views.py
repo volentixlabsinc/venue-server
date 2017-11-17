@@ -10,6 +10,7 @@ from venue.tasks import get_user_position
 from django.utils import timezone
 from django.shortcuts import render
 from django.http import JsonResponse
+from constance import config
 import json
 
 def frontend_app(request):
@@ -107,3 +108,10 @@ def save_signature(request):
         response['success'] = False
         response['message'] = 'The signature could not be found in the profile page.'
     return JsonResponse(response)
+    
+@csrf_exempt
+def get_site_configs(request):
+    configs = {
+        'disable_sign_up': config.DISABLE_SIGN_UP
+    }
+    return JsonResponse(configs)

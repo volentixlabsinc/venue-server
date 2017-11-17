@@ -25,7 +25,7 @@ SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', 'venue.volentix.com']
 
 
 # Application definition
@@ -57,6 +57,7 @@ REST_FRAMEWORK = {
 }
 
 CONSTANCE_CONFIG = {
+    'DISABLE_SIGN_UP': (True, 'Disable user sign up'),
     'VTX_AVAILABLE': (120000, 'Total VTX tokens available'),
     'TEST_MODE': (False, 'Test mode for scraping and points calculations. Signatures are always marked as found under test mode.')
 }
@@ -97,8 +98,10 @@ WSGI_APPLICATION = 'volentix.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'volentix',
+        'USER': 'volentix',
+        'PASSWORD': 'BxKkpaihl67B'
     }
 }
 

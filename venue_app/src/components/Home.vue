@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-jumbotron>
+    <b-jumbotron id="home-jumbotron" bg-variant="light" fluid="true">
       <template slot="header">
         VENUE
       </template>
@@ -11,7 +11,7 @@
       <p>
         {{ $t('venue_description') }}
       </p>
-      <b-btn variant="primary"
+      <b-btn variant="primary" :disabled="disableSignUp" 
         v-b-modal.signup-modal v-if="!$store.state.apiToken">
         {{ $t('signup') }}
       </b-btn>
@@ -27,15 +27,29 @@
 
 <script>
 import SignUpModal from '@/components/modals/SignUpModal'
+import axios from 'axios'
 
 export default {
   name: 'Home',
-  components: { SignUpModal }
+  components: { SignUpModal },
+  data () {
+    return {
+      'disableSignUp': true
+    }
+  },
+  created () {
+    axios.post('/get-site-configs/').then(response => {
+      this.disableSignUp = response.data.disable_sign_up
+    })
+  }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+#home-jumbotron {
+  text-align: center;
+}
 h1, h2 {
   font-weight: normal;
 }

@@ -184,7 +184,7 @@ class UptimeBatch(models.Model):
 class SignatureCheck(models.Model):
     """ Results of regular scraping from forum profile pages """
     forum_profile = models.ForeignKey(ForumProfile, related_name='regular_checks')
-    uptime_batch = models.ForeignKey(UptimeBatch, related_name='regular_checks', null=True, blank=True)
+    uptime_batch = models.ForeignKey(UptimeBatch, related_name='regular_checks')
     date_checked = models.DateTimeField(default=timezone.now)
     total_posts = models.IntegerField(default=0)
     signature_found = models.BooleanField(default=True)
