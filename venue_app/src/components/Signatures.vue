@@ -130,8 +130,12 @@ export default {
   },
   methods: {
     // Gets signatures for the given forum site
-    getSignatures (forumId) {
-      axios.get('/api/signatures/?forum_site_id=' + forumId).then(response => {
+    getSignatures (forumId, forumUserRank) {
+      var params = {
+        'forum_site_id': forumId,
+        'forum_user_rank': forumUserRank
+      }
+      axios.get('/api/signatures/', {params: params}).then(response => {
         this.signatures = response.data
       })
     },
@@ -166,7 +170,7 @@ export default {
       this.$swal({
         title: 'Profile Already Exists!',
         text: message,
-        icon: 'warning',
+        icon: 'error',
         button: {
           text: 'OK',
           className: 'btn-primary',
@@ -185,7 +189,6 @@ export default {
       }
       axios.post('/check-profile/', payload).then(response => {
         var self = this // To refer to `this` that's bound to vue instance
-        console.log(response.data)
         if (response.data.status_code === 200) {
           if (response.data.found === true) {
             this.forumUserPosition = response.data.position
@@ -200,19 +203,19 @@ export default {
                 } else {
                   this.flashAlreadyExistsNotice(self, 'Somebody else already claimed that profile.')
                 }
-              }
-              // Get the forum profile
-              var params = {
-                forum_id: response.data.forum_id,
-                forum_user_id: response.data.forum_user_id
-              }
-              axios.get('/api/forum-profiles/', {params: params}).then(response => {
-                console.log(response)
-                if (response.data.length > 0) {
-                  this.profileChecked = true
-                  this.forumProfileId = response.data[0].id
+              } else {
+                // Get the forum profile
+                var params = {
+                  forum_id: response.data.forum_id,
+                  forum_user_id: response.data.forum_user_id
                 }
-              })
+                axios.get('/api/forum-profiles/', {params: params}).then(response => {
+                  if (response.data.length > 0) {
+                    this.profileChecked = true
+                    this.forumProfileId = response.data[0].id
+                  }
+                })
+              }
             } else {
               this.profileChecked = true
               // Create the forum profile
@@ -324,12 +327,16 @@ export default {
   },
   watch: {
     forumSite: function (newForumSite) {
-      this.getSignatures(newForumSite)
       this.selectedSignature = null
     },
     selectedSignature: function (newSig) {
       if (newSig !== null) {
         this.$validator.validateAll()
+      }
+    },
+    profileChecked: function (newValue) {
+      if (newValue === true) {
+        this.getSignatures(this.forumSite, this.forumUserPosition)
       }
     }
   },
@@ -340,7 +347,6 @@ export default {
         this.forumSites.push({value: elem.id, text: elem.name})
       }
     })
-    this.getSignatures(this.forumSite)
   }
 }
 </script>

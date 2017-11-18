@@ -16,6 +16,7 @@
       </b-form-group>
       <b-form-group>
         <b-button type="submit" variant="primary" :disabled="disableLoginSubmit">{{ $t('submit') }}</b-button>
+        <img v-show="formSubmitted" src="../../assets/animated_spinner.gif" height="50">
         <span v-show="loginError" class="help is-danger" style="margin-top: 15px;">
           {{ $t('login_error') }}
         </span>
@@ -33,12 +34,13 @@ export default {
     return {
       username: '',
       password: '',
-      loginError: false
+      loginError: false,
+      formSubmitted: false
     }
   },
   computed: {
     disableLoginSubmit () {
-      return this.errors.any()
+      return this.errors.any() || this.formSubmitted
     }
   },
   methods: {
@@ -51,6 +53,7 @@ export default {
     },
     login (event) {
       event.preventDefault()
+      this.formSubmitted = true
       axios.post('/authenticate/', {
         username: this.username,
         password: this.password
@@ -65,7 +68,18 @@ export default {
         this.$router.push('/dashboard')
       }).catch(e => {
         this.loginError = true
+        this.formSubmitted = false
       })
+    }
+  },
+  watch: {
+    password: function () {
+      this.loginError = false
+      this.formSubmitted = false
+    },
+    username: function () {
+      this.loginError = false
+      this.formSubmitted = false
     }
   },
   created () {

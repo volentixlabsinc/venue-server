@@ -272,7 +272,7 @@ class ScrapingError(models.Model):
     
 class DataUpdateTask(models.Model):
     """ Record details about the execution run of scraping and data update tasks """
-    task_id = models.CharField(max_length=35)
+    task_id = models.CharField(max_length=50)
     date_started = models.DateTimeField(default=timezone.now)
     success = models.NullBooleanField(null=True)
     date_completed = models.DateTimeField(null=True, blank=True)

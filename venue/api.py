@@ -76,8 +76,9 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = self.queryset
         # Annotate the queryset
         forum_site_id = self.request.query_params.get('forum_site_id', None)
-        if forum_site_id:
-            queryset = queryset.filter(forum_site_id=forum_site_id)
+        forum_user_rank = self.request.query_params.get('forum_user_rank', None)
+        if forum_site_id and forum_user_rank:
+            queryset = queryset.filter(forum_site_id=forum_site_id, user_ranks__name=forum_user_rank)
         return queryset
     
 #-------------------

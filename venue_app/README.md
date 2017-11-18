@@ -1,6 +1,6 @@
 # venue_app
 
-> Autonomous signature campaign tracking
+> Frontend app for Volentix Venue that talks to the backend server through API endpoints
 
 ## Build Setup
 
