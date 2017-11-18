@@ -246,7 +246,7 @@ class PointsCalculation(models.Model):
             else:
                 self.post_days_points = 0
             # Calculate influence points
-            if batch.get_total_posts():
+            if batch.get_total_posts() and batch.get_total_posts_with_sig():
                 self.influence_points = decimal.Decimal(batch.get_total_posts() * 200) 
                 self.influence_points /= latest_gs.total_posts
             else:
