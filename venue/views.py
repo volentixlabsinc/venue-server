@@ -117,3 +117,25 @@ def get_site_configs(request):
         'disable_sign_up': config.DISABLE_SIGN_UP
     }
     return JsonResponse(configs)
+    
+@csrf_exempt
+def get_stats(request):
+    data = json.loads(request.body)
+    stats = []
+    token = Token.objects.get(key=data['apiToken'])
+    fps = ForumProfile.objects.filter(user_profile__user=token.user)
+    for fp in fps:
+        fields = ['postPoints', 'postDaysPoints', 'influencePoints', 'totalPoints', 'VTX_Tokens']
+        fp_data = {k: [] for k in fields}
+        for batch in fp.uptime_batches.filter(active=True):
+            latest_calc = batch.regular_checks.last().points_calculations.last()
+            fp_data['postPoints'].append(latest_calc.post_points)
+            fp_data['postDaysPoints'].append(latest_calc.post_days_points)
+            fp_data['influencePoints'].append(latest_calc.influence_points)
+            fp_data['totalPoints'].append(latest_calc.total_points)
+            fp_data['VTX_Tokens'].append(latest_calc.get_total_tokens())
+        sum_up_data = {k:  '{:,}'.format(sum(v)) for k,v in fp_data.items()}
+        sum_up_data['User_ID'] = fp.forum_user_id
+        sum_up_data['forumSite'] = fp.forum.name
+        stats.append(sum_up_data)
+    return JsonResponse({'status': 'success', 'stats': stats})

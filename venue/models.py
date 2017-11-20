@@ -257,6 +257,11 @@ class PointsCalculation(models.Model):
             self.total_points += decimal.Decimal(self.influence_points)
         super(PointsCalculation, self).save(*args, **kwargs)
         
+    def get_total_tokens(self):
+        total_points = self.total_points
+        tokens = (total_points * config.VTX_AVAILABLE) / 10000
+        return round(tokens, 2)
+        
 class ScrapingError(models.Model):
     """ Record of scraping errors """
     forum = models.ForeignKey(ForumSite, related_name='scraping_errors')
