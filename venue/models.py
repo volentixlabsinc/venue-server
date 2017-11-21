@@ -47,6 +47,7 @@ class Signature(models.Model):
 class UserProfile(models.Model):
     """ Custom internal user profiles """
     user = models.ForeignKey(User, related_name='profiles')
+    email_confirmed = models.BooleanField(default=False)
     
     def __str__(self):
         return self.user.username

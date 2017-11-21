@@ -158,3 +158,6 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 600 # seconds
     }
 }
+
+POSTMARK_TOKEN = '53ac5b12-1edc-43bc-9581-561c143f7352'
+POSTMARK_SENDER_EMAIL = 'venue@volentix.com'

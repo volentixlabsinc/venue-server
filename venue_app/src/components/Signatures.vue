@@ -4,10 +4,19 @@
       <b-col>
         <h2>{{ $t('signatures') }}</h2>
       </b-col>
+      <b-col v-if="!showAddForm" style="text-align: right;">
+        <b-button variant="primary" @click="addNewSignature(true)">Add New</b-button>
+      </b-col>
+      <b-col v-if="showAddForm" v-show="mySignatures.length > 0" style="text-align: right;">
+        <b-button @click="addNewSignature(false)">
+          List Signatures
+        </b-button>
+      </b-col>
     </b-row>
     <b-row>
       <b-col>
-        <b-form>
+        <b-form v-if="showAddForm">
+          <h4>Generate signature for a forum account</h4>
           <b-row>
             <b-col md="6" sm="12">
               <b-form-group 
@@ -86,10 +95,26 @@
         </b-form>
       </b-col>
     </b-row>
+    <b-row v-if='!showAddForm'>
+      <b-col>
+        <!-- List of current signatures -->
+        <h4>Your current signatures</h4>
+        <b-card-group class="card-group" v-for="signature in mySignatures">
+          <b-card 
+            :img-src="signature.image"
+            img-alt="Signature"
+            img-bottom>
+            <p class="card-text">
+              {{ signature.name }}
+            </p>
+          </b-card>
+        </b-card-group>
+      </b-col>
+    </b-row>
     <b-row v-if="profileChecked">
       <b-col id="signatures-list">
         <p>Select signature:</p>
-        <b-row v-for="signature in signatures">
+        <b-row v-for="signature in signatureOptions">
           <b-col>
             <h5>{{ signature.name }}</h5>
             <div class="sig-select-div">
@@ -115,9 +140,12 @@ export default {
   name: 'Signatures',
   data () {
     return {
+      initial: false,
+      showAddForm: false,
       forumSite: 1,
       forumSites: [],
-      signatures: [],
+      signatureOptions: [],
+      mySignatures: [],
       selectedSignature: null,
       profileUrl: '',
       profileChecked: false,
@@ -136,7 +164,7 @@ export default {
         'forum_user_rank': forumUserRank
       }
       axios.get('/api/signatures/', {params: params}).then(response => {
-        this.signatures = response.data
+        this.signatureOptions = response.data
       })
     },
     signatureCopySuccess () {
@@ -315,12 +343,15 @@ export default {
           })
         }
       })
+    },
+    addNewSignature (value) {
+      this.showAddForm = value
     }
   },
   computed: {
     signatureCode () {
       var sigId = this.selectedSignature
-      return this.signatures.filter(function (sig) {
+      return this.signatureOptions.filter(function (sig) {
         return sig.id === sigId
       })[0].code
     }
@@ -341,11 +372,20 @@ export default {
     }
   },
   created () {
+    // Check if it's the user first time to generate a signature
+    this.initial = this.$route.query.initial
+    this.showAddForm = this.$route.query.initial
     // Get forum sites
     axios.get('/api/forum-sites/').then(response => {
       for (var elem of response.data) {
         this.forumSites.push({value: elem.id, text: elem.name})
       }
+    })
+    // Get my signatures
+    var params = { 'own_sigs': 1 }
+    axios.get('/api/signatures/', {params: params}).then(response => {
+      console.log(response.data)
+      this.mySignatures = response.data
     })
   }
 }
@@ -369,5 +409,8 @@ export default {
   }
   input.is-danger {
     border:1px solid red;
+  }
+  .card-group {
+    margin-top: 20px;
   }
 </style>

@@ -67,6 +67,20 @@ export default {
     setLanguage (lang) {
       this.$i18n.locale = lang
     }
+  },
+  created () {
+    if (this.$route.query.email_confirmed === '1') {
+      this.$swal({
+        title: 'Email Confirmed!',
+        text: 'Thank you! You may login now.',
+        icon: 'success',
+        button: {
+          text: 'OK',
+          className: 'btn-primary',
+          closeModal: true
+        }
+      })
+    }
   }
 }
 </script>

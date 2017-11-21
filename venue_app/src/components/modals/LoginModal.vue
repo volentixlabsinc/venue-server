@@ -58,14 +58,29 @@ export default {
         username: this.username,
         password: this.password
       }).then(response => {
-        // Set user data
-        this.password = ''
-        this.setUser(response.data)
-        // Fix the authorization header for all HTTP requests
-        var authHeader = 'Token ' + this.$store.state.apiToken
-        axios.defaults.headers.common['Authorization'] = authHeader
-        // Redirect to dashboard
-        this.$router.push('/dashboard')
+        if (response.data.email_confirmed === true) {
+          // Set user data
+          this.password = ''
+          this.setUser(response.data)
+          // Fix the authorization header for all HTTP requests
+          var authHeader = 'Token ' + this.$store.state.apiToken
+          axios.defaults.headers.common['Authorization'] = authHeader
+          // Redirect to dashboard
+          this.$router.push('/dashboard')
+        } else {
+          this.$swal({
+            title: 'Email Not Confirmed!',
+            text: 'You need to confirm your email before you can login.',
+            icon: 'info',
+            button: {
+              text: 'OK',
+              className: 'btn-primary',
+              closeModal: true
+            }
+          }).then((value) => {
+            window.location.href = '/'
+          })
+        }
       }).catch(e => {
         this.loginError = true
         this.formSubmitted = false

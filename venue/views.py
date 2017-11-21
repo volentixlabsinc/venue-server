@@ -1,17 +1,22 @@
 from venue.models import UserProfile, ForumSite, ForumProfile, Signature
+from .tasks import verify_profile_signature, send_email_confirmation
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
-from .tasks import verify_profile_signature
+from django.shortcuts import render, redirect
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from venue.tasks import get_user_position
 from django.utils import timezone
-from django.shortcuts import render
+from django.conf import settings
 from django.http import JsonResponse
 from constance import config
+from hashids import Hashids
 import json
+
+# Instantiate a Hashids instance to be used later
+hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
 
 def frontend_app(request):
     return render(request, 'index.html')
@@ -26,8 +31,12 @@ class CustomObtainAuthToken(ObtainAuthToken):
             'token': token.key, 
             'username': token.user.username, 
             'email': token.user.email,
-            'user_profile_id': token.user.profiles.first().id 
+            'user_profile_id': token.user.profiles.first().id,
+            'email_confirmed': token.user.profiles.first().email_confirmed
         }
+        # Update last login datetime
+        token.user.last_login = timezone.now()
+        token.user.save()
         return Response(data)
         
 @csrf_exempt
@@ -42,7 +51,8 @@ def get_user(request):
                 'found': True,
                 'token': token.key, 
                 'username': token.user.username, 
-                'email': token.user.email
+                'email': token.user.email,
+                'email_confirmed': token.user.profiles.first().email_confirmed
             }
     except TypeError:
         pass
@@ -69,10 +79,21 @@ def create_user(request):
         response['user'] = user_data
         user_profile = UserProfile(user=user)
         user_profile.save()
+        # Send confirmation email
+        code = hashids.encode(int(user.id))
+        send_email_confirmation.delay(user.email, user.username, code)
     except Exception as exc:
         response['status'] = 'error'
-        response['message'] = exc.msg
+        response['message'] = str(exc)
     return JsonResponse(response)
+    
+def confirm_email(request):
+    code = request.GET.get('code')
+    user_id, = hashids.decode(code)
+    user_profile = UserProfile.objects.get(user_id=user_id)
+    user_profile.email_confirmed = True
+    user_profile.save()
+    return redirect('/#/?email_confirmed=1')
     
 @csrf_exempt
 def check_profile(request):

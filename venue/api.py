@@ -74,12 +74,18 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         queryset = self.queryset
-        # Annotate the queryset
-        forum_site_id = self.request.query_params.get('forum_site_id', None)
-        forum_user_rank = self.request.query_params.get('forum_user_rank', None)
-        if forum_site_id and forum_user_rank:
-            queryset = queryset.filter(forum_site_id=forum_site_id, user_ranks__name=forum_user_rank)
-        return queryset
+        # Filter the queryset according to the query parameters
+        own_sigs = self.request.query_params.get('own_sigs', None)
+        if own_sigs:
+            my_fps = ForumProfile.objects.filter(user_profile__user=self.request.user)
+            my_sigs = my_fps.values_list('signature_id', flat=True)
+            return queryset.filter(id__in=list(my_sigs))
+        else:
+            forum_site_id = self.request.query_params.get('forum_site_id', None)
+            forum_user_rank = self.request.query_params.get('forum_user_rank', None)
+            if forum_site_id and forum_user_rank:
+                queryset = queryset.filter(forum_site_id=forum_site_id, user_ranks__name=forum_user_rank)
+            return queryset
     
 #-------------------
 # Forum Profiles API

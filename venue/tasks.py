@@ -1,8 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumSite, ForumProfile, GlobalStats, Signature
+from django.template.loader import get_template
+from postmarker.core import PostmarkClient
 from django.utils import timezone
+from django.conf import settings
 from celery import shared_task
 from constance import config
+from hashids import Hashids
 from celery import chain
 import pandas as pd
 import traceback
@@ -150,3 +154,17 @@ def update_data():
     )
     # Send to the workflow to the queue
     workflow.apply_async()
+    
+@shared_task
+def send_email_confirmation(email, name, code):
+    postmark = PostmarkClient(
+        server_token=settings.POSTMARK_TOKEN, 
+        account_token=settings.POSTMARK_TOKEN)
+    context = {'name': name, 'code': code}
+    html = get_template('venue/email.html').render(context)
+    mail = postmark.emails.send(
+        From=settings.POSTMARK_SENDER_EMAIL,
+        To=email,
+        Subject='Email Confirmation',
+        HtmlBody=html)
+    return mail

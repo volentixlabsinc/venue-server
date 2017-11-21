@@ -80,8 +80,18 @@ export default {
         if (response.data.status === 'error') {
           this.signUpError = true
         } else {
-          this.setUser(response.data.user)
-          this.$router.push('/dashboard')
+          // this.setUser(response.data.user)
+          // this.$router.push('/dashboard')
+          this.$swal({
+            title: 'Email Confirmation Required!',
+            text: 'Please click on the link in the confirmation email we sent.',
+            icon: 'info',
+            button: {
+              text: 'OK',
+              className: 'btn-primary',
+              closeModal: true
+            }
+          })
         }
       }).catch(e => {
         this.signUpError = true

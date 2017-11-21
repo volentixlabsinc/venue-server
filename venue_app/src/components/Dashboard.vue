@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" v-if="showPage">
     <b-row>
       <b-col>
         <h2>{{ $t('dashboard') }}</h2>
@@ -7,7 +7,7 @@
     </b-row>
     <b-row style="margin-top: 16px;">
       <b-col>
-        <b-table striped hover :items="stats" :fields="statsFields"></b-table>
+        <b-table v-if="stats.length > 0" bordered hover :items="stats" :fields="statsFields"></b-table>
       </b-col>
     </b-row>
   </div>
@@ -20,6 +20,7 @@ export default {
   name: 'Dashboard',
   data () {
     return {
+      showPage: false,
       statsFields: [
         {key: 'forumSite', sortable: true},
         {key: 'User_ID', sortable: true},
@@ -34,9 +35,16 @@ export default {
   },
   created () {
     var payload = { apiToken: this.$store.state.apiToken }
-    console.log(payload)
     axios.post('/get-stats/', payload).then(response => {
       this.stats = response.data.stats
+      if (this.stats.length === 0) {
+        this.$router.push({
+          path: '/signatures',
+          query: { initial: true }
+        })
+      } else {
+        this.showPage = true
+      }
     })
   }
 }
