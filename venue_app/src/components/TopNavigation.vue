@@ -81,6 +81,32 @@ export default {
         }
       })
     }
+    if (this.$route.query.account_deleted === '1') {
+      this.$swal({
+        title: 'Account Deleted!',
+        text: 'Your account has been successfully deleted.',
+        icon: 'success',
+        button: {
+          text: 'OK',
+          className: 'btn-primary',
+          closeModal: true
+        }
+      }).then(() => {
+        this.logout()
+      })
+    }
+    if (this.$route.query.updated_email === '1') {
+      this.$swal({
+        title: 'Updated Email!',
+        text: 'You have successfully changed the email in your account.',
+        icon: 'success',
+        button: {
+          text: 'OK',
+          className: 'btn-primary',
+          closeModal: true
+        }
+      })
+    }
   }
 }
 </script>

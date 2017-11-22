@@ -1,9 +1,9 @@
 <template>
   <!-- Sign Up Modal -->
-  <b-modal id='signup-modal' :title="$i18n.t('sign_up_form')" v-if="!$store.state.apiToken" ref="signUpModal" hide-footer>
+  <b-modal id='signup-modal' :title="$i18n.t('sign_up_form')" v-if="!$store.state.apiToken" ref="signUpModal" centered hide-footer>
     <b-form @submit="register($event)" @click="clearSignUpError()">
-      <b-form-group label="Email">
-        <b-form-input v-model.trim="email" v-validate="{ required: true, email: true }" name="email" placeholder="Enter email address"></b-form-input>
+      <b-form-group :label="$i18n.t('email')">
+        <b-form-input v-model.trim="email" v-validate="{ required: true, email: true }" name="email" :placeholder="$i18n.t('enter_email')"></b-form-input>
         <span v-show="errors.has('email')" class="help is-danger">
           {{ errors.first('email') }}
         </span>
@@ -14,8 +14,8 @@
           {{ errors.first('username') }}
         </span>
       </b-form-group>
-      <b-form-group label="Password">
-        <b-form-input type="password" v-model.trim="password1" v-validate="{ required: true }" name="password1" placeholder="Enter password"></b-form-input>
+      <b-form-group :label="$i18n.t('password')">
+        <b-form-input type="password" v-model.trim="password1" v-validate="{ required: true }" name="password1" :placeholder="$i18n.t('enter_password')"></b-form-input>
         <span v-show="errors.has('password1')" class="help is-danger">
           {{ errors.first('password1') }}
         </span>
@@ -80,8 +80,6 @@ export default {
         if (response.data.status === 'error') {
           this.signUpError = true
         } else {
-          // this.setUser(response.data.user)
-          // this.$router.push('/dashboard')
           this.$swal({
             title: 'Email Confirmation Required!',
             text: 'Please click on the link in the confirmation email we sent.',

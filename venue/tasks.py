@@ -155,16 +155,43 @@ def update_data():
     # Send to the workflow to the queue
     workflow.apply_async()
     
+#-----------------------------------
+# Tasks for sending automated emails
+#-----------------------------------
+    
+postmark = PostmarkClient(
+    server_token=settings.POSTMARK_TOKEN, 
+    account_token=settings.POSTMARK_TOKEN)
+        
 @shared_task
 def send_email_confirmation(email, name, code):
-    postmark = PostmarkClient(
-        server_token=settings.POSTMARK_TOKEN, 
-        account_token=settings.POSTMARK_TOKEN)
     context = {'name': name, 'code': code}
-    html = get_template('venue/email.html').render(context)
+    html = get_template('venue/email_confirmation.html').render(context)
     mail = postmark.emails.send(
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Email Confirmation',
+        HtmlBody=html)
+    return mail
+    
+@shared_task
+def send_deletion_confirmation(email, name, code):
+    context = {'name': name, 'code': code}
+    html = get_template('venue/deletion_confirmation.html').render(context)
+    mail = postmark.emails.send(
+        From=settings.POSTMARK_SENDER_EMAIL,
+        To=email,
+        Subject='Account Deletion Confirmation',
+        HtmlBody=html)
+    return mail
+    
+@shared_task
+def send_email_change_confirmation(email, name, code):
+    context = {'name': name, 'code': code}
+    html = get_template('venue/email_change.html').render(context)
+    mail = postmark.emails.send(
+        From=settings.POSTMARK_SENDER_EMAIL,
+        To=email,
+        Subject='Email Change Confirmation',
         HtmlBody=html)
     return mail

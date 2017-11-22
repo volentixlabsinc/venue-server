@@ -1,6 +1,6 @@
 <template>
   <!-- Login Modal -->
-  <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" hide-footer>
+  <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" centered hide-footer>
     <b-form @submit="login($event)" @click="clearLoginError()">
       <b-form-group :label="$i18n.t('username')">
         <b-form-input v-model.trim="username" v-validate="{ required: true }" name="username" :placeholder="$i18n.t('enter_username')"></b-form-input>

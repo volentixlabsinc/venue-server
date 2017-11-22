@@ -1,5 +1,7 @@
+from .tasks import ( verify_profile_signature, 
+    send_email_confirmation, send_deletion_confirmation, 
+    send_email_change_confirmation)
 from venue.models import UserProfile, ForumSite, ForumProfile, Signature
-from .tasks import verify_profile_signature, send_email_confirmation
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from django.views.decorators.csrf import csrf_exempt
@@ -13,6 +15,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from constance import config
 from hashids import Hashids
+from .utils import RedisTemp
 import json
 
 # Instantiate a Hashids instance to be used later
@@ -160,3 +163,41 @@ def get_stats(request):
         sum_up_data['forumSite'] = fp.forum.name
         stats.append(sum_up_data)
     return JsonResponse({'status': 'success', 'stats': stats})
+    
+@csrf_exempt
+def delete_account(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        token = Token.objects.get(key=data['apiToken'])
+        code = hashids.encode(int(token.user.id))
+        send_deletion_confirmation.delay(token.user.email, token.user.username, code)
+    elif request.method == 'GET':
+        code = request.GET.get('code')
+        if code:
+            user_id, = hashids.decode(code)
+            User.objects.filter(id=user_id).delete()
+    return redirect('/#/?account_deleted=1')
+    
+@csrf_exempt
+def change_email(request):
+    rtemp = RedisTemp('new_email')
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        token = Token.objects.get(key=data['apiToken'])
+        response = {'success': False}
+        new_email = request.POST.get('email')
+        email_check = User.objects.filter(email=new_email)
+        if email_check.exists():
+            response['message'] = 'Email already exists'
+        else:
+            code = hashids.encode(int(token.user.id))
+            rtemp.store(code, new_email)
+            send_email_change_confirmation.delay(new_email, token.user.username, code)
+        return JsonResponse(response)
+    elif request.method == 'GET':
+        code = request.GET.get('code')
+        if code:
+            user_id, = hashids.decode(code)
+            new_email = rtemp.retrieve(code)
+            User.objects.filter(id=user_id).update(email=new_email)
+        return redirect('/#/?updated_email=1')

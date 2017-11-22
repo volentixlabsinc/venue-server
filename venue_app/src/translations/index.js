@@ -1,9 +1,15 @@
 const messages = {
   'en': {
     'username': 'Username',
-    'enter_username': 'Enter username',
+    'email': 'Email',
     'password': 'Password',
+    'enter_username': 'Enter username',
+    'enter_new_username': 'Enter new username',
     'enter_password': 'Enter password',
+    'enter_new_password': 'Enter new password',
+    'retype_password': 'Retype password',
+    'enter_email': 'Enter email',
+    'enter_new_email': 'Enter new email',
     'login_error': 'The username or password you entered was incorrect!',
     'language': 'Language',
     'login': 'Login',
@@ -16,7 +22,11 @@ const messages = {
     'settings': 'Settings',
     'sign_up_form': 'Sign Up Form',
     'login_form': 'Login Form',
-    'submit': 'Submit'
+    'submit': 'Submit',
+    'change_email_form': 'Change Email Form',
+    'change_username_form': 'Change Username Form',
+    'change_password_form': 'Change Password Form',
+    'delete_account_form': 'Delete Account Form'
   },
   'fr': {
     'username': "Nom d'utilisateur",
