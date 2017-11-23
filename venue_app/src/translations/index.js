@@ -1,5 +1,6 @@
 const messages = {
   'en': {
+    'welcome': 'Welcome',
     'username': 'Username',
     'email': 'Email',
     'password': 'Password',

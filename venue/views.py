@@ -4,7 +4,6 @@ from .tasks import ( verify_profile_signature,
 from venue.models import UserProfile, ForumSite, ForumProfile, Signature
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render, redirect
 from rest_framework.response import Response
@@ -42,7 +41,6 @@ class CustomObtainAuthToken(ObtainAuthToken):
         token.user.save()
         return Response(data)
         
-@csrf_exempt
 def get_user(request):
     data = {'found': False}
     try:
@@ -61,7 +59,6 @@ def get_user(request):
         pass
     return JsonResponse(data)
     
-@csrf_exempt
 def create_user(request):
     data = json.loads(request.body)
     user_check = User.objects.filter(email=data['email'])
@@ -98,7 +95,6 @@ def confirm_email(request):
     user_profile.save()
     return redirect('/#/?email_confirmed=1')
     
-@csrf_exempt
 def check_profile(request):
     data = json.loads(request.body)
     forum = ForumSite.objects.get(id=data['forum'])
@@ -117,7 +113,6 @@ def check_profile(request):
     response['status_code'] = info['status_code']
     return JsonResponse(response)
     
-@csrf_exempt
 def save_signature(request):
     data = json.loads(request.body)
     forum_profile = ForumProfile.objects.get(id=data['forum_profile_id'])
@@ -135,14 +130,12 @@ def save_signature(request):
         response['message'] = 'The signature could not be found in the profile page.'
     return JsonResponse(response)
     
-@csrf_exempt
 def get_site_configs(request):
     configs = {
         'disable_sign_up': config.DISABLE_SIGN_UP
     }
     return JsonResponse(configs)
     
-@csrf_exempt
 def get_stats(request):
     data = json.loads(request.body)
     stats = []
@@ -164,7 +157,6 @@ def get_stats(request):
         stats.append(sum_up_data)
     return JsonResponse({'status': 'success', 'stats': stats})
     
-@csrf_exempt
 def delete_account(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -178,21 +170,20 @@ def delete_account(request):
             User.objects.filter(id=user_id).delete()
     return redirect('/#/?account_deleted=1')
     
-@csrf_exempt
 def change_email(request):
     rtemp = RedisTemp('new_email')
     if request.method == 'POST':
         data = json.loads(request.body)
         token = Token.objects.get(key=data['apiToken'])
         response = {'success': False}
-        new_email = request.POST.get('email')
-        email_check = User.objects.filter(email=new_email)
+        email_check = User.objects.filter(email=data['email'])
         if email_check.exists():
             response['message'] = 'Email already exists'
         else:
             code = hashids.encode(int(token.user.id))
-            rtemp.store(code, new_email)
-            send_email_change_confirmation.delay(new_email, token.user.username, code)
+            rtemp.store(code, data['email'])
+            send_email_change_confirmation.delay(data['email'], token.user.username, code)
+            response['success'] = True
         return JsonResponse(response)
     elif request.method == 'GET':
         code = request.GET.get('code')
@@ -200,4 +191,33 @@ def change_email(request):
             user_id, = hashids.decode(code)
             new_email = rtemp.retrieve(code)
             User.objects.filter(id=user_id).update(email=new_email)
-        return redirect('/#/?updated_email=1')
+            rtemp.remove(code)
+        return redirect('/#/settings/?updated_email=1')
+        
+def change_username(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        token = Token.objects.get(key=data['apiToken'])
+        response = {'success': False}
+        username_check = User.objects.filter(username=data['username'])
+        if username_check.exists():
+            response['message'] = 'Username already exists'
+        else:
+            User.objects.filter(id=token.user_id).update(username=data['username'])
+            response['success'] = True
+            response['username'] = token.user.username
+            response['email'] = token.user.email
+        return JsonResponse(response)
+        
+def change_password(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        token = Token.objects.get(key=data['apiToken'])
+        response = {'success': False}
+        try:
+            user = User.objects.filter(id=token.user_id)
+            user.set_password(data['password'])
+            response['success'] = True
+        except Exception as exc:
+            response['message'] = str(exc)
+        return JsonResponse(response)

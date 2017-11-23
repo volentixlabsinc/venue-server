@@ -3,7 +3,7 @@
   <b-modal id="change-username-modal" :title="$i18n.t('change_username_form')" ref="changeUsernameModal" centered hide-footer>
     <b-form @submit="changeUsername($event)">
       <b-form-group :label="$i18n.t('username')">
-        <b-form-input v-model.trim="newUsername" v-validate="{ required: true }" name="username" :placeholder="$i18n.t('enter_new_username')"></b-form-input>
+        <b-form-input v-model.trim="newUsername" v-validate="{ required: true }" name="username" :placeholder="$store.state.user.userName"></b-form-input>
         <span v-show="errors.has('username')" class="help is-danger">
           {{ errors.first('username') }}
         </span>
@@ -17,11 +17,13 @@
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   name: 'ChangeUsernameModal',
   data () {
     return {
-      newUsername: '',
+      newUsername: null,
       formSubmitted: false
     }
   },
@@ -29,12 +31,34 @@ export default {
     changeUsername (event) {
       event.preventDefault()
       this.formSubmitted = true
-      console.log('Change username')
+      var payload = {
+        username: this.newUsername,
+        apiToken: this.$store.state.apiToken
+      }
+      axios.post('/change-username/', payload).then(response => {
+        if (response.data.success) {
+          var data = response.data
+          this.$store.commit('updateUserName', data.username)
+          this.$store.commit('updateUserEmail', data.email)
+          this.$refs.changeUsernameModal.hide()
+          this.$swal({
+            title: 'Updated Username!',
+            text: 'Your username has been successfully updated.',
+            icon: 'success'
+          }).then(() => {
+            Object.assign(this.$data, this.$options.data.call(this))
+            this.$validator.clean()
+          })
+        }
+      })
     }
   },
   computed: {
     disableSubmit () {
-      return this.errors.any() || this.formSubmitted
+      return this.errors.any() || this.formSubmitted || this.isFormPristine
+    },
+    isFormPristine () {
+      return Object.keys(this.fields).some(key => this.fields[key].pristine)
     }
   }
 }

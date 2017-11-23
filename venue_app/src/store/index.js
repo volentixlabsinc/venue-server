@@ -16,8 +16,11 @@ export default new Vuex.Store({
     updateApiToken (state, token) {
       state.apiToken = token
     },
-    updateUser (state, userName, userEmail) {
-      state.user = {userName: userName, userEmail: userEmail}
+    updateUserName (state, username) {
+      state.user.userName = username
+    },
+    updateUserEmail (state, email) {
+      state.user.userEmail = email
     },
     updateShowLoginForm (state, value) {
       state.showLoginForm = value

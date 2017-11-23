@@ -40,7 +40,10 @@ export default {
   },
   computed: {
     disableLoginSubmit () {
-      return this.errors.any() || this.formSubmitted
+      return this.errors.any() || this.formSubmitted || this.isFormPristine
+    },
+    isFormPristine () {
+      return Object.keys(this.fields).some(key => this.fields[key].pristine)
     }
   },
   methods: {
@@ -49,7 +52,8 @@ export default {
     },
     setUser (data) {
       this.$store.commit('updateApiToken', data.token)
-      this.$store.commit('updateUser', data.username, data.email)
+      this.$store.commit('updateUserName', data.username)
+      this.$store.commit('updateUserEmail', data.email)
     },
     login (event) {
       event.preventDefault()

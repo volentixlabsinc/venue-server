@@ -54,6 +54,9 @@
 import LoginModal from '@/components/modals/LoginModal'
 import axios from 'axios'
 
+axios.defaults.xsrfCookieName = 'csrftoken'
+axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+
 export default {
   name: 'TopNavigation',
   components: { LoginModal },

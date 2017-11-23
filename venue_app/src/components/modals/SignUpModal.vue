@@ -15,13 +15,13 @@
         </span>
       </b-form-group>
       <b-form-group :label="$i18n.t('password')">
-        <b-form-input type="password" v-model.trim="password1" v-validate="{ required: true }" name="password1" :placeholder="$i18n.t('enter_password')"></b-form-input>
+        <b-form-input type="password" v-model.trim="password1" v-validate="{ required: true, min: 6 }" name="password1" data-vv-as="password" :placeholder="$i18n.t('enter_password')"></b-form-input>
         <span v-show="errors.has('password1')" class="help is-danger">
           {{ errors.first('password1') }}
         </span>
       </b-form-group>
       <b-form-group label="Retype Password">
-        <b-form-input type="password" v-model.trim="password2" v-validate="{ required: true, confirmed: 'password1' }" name="password2" placeholder="Retype password"></b-form-input>
+        <b-form-input type="password" v-model.trim="password2" v-validate="{ required: true, confirmed: 'password1' }" name="password2" data-vv-as="retyped password" placeholder="Retype password"></b-form-input>
         <span v-show="errors.has('password2')" class="help is-danger">
           {{ errors.first('password2') }}
         </span>
@@ -54,7 +54,10 @@ export default {
   },
   computed: {
     disableSignUpSubmit () {
-      return this.errors.any()
+      return this.errors.any() || this.isFormPristine
+    },
+    isFormPristine () {
+      return Object.keys(this.fields).some(key => this.fields[key].pristine)
     }
   },
   watch: {

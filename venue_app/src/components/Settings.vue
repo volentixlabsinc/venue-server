@@ -99,13 +99,14 @@ export default {
         if (value) {
           this.$swal({
             title: 'Second Confirmation',
-            text: 'Please click on the link sent to your email to complete the deletion process.'
-          }).then(() => {
-            var payload = { apiToken: this.$store.state.apiToken }
-            console.log(payload)
-            axios.post('/delete-account/', payload).then(response => {
-              console.log(response)
-            })
+            text: 'Please click on the link sent to your email to complete the deletion process.',
+            icon: 'warning',
+            buttons: ['Cancel', 'Delete']
+          }).then((value) => {
+            if (value) {
+              var payload = { apiToken: this.$store.state.apiToken }
+              axios.post('/delete-account/', payload)
+            }
           })
         }
       })

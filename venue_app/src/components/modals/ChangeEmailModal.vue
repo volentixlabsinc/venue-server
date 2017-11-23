@@ -6,7 +6,7 @@
     ref="changeEmailModal" centered hide-footer>
     <b-form @submit="changeEmail($event)">
       <b-form-group :label="$i18n.t('email')">
-        <b-form-input v-model.trim="newEmail" v-validate="{ required: true }" name="email" :placeholder="$i18n.t('enter_new_email')"></b-form-input>
+        <b-form-input v-model.trim="newEmail" v-validate="{ required: true }" name="email" :placeholder="$store.state.user.userEmail"></b-form-input>
         <span v-show="errors.has('email')" class="help is-danger">
           {{ errors.first('email') }}
         </span>
@@ -20,6 +20,8 @@
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   name: 'ChangeEmailModal',
   data () {
@@ -32,12 +34,20 @@ export default {
     changeEmail (event) {
       event.preventDefault()
       this.formSubmitted = true
-      console.log('Change email')
+      var payload = {
+        email: this.newEmail,
+        apiToken: this.$store.state.apiToken
+      }
+      axios.post('/change-email/', payload).then(response => {
+      })
     }
   },
   computed: {
     disableSubmit () {
-      return this.errors.any() || this.formSubmitted
+      return this.errors.any() || this.formSubmitted || this.isFormPristine
+    },
+    isFormPristine () {
+      return Object.keys(this.fields).some(key => this.fields[key].pristine)
     }
   }
 }
