@@ -84,9 +84,16 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter the queryset according to the query parameters
         own_sigs = self.request.query_params.get('own_sigs', None)
         if own_sigs:
-            my_fps = ForumProfile.objects.filter(user_profile__user=self.request.user)
+            my_fps = ForumProfile.objects.filter(user_profile__user=self.request.user, verified=True)
+            name_map = {}
+            for fp in my_fps:
+                name = 'Forum site: %s / User ID: %s' % (fp.forum.name, fp.forum_user_id)
+                name_map[fp.signature.id] = name
             my_sigs = my_fps.values_list('signature_id', flat=True)
-            return queryset.filter(id__in=list(my_sigs))
+            my_sigs = queryset.filter(id__in=list(my_sigs))
+            for sig in my_sigs:
+                sig.name = name_map[sig.id]
+            return my_sigs
         else:
             forum_site_id = self.request.query_params.get('forum_site_id', None)
             forum_user_rank = self.request.query_params.get('forum_user_rank', None)

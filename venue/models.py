@@ -103,7 +103,7 @@ class ForumProfile(models.Model):
     forum_user_id = models.CharField(max_length=50, blank=True)
     profile_url = models.CharField(max_length=200)
     signature = models.ForeignKey(Signature, null=True, blank=True, related_name='users')
-    verification_code = models.CharField(max_length=10, blank=True)
+    verification_code = models.CharField(max_length=20, blank=True)
     active = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
     date_verified = models.DateTimeField(null=True, blank=True)
@@ -117,11 +117,11 @@ class ForumProfile(models.Model):
         self.date_updated = timezone.now()
         super(ForumProfile, self).save(*args, **kwargs)
         if not self.verification_code:
-            hashids = Hashids(min_length=6, salt=settings.SECRET_KEY)
+            hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
             forum_profile_id, forum_user_id = self.id, self.forum_user_id
             verification_code = hashids.encode(forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(verification_code=verification_code)
-        
+            
     class Meta:
         unique_together = ('forum', 'forum_user_id', 'verified')
 

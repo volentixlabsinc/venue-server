@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.conf import settings
 from celery import shared_task
 from constance import config
-from hashids import Hashids
 from celery import chain
 import pandas as pd
 import traceback

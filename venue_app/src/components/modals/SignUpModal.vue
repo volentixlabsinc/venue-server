@@ -89,8 +89,7 @@ export default {
             icon: 'info',
             button: {
               text: 'OK',
-              className: 'btn-primary',
-              closeModal: true
+              className: 'btn-primary'
             }
           })
         }
