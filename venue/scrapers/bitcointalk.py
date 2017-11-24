@@ -10,6 +10,19 @@ class BitcoinTalk(object):
     def __init__(self):
         self.base_url = 'https://bitcointalk.org'
         
+    def list_forum_positions(self):
+        positions = [
+            'Brand New',
+            'Newbie',
+            'Jr. Member',
+            'Member',
+            'Full Member',
+            'Sr. Member',
+            'Hero Member',
+            'Legendary'
+        ]
+        return positions
+        
     def set_params(self, forum_profile_id, forum_user_id, expected_links):
         self.forum_profile_id = forum_profile_id
         self.forum_user_id = forum_user_id

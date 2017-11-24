@@ -1,7 +1,7 @@
 from .tasks import ( verify_profile_signature, 
     send_email_confirmation, send_deletion_confirmation, 
     send_email_change_confirmation)
-from venue.models import UserProfile, ForumSite, ForumProfile, Signature
+from venue.models import UserProfile, ForumSite, ForumProfile, Signature, ForumUserRank
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
@@ -105,6 +105,8 @@ def check_profile(request):
     info = get_user_position(forum.id, data['profile_url'], request.user.id)
     if info['status_code'] == 200 and info['position']:
         response['position'] = info['position']
+        forum_rank = ForumUserRank.objects.get(forum_site=forum, name__iexact=info['position'].strip())
+        response['position_allowed'] = forum_rank.allowed
         response['forum_user_id'] = info['forum_user_id']
         response['found'] = True
         response['exists'] = info['exists']
@@ -145,7 +147,7 @@ def get_stats(request):
     data = json.loads(body_unicode)
     stats = []
     token = Token.objects.get(key=data['apiToken'])
-    fps = ForumProfile.objects.filter(user_profile__user=token.user)
+    fps = ForumProfile.objects.filter(user_profile__user=token.user, verified=True)
     for fp in fps:
         fields = ['postPoints', 'postDaysPoints', 'influencePoints', 'totalPoints', 'VTX_Tokens']
         fp_data = {k: [] for k in fields}

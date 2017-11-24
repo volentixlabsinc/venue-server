@@ -158,10 +158,11 @@ export default {
   },
   methods: {
     // Gets signatures for the given forum site
-    getSignatures (forumId, forumUserRank) {
+    getSignatures (forumId, forumUserRank, forumProfileId) {
       var params = {
         'forum_site_id': forumId,
-        'forum_user_rank': forumUserRank
+        'forum_user_rank': forumUserRank,
+        'forum_profile_id': forumProfileId
       }
       axios.get('/api/signatures/', {params: params}).then(response => {
         this.signatureOptions = response.data
@@ -245,15 +246,23 @@ export default {
                 })
               }
             } else {
-              this.profileChecked = true
-              // Create the forum profile
-              var payload = {
-                profile_url: this.profileUrl,
-                forum_id: this.forumSite
+              if (response.data.position_allowed) {
+                this.profileChecked = true
+                // Create the forum profile
+                var payload = {
+                  profile_url: this.profileUrl,
+                  forum_id: this.forumSite
+                }
+                axios.post('/api/forum-profiles/', payload).then(response => {
+                  this.forumProfileId = response.data.id
+                })
+              } else {
+                this.$swal({
+                  title: 'Insufficient Rank!',
+                  text: 'Your profile does not meet the required minimum forum rank/position.',
+                  icon: 'error'
+                })
               }
-              axios.post('/api/forum-profiles/', payload).then(response => {
-                this.forumProfileId = response.data.id
-              })
             }
           } else {
             this.$swal({
@@ -367,7 +376,7 @@ export default {
     },
     profileChecked: function (newValue) {
       if (newValue === true) {
-        this.getSignatures(this.forumSite, this.forumUserPosition)
+        this.getSignatures(this.forumSite, this.forumUserPosition, this.forumProfileId)
       }
     }
   },
@@ -384,7 +393,6 @@ export default {
     // Get my signatures
     var params = { 'own_sigs': 1 }
     axios.get('/api/signatures/', {params: params}).then(response => {
-      console.log(response.data)
       this.mySignatures = response.data
     })
   }

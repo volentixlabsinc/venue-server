@@ -7,6 +7,7 @@ from rest_framework.fields import CurrentUserDefault
 from django.db import IntegrityError
 from rest_framework import generics
 from django.utils import timezone
+import re
 
 #------------------
 # User Profiles API
@@ -66,6 +67,12 @@ class SignatureSerializer(serializers.HyperlinkedModelSerializer):
         model = Signature
         fields = ('id', 'name', 'forum_site', 'user_ranks', 'code', 'image', 'active')
         
+def inject_verification_code(sig_code, verification_code):
+    def repl(m):
+        return '%s?vcode=%s' % (m.group(), verification_code)
+    pattern = r'http[s]?://([a-z./-?=&])+'
+    return re.sub(pattern, repl, sig_code)
+
 class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
@@ -83,8 +90,13 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             forum_site_id = self.request.query_params.get('forum_site_id', None)
             forum_user_rank = self.request.query_params.get('forum_user_rank', None)
+            forum_profile_id = self.request.query_params.get('forum_profile_id', None)
+            forum_profile = ForumProfile.objects.get(id=forum_profile_id)
             if forum_site_id and forum_user_rank:
                 queryset = queryset.filter(forum_site_id=forum_site_id, user_ranks__name=forum_user_rank)
+                # Modify the links in the code so it contains the verification code
+                for sig in queryset:
+                    sig.code = inject_verification_code(sig.code, forum_profile.verification_code)
             return queryset
     
 #-------------------
