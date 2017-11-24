@@ -22,7 +22,7 @@ class RedisTemp(object):
         key = self.generate_key(key)
         value = self.rconn.get(key)
         if value:
-            return json.loads(value)
+            return json.loads(value.decode('utf-8'))
         else:
             return value
         

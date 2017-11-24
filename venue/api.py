@@ -70,8 +70,11 @@ class SignatureSerializer(serializers.HyperlinkedModelSerializer):
 def inject_verification_code(sig_code, verification_code):
     def repl(m):
         return '%s?vcode=%s' % (m.group(), verification_code)
-    pattern = r'http[s]?://([a-z./-?=&])+'
-    return re.sub(pattern, repl, sig_code)
+    if 'http' in sig_code:
+        pattern = r'http[s]?://([a-z./-?=&])+'
+        return re.sub(pattern, repl, sig_code)
+    elif 'link' in sig_code:
+        return sig_code + '?vcode=' + verification_code
 
 class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)

@@ -119,9 +119,10 @@ def database_cleanup():
     # This also deletes the point calculations for each deleted signature check
     for batch in uptime_batches:
         checks = batch.regular_checks.all()
-        df = pd.DataFrame(list(checks.values('id', 'date_checked')))
-        dfs = df.groupby([df['date_checked'].dt.date]).agg('max')
-        checks.exclude(id__in=list(dfs['id'])).delete()
+        if checks.count() > 1:
+            df = pd.DataFrame(list(checks.values('id', 'date_checked')))
+            dfs = df.groupby([df['date_checked'].dt.date]).agg('max')
+            checks.exclude(id__in=list(dfs['id'])).delete()
     # Retain only the latest row in global stats
     stats = GlobalStats.objects.all()
     df = pd.DataFrame(list(stats.values('id', 'date_updated')))

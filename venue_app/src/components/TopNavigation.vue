@@ -11,7 +11,11 @@
       <b-collapse is-nav id="nav_collapse">
         
         <b-nav is-nav-bar class="ml-auto">
-        
+          
+          <b-nav-item v-if="$store.state.apiToken" to="/dashboard">
+            {{ $t('welcome') }} {{ $store.state.user.userName }}!
+          </b-nav-item>
+          
           <b-nav-item-dropdown :text="$i18n.t('language')" right>
             <b-dropdown-item @click="setLanguage('en')">English</b-dropdown-item>
             <b-dropdown-item @click="setLanguage('fr')">French</b-dropdown-item>

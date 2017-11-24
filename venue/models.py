@@ -52,43 +52,43 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
         
-    def get_total_posts(self):
-        total_per_forum = []
-        for site in self.forum_profiles.all():
-            #latest_batch = site.uptime_batches.last()
-            #if latest_batch:
-            #    total_per_forum.append(latest_batch.get_total_posts())
-            for batch in site.uptime_batches.all():
-                total_per_forum.append(batch.get_total_posts())
-        return sum(total_per_forum)
-        
     def get_total_posts_with_sig(self):
         total_per_forum = []
         for site in self.forum_profiles.all():
-            #latest_batch = site.uptime_batches.last()
-            #if latest_batch:
-            #    total_per_forum.append(latest_batch.get_total_posts_with_sig())
             for batch in site.uptime_batches.all():
                 total_per_forum.append(batch.get_total_posts_with_sig())
         return sum(total_per_forum)
         
+    def get_total_posts(self):
+        value = 0
+        if self.get_total_posts_with_sig():
+            total_per_forum = []
+            for site in self.forum_profiles.all():
+                for batch in site.uptime_batches.all():
+                    total_per_forum.append(batch.get_total_posts())
+            value = sum(total_per_forum)
+        return value
+        
     def get_total_days(self):
-        total_per_forum = []
-        for site in self.forum_profiles.all():
-            #latest_batch = site.uptime_batches.last()
-            #if latest_batch:
-            #    total_per_forum.append(latest_batch.get_total_days())
-            for batch in site.uptime_batches.all():
-                total_per_forum.append(batch.get_total_days())
-        return sum(total_per_forum)
+        value = 0
+        if self.get_total_posts_with_sig():
+            total_per_forum = []
+            for site in self.forum_profiles.all():
+                for batch in site.uptime_batches.all():
+                    total_per_forum.append(batch.get_total_days())
+            value = sum(total_per_forum)
+        return value
         
     def get_total_points(self):
-        total_per_forum = []
-        for site in self.forum_profiles.all():
-            for batch in site.uptime_batches.all():
-                uptime_points = batch.get_total_points()
-                total_per_forum.append(uptime_points)
-        return sum(total_per_forum)
+        value = 0
+        if self.get_total_posts_with_sig():
+            total_per_forum = []
+            for site in self.forum_profiles.all():
+                for batch in site.uptime_batches.all():
+                    uptime_points = batch.get_total_points()
+                    total_per_forum.append(uptime_points)
+            value = sum(total_per_forum)
+        return value
         
     def get_total_tokens(self):
         total_points = self.get_total_points()
@@ -157,20 +157,26 @@ class UptimeBatch(models.Model):
         return latest_check.total_posts
         
     def get_total_posts_with_sig(self):
-        earliest_check = self.regular_checks.first()
-        latest_check = self.regular_checks.last()
-        earliest_total = earliest_check.total_posts
-        latest_total = latest_check.total_posts
-        return latest_total - earliest_total
+        value = 0
+        if self.regular_checks.count() > 1:
+            earliest_check = self.regular_checks.first()
+            latest_check = self.regular_checks.last()
+            earliest_total = earliest_check.total_posts
+            latest_total = latest_check.total_posts
+            value = latest_total - earliest_total
+        return value
         
     def get_total_days(self):
-        earliest_check = self.regular_checks.first()
-        latest_check = self.regular_checks.last()
-        earliest_check_date = earliest_check.date_checked
-        latest_check_date = latest_check.date_checked
-        tdiff = latest_check_date - earliest_check_date
-        days = tdiff.total_seconds() / 86400 # converts total seconds to days
-        return round(days, 2)
+        value = 0
+        if self.regular_checks.count() > 1:
+            earliest_check = self.regular_checks.first()
+            latest_check = self.regular_checks.last()
+            earliest_check_date = earliest_check.date_checked
+            latest_check_date = latest_check.date_checked
+            tdiff = latest_check_date - earliest_check_date
+            days = tdiff.total_seconds() / 86400 # converts total seconds to days
+            value = round(days, 2)
+        return value
         
     def get_total_points(self):
         latest_calc = self.points_calculations.last()
@@ -230,32 +236,30 @@ class PointsCalculation(models.Model):
     total_points = models.DecimalField(max_digits=10, decimal_places=2)
     
     def save(self, *args, **kwargs):
-        if self._state.adding == True:
-            sigcheck = self.signature_check
-            batch = self.uptime_batch
-            latest_gs = GlobalStats.objects.last()
-            # Calculate points for posts with sig
-            if batch.get_total_posts_with_sig():
-                self.post_points = decimal.Decimal(batch.get_total_posts_with_sig() * 6000) 
-                self.post_points /= latest_gs.total_posts_with_sig
-            else:
-                self.post_points = 0
-            # Calculate post days points
+        #if self._state.adding == True:
+        sigcheck = self.signature_check
+        batch = self.uptime_batch
+        latest_gs = GlobalStats.objects.last()
+        # Calculate points for posts with sig
+        self.post_points = 0
+        if batch.get_total_posts_with_sig() and latest_gs.total_posts_with_sig:
+            self.post_points = decimal.Decimal(batch.get_total_posts_with_sig() * 6000) 
+            self.post_points /= latest_gs.total_posts_with_sig
+        # Calculate post days points
+        self.post_days_points = 0
+        if batch.get_total_posts() and batch.get_total_posts_with_sig() and latest_gs.total_days:
             if batch.get_total_days():
                 self.post_days_points = decimal.Decimal(batch.get_total_days() * 3800)
                 self.post_days_points /= latest_gs.total_days
-            else:
-                self.post_days_points = 0
-            # Calculate influence points
-            if batch.get_total_posts() and batch.get_total_posts_with_sig():
-                self.influence_points = decimal.Decimal(batch.get_total_posts() * 200) 
-                self.influence_points /= latest_gs.total_posts
-            else:
-                self.influence_points = 0
-            # Calculate total points
-            self.total_points = decimal.Decimal(self.post_points)
-            self.total_points += decimal.Decimal(self.post_days_points)
-            self.total_points += decimal.Decimal(self.influence_points)
+        # Calculate influence points
+        self.influence_points = 0
+        if batch.get_total_posts() and batch.get_total_posts_with_sig() and latest_gs.total_posts:
+            self.influence_points = decimal.Decimal(batch.get_total_posts() * 200) 
+            self.influence_points /= latest_gs.total_posts
+        # Calculate total points
+        self.total_points = decimal.Decimal(self.post_points)
+        self.total_points += decimal.Decimal(self.post_days_points)
+        self.total_points += decimal.Decimal(self.influence_points)
         super(PointsCalculation, self).save(*args, **kwargs)
         
     def get_total_tokens(self):
