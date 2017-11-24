@@ -101,7 +101,7 @@ export default {
             title: 'Second Confirmation',
             text: 'Please click on the link sent to your email to complete the deletion process.',
             icon: 'warning',
-            buttons: ['Cancel', 'Delete']
+            buttons: ['Cancel', 'Ok']
           }).then((value) => {
             if (value) {
               var payload = { apiToken: this.$store.state.apiToken }

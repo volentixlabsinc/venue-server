@@ -16,7 +16,7 @@ Including another URLconf
 from venue.views import (
     frontend_app, get_user, create_user, CustomObtainAuthToken, check_profile,
     save_signature, get_site_configs, get_stats, confirm_email, delete_account, 
-    change_email, change_username
+    change_email, change_username, change_password
 )
 from venue.api import (
     ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
@@ -48,6 +48,7 @@ urlpatterns = [
     url(r'^change-email/', change_email),
     url(r'^change-username/', change_username),
     url(r'^delete-account', delete_account),
+    url(r'^change-password/', change_password),
     url(r'^authenticate/', CustomObtainAuthToken.as_view()),
 ]
 

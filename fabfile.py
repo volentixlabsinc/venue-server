@@ -21,5 +21,5 @@ def sync():
         ssh_opts='-o stricthostkeychecking=no')
 
 def restart(program):
-    with cd(BASE_DIR + '/volentix'):
+    with cd(BASE_DIR + '/volentix_venue'):
         run('supervisorctl restart ' + program)

@@ -44,7 +44,8 @@ class CustomObtainAuthToken(ObtainAuthToken):
 def get_user(request):
     data = {'found': False}
     try:
-        data = json.loads(request.body)
+        body_unicode = request.body.decode('utf-8')
+        data = json.loads(body_unicode)
         token = Token.objects.filter(key=data['token'])
         if token.exists():
             token = token.first()
@@ -60,7 +61,8 @@ def get_user(request):
     return JsonResponse(data)
     
 def create_user(request):
-    data = json.loads(request.body)
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)
     user_check = User.objects.filter(email=data['email'])
     response = {}
     try:
@@ -96,7 +98,8 @@ def confirm_email(request):
     return redirect('/#/?email_confirmed=1')
     
 def check_profile(request):
-    data = json.loads(request.body)
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)
     forum = ForumSite.objects.get(id=data['forum'])
     response = {'found': False, 'forum_id': data['forum']}
     info = get_user_position(forum.id, data['profile_url'], request.user.id)
@@ -114,7 +117,8 @@ def check_profile(request):
     return JsonResponse(response)
     
 def save_signature(request):
-    data = json.loads(request.body)
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)
     forum_profile = ForumProfile.objects.get(id=data['forum_profile_id'])
     signature = Signature.objects.get(id=data['signature_id'])
     forum_profile.signature = signature
@@ -137,7 +141,8 @@ def get_site_configs(request):
     return JsonResponse(configs)
     
 def get_stats(request):
-    data = json.loads(request.body)
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)
     stats = []
     token = Token.objects.get(key=data['apiToken'])
     fps = ForumProfile.objects.filter(user_profile__user=token.user)
@@ -159,7 +164,8 @@ def get_stats(request):
     
 def delete_account(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
+        body_unicode = request.body.decode('utf-8')
+        data = json.loads(body_unicode)
         token = Token.objects.get(key=data['apiToken'])
         code = hashids.encode(int(token.user.id))
         send_deletion_confirmation.delay(token.user.email, token.user.username, code)
@@ -173,7 +179,8 @@ def delete_account(request):
 def change_email(request):
     rtemp = RedisTemp('new_email')
     if request.method == 'POST':
-        data = json.loads(request.body)
+        body_unicode = request.body.decode('utf-8')
+        data = json.loads(body_unicode)
         token = Token.objects.get(key=data['apiToken'])
         response = {'success': False}
         email_check = User.objects.filter(email=data['email'])
@@ -196,7 +203,8 @@ def change_email(request):
         
 def change_username(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
+        body_unicode = request.body.decode('utf-8')
+        data = json.loads(body_unicode)
         token = Token.objects.get(key=data['apiToken'])
         response = {'success': False}
         username_check = User.objects.filter(username=data['username'])
@@ -211,12 +219,14 @@ def change_username(request):
         
 def change_password(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
+        body_unicode = request.body.decode('utf-8')
+        data = json.loads(body_unicode)
         token = Token.objects.get(key=data['apiToken'])
         response = {'success': False}
         try:
-            user = User.objects.filter(id=token.user_id)
+            user = User.objects.get(id=token.user_id)
             user.set_password(data['password'])
+            user.save()
             response['success'] = True
         except Exception as exc:
             response['message'] = str(exc)

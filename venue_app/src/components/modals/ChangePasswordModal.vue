@@ -41,10 +41,13 @@ export default {
     changePassword (event) {
       event.preventDefault()
       this.formSubmitted = true
-      var payload = { password: this.newPassword1 }
+      var payload = {
+        apiToken: this.$store.state.apiToken,
+        password: this.newPassword1
+      }
       axios.post('/change-password/', payload).then(response => {
         if (response.data.success) {
-          this.$refs.changeUsernameModal.hide()
+          this.$refs.changePasswordModal.hide()
           this.$swal({
             title: 'Updated Password!',
             text: 'Your password has been successfully updated.',
