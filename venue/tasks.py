@@ -137,13 +137,16 @@ def mark_master_task_complete(master_task_id):
     master_task.save()
     
 @shared_task
-def update_data():
+def update_data(forum_profile_id=None):
     # Save this data update task
     task_id = update_data.request.id
     data_update = DataUpdateTask(task_id=task_id)
     data_update.save()
     # Create a bakcground tasks workflow as a chain
-    forum_profiles = ForumProfile.objects.filter(active=True, verified=True)
+    if not forum_profile_id:
+        forum_profiles = ForumProfile.objects.filter(id__in=[forum_profile_id])
+    else:
+        forum_profiles = ForumProfile.objects.filter(active=True, verified=True)
     scraping_tasks = scrape_forum_profile.starmap([(fp.id, task_id) for fp in forum_profiles])
     workflow = chain(
         scraping_tasks, # Execute scraping tasks

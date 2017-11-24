@@ -2,8 +2,8 @@
   <!-- Login Modal -->
   <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" centered hide-footer>
     <b-form @submit="login($event)" @click="clearLoginError()">
-      <b-form-group :label="$i18n.t('username')">
-        <b-form-input v-model.trim="username" v-validate="{ required: true }" name="username" :placeholder="$i18n.t('enter_username')"></b-form-input>
+      <b-form-group :label="$i18n.t('username_or_email')">
+        <b-form-input v-model.trim="username" data-vv-as="username/email" v-validate="{ required: true }" name="username" :placeholder="$i18n.t('enter_username_or_email')"></b-form-input>
         <span v-show="errors.has('username')" class="help is-danger">
           {{ errors.first('username') }}
         </span>
@@ -58,36 +58,36 @@ export default {
     login (event) {
       event.preventDefault()
       this.formSubmitted = true
-      axios.post('/authenticate/', {
-        username: this.username,
-        password: this.password
-      }).then(response => {
-        if (response.data.email_confirmed === true) {
-          // Set user data
-          this.password = ''
-          this.setUser(response.data)
-          // Fix the authorization header for all HTTP requests
-          var authHeader = 'Token ' + this.$store.state.apiToken
-          axios.defaults.headers.common['Authorization'] = authHeader
-          // Redirect to dashboard
-          this.$router.push('/dashboard')
+      var payload = { username: this.username, password: this.password }
+      axios.post('/authenticate/', payload).then(response => {
+        if (response.data.success) {
+          if (response.data.email_confirmed === true) {
+            // Set user data
+            this.password = ''
+            this.setUser(response.data)
+            // Fix the authorization header for all HTTP requests
+            var authHeader = 'Token ' + this.$store.state.apiToken
+            axios.defaults.headers.common['Authorization'] = authHeader
+            // Redirect to dashboard
+            this.$router.push('/dashboard')
+          } else {
+            this.$swal({
+              title: 'Email Not Confirmed!',
+              text: 'You need to confirm your email before you can login.',
+              icon: 'info',
+              button: {
+                text: 'OK',
+                className: 'btn-primary',
+                closeModal: true
+              }
+            }).then((value) => {
+              window.location.href = '/'
+            })
+          }
         } else {
-          this.$swal({
-            title: 'Email Not Confirmed!',
-            text: 'You need to confirm your email before you can login.',
-            icon: 'info',
-            button: {
-              text: 'OK',
-              className: 'btn-primary',
-              closeModal: true
-            }
-          }).then((value) => {
-            window.location.href = '/'
-          })
+          this.loginError = true
+          this.formSubmitted = false
         }
-      }).catch(e => {
-        this.loginError = true
-        this.formSubmitted = false
       })
     }
   },

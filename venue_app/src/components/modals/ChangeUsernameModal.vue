@@ -49,6 +49,14 @@ export default {
             Object.assign(this.$data, this.$options.data.call(this))
             this.$validator.clean()
           })
+        } else {
+          this.$swal({
+            title: 'Update Error!',
+            text: response.data.message,
+            icon: 'error'
+          }).then(() => {
+            this.formSubmitted = false
+          })
         }
       })
     }

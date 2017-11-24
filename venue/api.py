@@ -12,7 +12,7 @@ import re
 #------------------
 # User Profiles API
 
-class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.ReadOnlyField(source='user.username')
     first_name = serializers.ReadOnlyField(source='user.first_name')
     last_name = serializers.ReadOnlyField(source='user.last_name')
@@ -36,7 +36,7 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
 #----------------
 # Forum Sites API
 
-class ForumSiteSerializer(serializers.HyperlinkedModelSerializer):
+class ForumSiteSerializer(serializers.ModelSerializer):
     used = serializers.BooleanField()
     
     class Meta:
@@ -60,7 +60,7 @@ class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
 #---------------
 # Signatures API
 
-class SignatureSerializer(serializers.HyperlinkedModelSerializer):
+class SignatureSerializer(serializers.ModelSerializer):
     user_ranks = serializers.StringRelatedField(many=True)
     
     class Meta:
@@ -112,7 +112,7 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
 #-------------------
 # Forum Profiles API
 
-class ForumProfileSerializer(serializers.HyperlinkedModelSerializer):
+class ForumProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ForumProfile
         fields = ('id', 'profile_url', 'signature', 'forum')

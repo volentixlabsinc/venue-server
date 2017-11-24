@@ -23,23 +23,29 @@ hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
 def frontend_app(request):
     return render(request, 'index.html')
     
-class CustomObtainAuthToken(ObtainAuthToken):
-    authentication_classes = (TokenAuthentication,)
-    
-    def post(self, request, *args, **kwargs):
-        response = super(CustomObtainAuthToken, self).post(request, *args, **kwargs)
-        token = Token.objects.get(key=response.data['token'])
-        data = {
+def authenticate(request):
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)
+    response = {'success': False}
+    try:
+        if '@' in data['username']:
+            user = User.objects.get(email=data['username'])
+        else:
+            user = User.objects.get(username=data['username'])
+        token, created = Token.objects.get_or_create(user=user)
+        user.last_login = timezone.now()
+        user.save()
+        response = {
+            'success': True,
             'token': token.key, 
-            'username': token.user.username, 
+            'username': user.username, 
             'email': token.user.email,
-            'user_profile_id': token.user.profiles.first().id,
-            'email_confirmed': token.user.profiles.first().email_confirmed
+            'user_profile_id': user.profiles.first().id,
+            'email_confirmed': user.profiles.first().email_confirmed
         }
-        # Update last login datetime
-        token.user.last_login = timezone.now()
-        token.user.save()
-        return Response(data)
+    except Exception as exc:
+        response['message'] = str(exc)
+    return JsonResponse(response)
         
 def get_user(request):
     data = {'found': False}
@@ -131,6 +137,9 @@ def save_signature(request):
         forum_profile.verified = True
         forum_profile.date_verified = timezone.now()
         forum_profile.save()
+        # Update the data for this newly verified forum profile
+        job = update_data.delay(forum_profile.id)
+        response['task_id'] = job.id
     else:
         response['success'] = False
         response['message'] = 'The signature could not be found in the profile page.'
