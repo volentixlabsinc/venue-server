@@ -143,7 +143,7 @@ def update_data(forum_profile_id=None):
     data_update = DataUpdateTask(task_id=task_id)
     data_update.save()
     # Create a bakcground tasks workflow as a chain
-    if not forum_profile_id:
+    if forum_profile_id:
         forum_profiles = ForumProfile.objects.filter(id__in=[forum_profile_id])
     else:
         forum_profiles = ForumProfile.objects.filter(active=True, verified=True)
@@ -153,7 +153,7 @@ def update_data(forum_profile_id=None):
         update_global_stats.si(task_id), # Execute task to update global stats
         calculate_points.si(task_id), # Execute task to calculate points
         mark_master_task_complete.si(task_id), # Mark the data update run as complete
-        database_cleanup.si() # Trigger the database cleanup task
+        #database_cleanup.si() # Trigger the database cleanup task
     )
     # Send to the workflow to the queue
     workflow.apply_async()

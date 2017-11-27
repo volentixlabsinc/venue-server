@@ -3,7 +3,7 @@
   <b-modal id="change-username-modal" :title="$i18n.t('change_username_form')" ref="changeUsernameModal" centered hide-footer>
     <b-form @submit="changeUsername($event)">
       <b-form-group :label="$i18n.t('username')">
-        <b-form-input v-model.trim="newUsername" v-validate="{ required: true }" name="username" :placeholder="$store.state.user.userName"></b-form-input>
+        <b-form-input v-model.trim="newUsername" v-validate="{ required: true }" name="username" :placeholder="$store.state.userName"></b-form-input>
         <span v-show="errors.has('username')" class="help is-danger">
           {{ errors.first('username') }}
         </span>

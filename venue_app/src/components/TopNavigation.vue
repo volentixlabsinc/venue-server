@@ -12,8 +12,8 @@
         
         <b-nav is-nav-bar class="ml-auto">
           
-          <b-nav-item v-if="$store.state.apiToken" to="/dashboard">
-            {{ $t('welcome') }} {{ $store.state.user.userName }}!
+          <b-nav-item v-if="username" to="/dashboard">
+            {{ $t('welcome') }} {{ username }}!
           </b-nav-item>
           
           <b-nav-item-dropdown :text="$i18n.t('language')" right>
@@ -73,9 +73,28 @@ export default {
     },
     setLanguage (lang) {
       this.$i18n.locale = lang
+    },
+    setUser (data) {
+      this.$store.commit('updateApiToken', data.token)
+      this.$store.commit('updateUserName', data.username)
+      this.$store.commit('updateUserEmail', data.email)
+    }
+  },
+  computed: {
+    username () {
+      return this.$store.state.userName
     }
   },
   created () {
+    if (this.$store.state.apiToken) {
+      axios.post('/get-user/', {
+        token: this.$store.state.apiToken
+      }).then(response => {
+        if (response.data.found === true) {
+          this.setUser(response.data)
+        }
+      })
+    }
     if (this.$route.query.email_confirmed === '1') {
       this.$swal({
         title: 'Email Confirmed!',

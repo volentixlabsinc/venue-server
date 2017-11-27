@@ -9,6 +9,13 @@ class BitcoinTalk(object):
     
     def __init__(self):
         self.base_url = 'https://bitcointalk.org'
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) '
+                'AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8',
+            'Host': 'bitcointalk.org',
+            'Origin': self.base_url,
+            'Referer': self.base_url
+        }
         
     def list_forum_positions(self):
         positions = [
@@ -33,7 +40,7 @@ class BitcoinTalk(object):
             profile_url = user_id
         else:
             profile_url = self.base_url + '/index.php?action=profile;u=' + str(user_id)
-        self.response = requests.get(profile_url)
+        self.response = requests.get(profile_url, headers=self.headers)
         self.soup = BeautifulSoup(self.response.content, 'html.parser')
         
     def get_total_posts(self):

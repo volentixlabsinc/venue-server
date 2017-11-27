@@ -242,6 +242,7 @@ export default {
                   if (response.data.length > 0) {
                     this.profileChecked = true
                     this.forumProfileId = response.data[0].id
+                    this.getSignatures(this.forumSite, this.forumUserPosition, response.data[0].id)
                   }
                 })
               }
@@ -255,6 +256,7 @@ export default {
                 }
                 axios.post('/api/forum-profiles/', payload).then(response => {
                   this.forumProfileId = response.data.id
+                  this.getSignatures(this.forumSite, this.forumUserPosition, response.data.id)
                 })
               } else {
                 this.$swal({
@@ -372,11 +374,6 @@ export default {
     selectedSignature: function (newSig) {
       if (newSig !== null) {
         this.$validator.validateAll()
-      }
-    },
-    profileChecked: function (newValue) {
-      if (newValue === true) {
-        this.getSignatures(this.forumSite, this.forumUserPosition, this.forumProfileId)
       }
     }
   },

@@ -4,11 +4,11 @@ from .tasks import ( verify_profile_signature,
 from venue.models import UserProfile, ForumSite, ForumProfile, Signature, ForumUserRank
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
+from venue.tasks import get_user_position, update_data
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render, redirect
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from venue.tasks import get_user_position
 from django.utils import timezone
 from django.conf import settings
 from django.http import JsonResponse
@@ -45,6 +45,8 @@ def authenticate(request):
         }
     except Exception as exc:
         response['message'] = str(exc)
+    print('hey')
+    print(response)
     return JsonResponse(response)
         
 def get_user(request):
@@ -161,7 +163,7 @@ def get_stats(request):
         fields = ['postPoints', 'postDaysPoints', 'influencePoints', 'totalPoints', 'VTX_Tokens']
         fp_data = {k: [] for k in fields}
         for batch in fp.uptime_batches.filter(active=True):
-            latest_calc = batch.regular_checks.last().points_calculations.last()
+            latest_calc = latest_check.points_calculations.last()
             fp_data['postPoints'].append(latest_calc.post_points)
             fp_data['postDaysPoints'].append(latest_calc.post_days_points)
             fp_data['influencePoints'].append(latest_calc.influence_points)

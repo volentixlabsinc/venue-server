@@ -100,7 +100,8 @@ export default {
       this.loginError = false
       this.formSubmitted = false
     }
-  },
+  }
+  /*
   created () {
     axios.post('/get-user/', {
       token: this.$store.state.apiToken
@@ -110,5 +111,6 @@ export default {
       }
     })
   }
+  */
 }
 </script>

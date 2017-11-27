@@ -8,7 +8,8 @@ export default new Vuex.Store({
   plugins: [createPersistedState()],
   state: {
     apiToken: '',
-    user: null,
+    userName: null,
+    userEmail: null,
     language: 'English',
     showLoginForm: false
   },
@@ -17,10 +18,10 @@ export default new Vuex.Store({
       state.apiToken = token
     },
     updateUserName (state, username) {
-      state.user.userName = username
+      state.userName = username
     },
     updateUserEmail (state, email) {
-      state.user.userEmail = email
+      state.userEmail = email
     },
     updateShowLoginForm (state, value) {
       state.showLoginForm = value
