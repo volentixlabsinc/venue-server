@@ -21,6 +21,7 @@ admin.site.register(ScrapingError, ScrapingErrorAdmin)
 
 class UptimeBatchAdmin(admin.ModelAdmin):
     list_display = ['user', 'forum_profile', 'batch_number', 'active', 'date_started', 'date_ended']
+    list_filter = ['forum_profile__user_profile']
     
     def user(self, obj):
         return obj.forum_profile.user_profile.user.username
@@ -34,8 +35,11 @@ class UptimeBatchAdmin(admin.ModelAdmin):
 admin.site.register(UptimeBatch, UptimeBatchAdmin)
 
 class PointsCalculationAdmin(admin.ModelAdmin):
-    list_display = ['uptime_batch', 'signature_check', 'post_points', 
+    list_display = ['uptime_batch', 'user', 'signature_check', 'post_points', 
         'post_days_points', 'influence_points', 'date_calculated']
+        
+    def user(self, obj):
+        return obj.uptime_batch.forum_profile.user_profile.user.username
         
 admin.site.register(PointsCalculation, PointsCalculationAdmin)
 
@@ -107,7 +111,7 @@ class ForumUserRankAdmin(admin.ModelAdmin):
 admin.site.register(ForumUserRank, ForumUserRankAdmin)
 
 class ForumProfileAdmin(admin.ModelAdmin):
-    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_rank', 'verified', 'active']
+    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_rank', 'verified']
     
 admin.site.register(ForumProfile, ForumProfileAdmin)
 

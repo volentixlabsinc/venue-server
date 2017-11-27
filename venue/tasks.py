@@ -33,7 +33,7 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
         sigcheck.save()
     except Exception as exc:
         if master_task_id:
-            data_update = DataUpdateTask(task_id=master_task_id)
+            data_update = DataUpdateTask.objects.get(task_id=master_task_id)
             scrape_error = ScrapingError(
                 error_type=type(exc).__name__,
                 forum=forum_profile.forum, 
@@ -133,7 +133,10 @@ def database_cleanup():
 def mark_master_task_complete(master_task_id):
     master_task = DataUpdateTask.objects.get(task_id=master_task_id)
     master_task.date_completed = timezone.now()
-    master_task.success = True
+    if master_task.scraping_errors.count():
+        master_task.success = False
+    else:
+        master_task.success = True
     master_task.save()
     
 @shared_task

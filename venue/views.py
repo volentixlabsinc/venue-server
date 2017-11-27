@@ -160,18 +160,24 @@ def get_stats(request):
     token = Token.objects.get(key=data['apiToken'])
     fps = ForumProfile.objects.filter(user_profile__user=token.user, verified=True)
     for fp in fps:
-        fields = ['postPoints', 'postDaysPoints', 'influencePoints', 'totalPoints', 'VTX_Tokens']
+        fields = ['postPoints', 'totalPostsWithSig', 'postDaysPoints', 'totalPostDays',
+            'influencePoints', 'totalPosts', 'totalPoints', 'VTX_Tokens']
         fp_data = {k: [] for k in fields}
         for batch in fp.uptime_batches.filter(active=True):
+            latest_check = batch.regular_checks.last()
             latest_calc = latest_check.points_calculations.last()
             fp_data['postPoints'].append(latest_calc.post_points)
+            fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
             fp_data['postDaysPoints'].append(latest_calc.post_days_points)
+            fp_data['totalPostDays'].append(batch.get_total_days())
             fp_data['influencePoints'].append(latest_calc.influence_points)
+            fp_data['totalPosts'].append(batch.get_total_posts())
             fp_data['totalPoints'].append(latest_calc.total_points)
             fp_data['VTX_Tokens'].append(latest_calc.get_total_tokens())
         sum_up_data = {k:  '{:,}'.format(sum(v)) for k,v in fp_data.items()}
         sum_up_data['User_ID'] = fp.forum_user_id
         sum_up_data['forumSite'] = fp.forum.name
+        sum_up_data['_showDetails'] = False
         stats.append(sum_up_data)
     return JsonResponse({'status': 'success', 'stats': stats})
     

@@ -7,7 +7,27 @@
     </b-row>
     <b-row style="margin-top: 16px;">
       <b-col>
-        <b-table v-if="stats.length > 0" bordered hover :items="stats" :fields="statsFields"></b-table>
+        <b-table v-if="stats.length > 0" bordered hover :items="stats" :fields="statsFields">
+          <template slot="show_details" scope="row">
+            <b-form-checkbox v-model="row.item._showDetails"></b-form-checkbox>
+          </template>
+          <template slot="row-details" scope="row">
+            <b-card>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Total posts:</b></b-col>
+                <b-col>{{ row.item.totalPosts }}</b-col>
+              </b-row>
+              <b-row>
+                <b-col sm="3" class="text-sm-right"><b>Posts since signature was used:</b></b-col>
+                <b-col>{{ row.item.totalPostsWithSig }}</b-col>
+              </b-row>
+              <b-row>
+                <b-col sm="3" class="text-sm-right"><b>Days since signature was used:</b></b-col>
+                <b-col>{{ row.item.totalPostDays }}</b-col>
+              </b-row>
+            </b-card>
+          </template>
+        </b-table>
       </b-col>
     </b-row>
   </div>
@@ -28,7 +48,8 @@ export default {
         {key: 'postDaysPoints', sortable: true},
         {key: 'influencePoints', sortable: true},
         {key: 'totalPoints', sortable: true},
-        {key: 'VTX_Tokens', sortable: true}
+        {key: 'VTX_Tokens', sortable: true},
+        'show_details'
       ],
       stats: []
     }

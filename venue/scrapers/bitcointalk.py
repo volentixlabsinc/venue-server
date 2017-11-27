@@ -101,6 +101,7 @@ class BitcoinTalk(object):
         sig_found = False
         if links_verified and code_verified:
             sig_found = True
+        print(links_verified, vcode, code_verified)
         return sig_found
         
 def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode=False):

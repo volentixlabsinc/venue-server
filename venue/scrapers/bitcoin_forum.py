@@ -19,15 +19,15 @@ class BitcoinForum(object):
         
     def list_forum_positions(self):
         positions = [
-            'Founder',
-            'Site Admin',
-            'Junior Mod',
-            'Global Moderator',
             'Nickel Bitcoiner',
             'Bronze Bitcoiner',
             'Silver Bitcoiner',
             'Gold Bitcoiner',
-            'Platinum Bitcoiner'
+            'Platinum Bitcoiner',
+            'Junior Mod',
+            'Global Moderator',
+            'Site Admin',
+            'Founder'
         ]
         return positions
         
@@ -74,7 +74,10 @@ class BitcoinForum(object):
         position = 'No rank'
         elem = self.soup.select('div.bg1 dl.left-box dd')
         if elem:
-            position = elem[1].img.attrs['title']
+            try:
+                position = elem[1].img.attrs['title']
+            except AttributeError:
+                pass
         if not position:
             details = {}
             dt_keys = self.soup.select('div.bg1 dl.profile-details dt')
@@ -119,11 +122,11 @@ class BitcoinForum(object):
             if links:
                 links = [x.attrs['href'] for x in links]
             else:
-                links = sig.text.strip().splitlines() 
+                links = sig_div[0].text.strip().splitlines() 
             links_verified, vcode = self.verify_links(links, self.expected_links)
+            code_verified = False
             if vcode:
                 code_verified = self.verify_code(vcode.strip(), self.forum_profile_id, self.forum_user_id)
-            code_verified = False
             if links_verified and code_verified:
                 sig_found = True
         return sig_found
