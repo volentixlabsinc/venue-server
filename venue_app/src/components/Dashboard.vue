@@ -72,7 +72,7 @@
                       <b-col>{{ batch.totalPostsWithSig }}</b-col>
                     </b-row>
                     <b-row>
-                      <b-col sm="9">Days since signature was found:</b-col>
+                      <b-col sm="9" class="mb-2">Days since signature was found:</b-col>
                       <b-col>{{ batch.totalPostDays }}</b-col>
                     </b-row>
                   </div>

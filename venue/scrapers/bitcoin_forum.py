@@ -15,6 +15,7 @@ class BitcoinForum(object):
             'Referer': self.login_url
         }
         self.cookies = {}
+        self.status_code = None
         self.login(username, password)
         
     def list_forum_positions(self):
@@ -47,6 +48,7 @@ class BitcoinForum(object):
     
     def login(self, username, password):
         resp = self.send_get(self.login_url)
+        self.status_code = resp.status_code
         payload = {
             'username': username,
             'password': password,
@@ -143,13 +145,13 @@ def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
     scraper.get_profile(forum_user_id)
     if test_mode:
-        data = (True, scraper.get_total_posts())
+        data = (scraper.status_code, True, scraper.get_total_posts())
     else:
         verified = scraper.check_signature()
         posts = 0
         if verified:
             posts = scraper.get_total_posts()
-        data = (verified, posts)
+        data = (scraper.status_code, verified, posts)
     return data
     
 def get_user_position(forum_user_id, credentials=None):

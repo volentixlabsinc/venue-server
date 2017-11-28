@@ -232,7 +232,8 @@ class SignatureCheck(models.Model):
             batches = self.forum_profile.uptime_batches.filter(active=True)
             latest_batch = batches.last()
             init_check = latest_batch.regular_checks.filter(initial=True).last()
-            if self.total_posts <= init_check.total_posts:
+            sc = SignatureCheck.objects.get(id=self.id)
+            if sc.total_posts <= init_check.total_posts:
                 SignatureCheck.objects.filter(id=self.id).update(initial=True)
 
 class PointsCalculation(models.Model):
@@ -269,7 +270,6 @@ class PointsCalculation(models.Model):
                 # inactive batches in the batch's forum profile
                 sum_total_days = batch.get_total_days()
                 for item in self.uptime_batch.forum_profile.uptime_batches.filter(active=False):
-                    print(item.id, item.get_total_days())
                     sum_total_days += item.get_total_days()
                 # Ready to calculate the post days points
                 self.post_days_points = decimal.Decimal(sum_total_days * 3800)

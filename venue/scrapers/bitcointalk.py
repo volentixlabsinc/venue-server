@@ -16,6 +16,7 @@ class BitcoinTalk(object):
             'Origin': self.base_url,
             'Referer': self.base_url
         }
+        self.status_code = None
         
     def list_forum_positions(self):
         positions = [
@@ -41,14 +42,15 @@ class BitcoinTalk(object):
         else:
             profile_url = self.base_url + '/index.php?action=profile;u=' + str(user_id)
         self.response = requests.get(profile_url, headers=self.headers)
+        self.status_code = self.response.status_code
         self.soup = BeautifulSoup(self.response.content, 'html.parser')
         
     def get_total_posts(self):
         row = self.soup.select('div#bodyarea tr')[4]
-        if 'Posts' in row.text:
-            return int(row.text.split()[-1])
-        else:
-            raise ScraperError('Cannot get total posts')
+        #if 'Posts' in row.text:
+        return int(row.text.split()[-1])
+        #else:
+        #    raise ScraperError('Cannot get total posts')
             
     def get_user_position(self):
         try:
@@ -101,7 +103,6 @@ class BitcoinTalk(object):
         sig_found = False
         if links_verified and code_verified:
             sig_found = True
-        print(links_verified, vcode, code_verified)
         return sig_found
         
 def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode=False):
@@ -109,13 +110,13 @@ def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
     scraper.get_profile(forum_user_id)
     if test_mode:
-        data = (True, scraper.get_total_posts())
+        data = (scraper.status_code, True, scraper.get_total_posts())
     else:
         verified = scraper.check_signature()
         posts = 0
         if verified:
             posts = scraper.get_total_posts()
-        data = (verified, posts)
+        data = (scraper.status_code, verified, posts)
     return data
     
 def get_user_position(forum_user_id):

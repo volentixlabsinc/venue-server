@@ -96,7 +96,7 @@ class UserProfileAdmin(admin.ModelAdmin):
         return obj.get_total_posts_with_sig()
         
     def total_post_days(self, obj):
-        return obj.get_total_days()
+        return round(obj.get_total_days(), 2)
         
     def total_points(self, obj):
         return obj.get_total_points()

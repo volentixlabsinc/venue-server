@@ -20,17 +20,18 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     try:
         scraper = load_scraper(forum_profile.forum.scraper_name)
-        signature_found, total_posts = scraper.verify_and_scrape(
+        status_code, signature_found, total_posts = scraper.verify_and_scrape(
             forum_profile.id,
             forum_profile.forum_user_id,
             forum_profile.signature.expected_links.splitlines(),
             test_mode=config.TEST_MODE)
-        sigcheck = SignatureCheck(
-            forum_profile=forum_profile,
-            total_posts=total_posts,
-            signature_found=signature_found
-        )
-        sigcheck.save()
+        if status_code == 200:
+            sigcheck = SignatureCheck(
+                forum_profile=forum_profile,
+                total_posts=total_posts,
+                signature_found=signature_found
+            )
+            sigcheck.save()
     except Exception as exc:
         if master_task_id:
             data_update = DataUpdateTask.objects.get(task_id=master_task_id)
@@ -89,9 +90,15 @@ def update_global_stats(master_task_id):
     total_posts_with_sig = 0
     total_days = 0
     for user in users:
-        total_posts += user.get_total_posts()
-        total_posts_with_sig += user.get_total_posts_with_sig()
-        total_days += user.get_total_days()
+        fps = user.forum_profiles.all()
+        for fp in fps:
+            latest_batch = fp.uptime_batches.last()
+            if latest_batch.active:
+                if latest_batch.get_total_posts_with_sig():
+                    total_posts += latest_batch.get_total_posts()
+                    for batch in fp.uptime_batches.all():
+                        total_posts_with_sig += batch.get_total_posts_with_sig()
+                        total_days += batch.get_total_days()
     gstats = GlobalStats(
         total_posts=total_posts,
         total_posts_with_sig=total_posts_with_sig,

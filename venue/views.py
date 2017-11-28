@@ -180,12 +180,18 @@ def get_stats(request):
         sum_up_data['forumUserId'] = fp.forum_user_id
         sum_up_data['forumUserRank'] = fp.forum_rank.name
         sum_up_data['_showDetails'] = False
-        batch_ids = list(fp.uptime_batches.order_by('-id').values_list('id', flat=True))
+        batch_ids = []
+        for item in fp.uptime_batches.all().order_by('-id'):
+            if item.active:
+                batch_ids.append(int(item.id))
+            else:
+                if item.get_total_posts_with_sig():
+                    batch_ids.append(int(item.id))
         sum_up_data['currentUptimeBatch'] = len(batch_ids)
         if len(batch_ids) > 1:
             sum_up_data['hasPreviousBatches'] = True
             sum_up_data['previousBatches'] = []
-            for i, item in enumerate(batch_ids[1:], 1):
+            for i, item in enumerate(batch_ids[1:][::-1], 1):
                 batch_obj = UptimeBatch.objects.get(id=item)
                 data = {
                     'batch': i,
