@@ -13,17 +13,70 @@
           </template>
           <template slot="row-details" scope="row">
             <b-card>
-              <b-row class="mb-2">
-                <b-col sm="3" class="text-sm-right"><b>Total posts:</b></b-col>
-                <b-col>{{ row.item.totalPosts }}</b-col>
-              </b-row>
               <b-row>
-                <b-col sm="3" class="text-sm-right"><b>Posts since signature was used:</b></b-col>
-                <b-col>{{ row.item.totalPostsWithSig }}</b-col>
-              </b-row>
-              <b-row>
-                <b-col sm="3" class="text-sm-right"><b>Days since signature was used:</b></b-col>
-                <b-col>{{ row.item.totalPostDays }}</b-col>
+                <b-col sm="4">
+                  <b-row class="mb-2">
+                    <b-col>
+                      <b>Profile details</b>
+                    </b-col>
+                  </b-row>
+                  <b-row>
+                    <b-col sm="5">Forum:</b-col>
+                    <b-col>{{ row.item.forumSite }}</b-col>
+                  </b-row>
+                  <b-row>
+                    <b-col sm="5">User ID:</b-col>
+                    <b-col>{{ row.item.forumUserId }}</b-col>
+                  </b-row>
+                  <b-row>
+                    <b-col sm="5">Rank:</b-col>
+                    <b-col>{{ row.item.forumUserRank }}</b-col>
+                  </b-row>
+                  <b-row>
+                    <b-col sm="5">Total posts:</b-col>
+                    <b-col>{{ row.item.totalPosts }}</b-col>
+                  </b-row>
+                </b-col>
+                <b-col>
+                  <b-row class="mb-2">
+                    <b-col>
+                      <b>Credits for the current uptime batch</b>
+                    </b-col>
+                  </b-row>
+                  <b-row>
+                    <b-col sm="9">Batch number:</b-col>
+                    <b-col>{{ row.item.currentUptimeBatch }}</b-col>
+                  </b-row>
+                  <b-row>
+                    <b-col sm="9">Posts since signature was found:</b-col>
+                    <b-col>{{ row.item.totalPostsWithSig }}</b-col>
+                  </b-row>
+                  <b-row>
+                    <b-col sm="9">Days since signature was found:</b-col>
+                    <b-col>{{ row.item.totalPostDays }}</b-col>
+                  </b-row>
+                </b-col>
+                <b-col>
+                  <b-row v-if="row.item.hasPreviousBatches" class="mb-2">
+                    <b-col>
+                      <b>Credits from previous uptime batches</b>
+                    </b-col>
+                  </b-row>
+                  <div v-for="batch in row.item.previousBatches">
+                    <b-row>
+                      <b-col sm="9">Batch number:</b-col>
+                      <b-col>{{ batch.batch }}</b-col>
+                    </b-row>
+                    <b-row>
+                      <b-col sm="9">Posts since signature was found:</b-col>
+                      <b-col>{{ batch.totalPostsWithSig }}</b-col>
+                    </b-row>
+                    <b-row>
+                      <b-col sm="9">Days since signature was found:</b-col>
+                      <b-col>{{ batch.totalPostDays }}</b-col>
+                    </b-row>
+                  </div>
+                </b-col>
               </b-row>
             </b-card>
           </template>

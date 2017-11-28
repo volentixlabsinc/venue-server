@@ -37,6 +37,7 @@ admin.site.register(UptimeBatch, UptimeBatchAdmin)
 class PointsCalculationAdmin(admin.ModelAdmin):
     list_display = ['uptime_batch', 'user', 'signature_check', 'post_points', 
         'post_days_points', 'influence_points', 'date_calculated']
+    list_filter = ['uptime_batch__forum_profile__user_profile']
         
     def user(self, obj):
         return obj.uptime_batch.forum_profile.user_profile.user.username
@@ -50,7 +51,8 @@ admin.site.register(GlobalStats, GlobalStatsAdmin)
 
 class SignatureCheckAdmin(admin.ModelAdmin):
     list_display = ['user', 'forum_profile', 
-        'uptime_batch', 'total_posts', 'signature_found', 'date_checked']
+        'uptime_batch', 'total_posts', 'signature_found', 'date_checked', 'initial']
+    list_filter = ['forum_profile__user_profile']
         
     def user(self, obj):
         return obj.uptime_batch.forum_profile.user_profile.user.username
@@ -77,7 +79,7 @@ class UserProfileAdmin(admin.ModelAdmin):
             {'name': 'Total Users', 'value': user_profiles.count()},
             {'name': 'Total Posts', 'value': int(sum_posts)},
             {'name': 'Total Posts With Sig', 'value': int(sum_posts_with_sig)},
-            {'name': 'Total Post Days', 'value': int(sum_post_days)},
+            {'name': 'Total Post Days', 'value': round(sum_post_days, 2)},
             {'name': 'Total Points', 'value': int(sum_points)},
             {'name': 'Total VTX', 'value': int(round(sum_vtx, 0))}
         ]

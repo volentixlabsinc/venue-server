@@ -91,6 +91,10 @@ export default {
               text: 'OK',
               className: 'btn-primary'
             }
+          }).then(() => {
+            Object.assign(this.$data, this.$options.data.call(this))
+            this.$validator.clean()
+            this.$refs.signUpModal.hide()
           })
         }
       }).catch(e => {

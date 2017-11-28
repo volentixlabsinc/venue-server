@@ -67,7 +67,8 @@ export default {
   methods: {
     logout () {
       this.$store.commit('updateApiToken', '')
-      this.$store.commit('updateUser', null)
+      this.$store.commit('updateUserEmail', null)
+      this.$store.commit('updateUserName', null)
       axios.defaults.headers.common['Authorization'] = ''
       this.$router.push('/')
     },

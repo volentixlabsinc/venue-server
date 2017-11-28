@@ -101,16 +101,5 @@ export default {
       this.formSubmitted = false
     }
   }
-  /*
-  created () {
-    axios.post('/get-user/', {
-      token: this.$store.state.apiToken
-    }).then(response => {
-      if (response.data.found === true) {
-        this.setUser(response.data)
-      }
-    })
-  }
-  */
 }
 </script>

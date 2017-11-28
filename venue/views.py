@@ -1,7 +1,7 @@
 from .tasks import ( verify_profile_signature, 
     send_email_confirmation, send_deletion_confirmation, 
     send_email_change_confirmation)
-from venue.models import UserProfile, ForumSite, ForumProfile, Signature, ForumUserRank
+from venue.models import UserProfile, ForumSite, ForumProfile, Signature, ForumUserRank, UptimeBatch
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from venue.tasks import get_user_position, update_data
@@ -177,7 +177,22 @@ def get_stats(request):
         sum_up_data = {k:  '{:,}'.format(sum(v)) for k,v in fp_data.items()}
         sum_up_data['User_ID'] = fp.forum_user_id
         sum_up_data['forumSite'] = fp.forum.name
+        sum_up_data['forumUserId'] = fp.forum_user_id
+        sum_up_data['forumUserRank'] = fp.forum_rank.name
         sum_up_data['_showDetails'] = False
+        batch_ids = list(fp.uptime_batches.order_by('-id').values_list('id', flat=True))
+        sum_up_data['currentUptimeBatch'] = len(batch_ids)
+        if len(batch_ids) > 1:
+            sum_up_data['hasPreviousBatches'] = True
+            sum_up_data['previousBatches'] = []
+            for i, item in enumerate(batch_ids[1:], 1):
+                batch_obj = UptimeBatch.objects.get(id=item)
+                data = {
+                    'batch': i,
+                    'totalPostsWithSig': batch_obj.get_total_posts_with_sig(),
+                    'totalPostDays': batch_obj.get_total_days()
+                }
+                sum_up_data['previousBatches'].append(data)
         stats.append(sum_up_data)
     return JsonResponse({'status': 'success', 'stats': stats})
     
