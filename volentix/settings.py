@@ -154,7 +154,7 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULE = {
     'update-data-every-10-minutes': {
         'task': 'venue.tasks.update_data',
-        'schedule': 120 # seconds
+        'schedule': 180 # seconds
     }
 }
 

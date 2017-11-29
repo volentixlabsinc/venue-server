@@ -4,6 +4,9 @@
       <b-col>
         <h2>{{ $t('dashboard') }}</h2>
       </b-col>
+      <b-col style="text-align: right;">
+        <b-button variant="primary" v-b-modal.leaderboard-modal>Show Leaderboard</b-button>
+      </b-col>
     </b-row>
     <b-row style="margin-top: 16px;">
       <b-col>
@@ -83,14 +86,17 @@
         </b-table>
       </b-col>
     </b-row>
+    <leaderboard-modal></leaderboard-modal>
   </div>
 </template>
 
 <script>
+import LeaderboardModal from '@/components/modals/LeaderboardModal'
 import axios from 'axios'
 
 export default {
   name: 'Dashboard',
+  components: { LeaderboardModal },
   data () {
     return {
       showPage: false,

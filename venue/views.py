@@ -45,8 +45,6 @@ def authenticate(request):
         }
     except Exception as exc:
         response['message'] = str(exc)
-    print('hey')
-    print(response)
     return JsonResponse(response)
         
 def get_user(request):
@@ -271,3 +269,6 @@ def change_password(request):
         except Exception as exc:
             response['message'] = str(exc)
         return JsonResponse(response)
+        
+def reset_password(request):
+    return JsonResponse({'success': True})

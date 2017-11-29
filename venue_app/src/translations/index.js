@@ -29,7 +29,9 @@ const messages = {
     'change_email_form': 'Change Email Form',
     'change_username_form': 'Change Username Form',
     'change_password_form': 'Change Password Form',
-    'delete_account_form': 'Delete Account Form'
+    'delete_account_form': 'Delete Account Form',
+    'send_reset_link': 'Send Reset Link',
+    'leaderboard': 'Leaderboard'
   },
   'fr': {
     'username': "Nom d'utilisateur",

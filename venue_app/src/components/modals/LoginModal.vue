@@ -1,6 +1,6 @@
 <template>
   <!-- Login Modal -->
-  <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" centered hide-footer>
+  <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" centered>
     <b-form @submit="login($event)" @click="clearLoginError()">
       <b-form-group :label="$i18n.t('username_or_email')">
         <b-form-input v-model.trim="username" data-vv-as="username/email" v-validate="{ required: true }" name="username" :placeholder="$i18n.t('enter_username_or_email')"></b-form-input>
@@ -22,6 +22,20 @@
         </span>
       </b-form-group>
     </b-form>
+    <div slot="modal-footer" class="w-100">
+      <p class="float-left" v-if="!resetPassswordMessage">
+        <a @click="togglePasswordResetForm()" href="#">Forgot password?</a>
+      </p>
+      <b-alert v-if="resetPassswordMessage" show>{{ resetPassswordMessage }}</b-alert>
+      <b-input-group v-if="showPasswordResetForm">
+        <b-form-input type="email" v-model.trim="resetPasswordEmail" name="resetPasswordEmail" :placeholder="$i18n.t('enter_email')"></b-form-input>
+        <b-input-group-button>
+          <b-btn @click="resetPassword()" :disabled="!resetPasswordEmail.length">
+            {{ $t('send_reset_link') }}
+          </b-btn>
+        </b-input-group-button>
+      </b-input-group>
+    </div>
   </b-modal>
 </template>
 
@@ -35,7 +49,10 @@ export default {
       username: '',
       password: '',
       loginError: false,
-      formSubmitted: false
+      formSubmitted: false,
+      showPasswordResetForm: false,
+      resetPasswordEmail: '',
+      resetPassswordMessage: ''
     }
   },
   computed: {
@@ -89,6 +106,20 @@ export default {
           this.formSubmitted = false
         }
       })
+    },
+    togglePasswordResetForm () {
+      this.showPasswordResetForm = !this.showPasswordResetForm
+    },
+    resetPassword () {
+      if (this.resetPasswordEmail) {
+        var payload = {'email': this.resetPasswordEmail}
+        axios.post('/reset-password/', payload).then(response => {
+          if (response.data.success) {
+            this.showPasswordResetForm = false
+            this.resetPassswordMessage = 'Please click on the reset button in the email we sent.'
+          }
+        })
+      }
     }
   },
   watch: {
