@@ -21,7 +21,7 @@ admin.site.register(ScrapingError, ScrapingErrorAdmin)
 
 class UptimeBatchAdmin(admin.ModelAdmin):
     list_display = ['user', 'forum_profile', 'batch_number', 'active', 'date_started', 'date_ended']
-    list_filter = ['forum_profile__user_profile']
+    list_filter = ['forum_profile', 'forum_profile__user_profile']
     
     def user(self, obj):
         return obj.forum_profile.user_profile.user.username
@@ -35,12 +35,15 @@ class UptimeBatchAdmin(admin.ModelAdmin):
 admin.site.register(UptimeBatch, UptimeBatchAdmin)
 
 class PointsCalculationAdmin(admin.ModelAdmin):
-    list_display = ['uptime_batch', 'user', 'signature_check', 'post_points', 
+    list_display = ['id', 'uptime_batch', 'forum_profile', 'user', 'signature_check', 'post_points', 
         'post_days_points', 'influence_points', 'date_calculated']
-    list_filter = ['uptime_batch__forum_profile__user_profile']
+    list_filter = ['uptime_batch__forum_profile', 'uptime_batch__forum_profile__user_profile']
         
     def user(self, obj):
         return obj.uptime_batch.forum_profile.user_profile.user.username
+    
+    def forum_profile(self, obj):
+        return obj.uptime_batch.forum_profile
         
 admin.site.register(PointsCalculation, PointsCalculationAdmin)
 
@@ -50,9 +53,9 @@ class GlobalStatsAdmin(admin.ModelAdmin):
 admin.site.register(GlobalStats, GlobalStatsAdmin)
 
 class SignatureCheckAdmin(admin.ModelAdmin):
-    list_display = ['user', 'forum_profile', 
+    list_display = ['id', 'user', 'forum_profile', 
         'uptime_batch', 'total_posts', 'signature_found', 'date_checked', 'initial']
-    list_filter = ['forum_profile__user_profile']
+    list_filter = ['forum_profile', 'forum_profile__user_profile']
         
     def user(self, obj):
         return obj.uptime_batch.forum_profile.user_profile.user.username
@@ -113,7 +116,17 @@ class ForumUserRankAdmin(admin.ModelAdmin):
 admin.site.register(ForumUserRank, ForumUserRankAdmin)
 
 class ForumProfileAdmin(admin.ModelAdmin):
-    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_rank', 'verified']
+    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_rank', 'verified',
+        'total_posts', 'total_posts_with_sig', 'total_days']
+        
+    def total_posts(self, obj):
+        return obj.get_total_posts()
+        
+    def total_posts_with_sig(self, obj):
+        return obj.get_total_posts_with_sig()
+        
+    def total_days(self, obj):
+        return obj.get_total_days()
     
 admin.site.register(ForumProfile, ForumProfileAdmin)
 

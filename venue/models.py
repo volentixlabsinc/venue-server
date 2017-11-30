@@ -52,32 +52,39 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
         
-    def get_total_posts_with_sig(self):
-        total_per_forum = []
-        for site in self.forum_profiles.filter(verified=True):
-            if site.uptime_batches.filter(active=True).count():
-                for batch in site.uptime_batches.all():
-                    total_per_forum.append(batch.get_total_posts_with_sig())
-        return sum(total_per_forum)
-        
     def get_total_posts(self):
         value = 0
         if self.get_total_posts_with_sig():
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
-                if site.uptime_batches.filter(active=True).count():
-                    latest_batch = site.uptime_batches.filter(active=True).last()
+                if site.uptime_batches.count():
+                    latest_batch = site.uptime_batches.last()
                     if latest_batch:
-                        total_per_forum.append(latest_batch.get_total_posts())
+                        increment = False
+                        if site.uptime_batches.count() > 1:
+                            increment = True
+                        else:
+                            if latest_batch.get_total_posts_with_sig():
+                                increment = True
+                        if increment:
+                            total_per_forum.append(latest_batch.get_total_posts())
             value = sum(total_per_forum)
         return value
+        
+    def get_total_posts_with_sig(self):
+        total_per_forum = []
+        for site in self.forum_profiles.filter(verified=True):
+            if site.uptime_batches.count():
+                for batch in site.uptime_batches.all():
+                    total_per_forum.append(batch.get_total_posts_with_sig())
+        return sum(total_per_forum)
         
     def get_total_days(self):
         value = 0
         if self.get_total_posts_with_sig():
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
-                if site.uptime_batches.filter(active=True).count():
+                if site.uptime_batches.count():
                     for batch in site.uptime_batches.all():
                         total_per_forum.append(batch.get_total_days())
             value = sum(total_per_forum)
@@ -88,7 +95,7 @@ class UserProfile(models.Model):
         if self.get_total_posts_with_sig():
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
-                for batch in site.uptime_batches.filter(active=True):
+                for batch in site.uptime_batches.all():
                     uptime_points = batch.get_total_points()
                     total_per_forum.append(uptime_points)
             value = sum(total_per_forum)
@@ -113,6 +120,22 @@ class ForumProfile(models.Model):
     date_verified = models.DateTimeField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
     date_updated = models.DateTimeField(default=timezone.now)
+    
+    def get_total_posts(self):
+        latest_batch = self.uptime_batches.last()
+        return latest_batch.get_total_posts()
+        
+    def get_total_posts_with_sig(self):
+        value = 0
+        if self.uptime_batches.count():
+            value = sum([x.get_total_posts_with_sig() for x in self.uptime_batches.all()])
+        return value
+        
+    def get_total_days(self):
+        value = 0
+        if self.uptime_batches.count():
+            value = sum([x.get_total_days() for x in self.uptime_batches.all()])
+        return value
     
     def __str__(self):
         return '%s @ %s' % (self.forum_user_id, self.forum.name)
@@ -154,7 +177,8 @@ class UptimeBatch(models.Model):
         
     def get_batch_number(self):
         batch_ids = self.forum_profile.uptime_batches.all().values_list('id', flat=True)
-        return list(batch_ids).index(self.id) + 1
+        batch_ids = list(batch_ids)
+        return sorted(batch_ids).index(self.id) + 1
         
     def get_total_posts(self):
         latest_check = self.regular_checks.last()
@@ -188,9 +212,6 @@ class UptimeBatch(models.Model):
             return latest_calc.total_points
         else:
             return 0
-        
-    def get_first_check(self):
-        return self.regular_checks.first()
 
 class SignatureCheck(models.Model):
     """ Results of regular scraping from forum profile pages """
@@ -206,10 +227,10 @@ class SignatureCheck(models.Model):
     
     def save(self, *args, **kwargs):
         proceed_save = False
+        batches = self.forum_profile.uptime_batches.all()
         if self._state.adding == True:
             # Automatically assign to old or new uptime batch
-            batches = self.forum_profile.uptime_batches.filter(active=True)
-            if batches.count():
+            if batches.filter(active=True).count():
                 latest_batch = batches.last()
                 if self.signature_found:
                     self.uptime_batch = latest_batch
@@ -225,11 +246,16 @@ class SignatureCheck(models.Model):
                     self.uptime_batch = batch
                     self.initial = True
                     proceed_save = True
+                else:
+                    latest_batch = batches.last()
+                    self.uptime_batch = latest_batch
+                    # Copy the total post of the last regular check
+                    self.total_posts = latest_batch.regular_checks.last().total_posts
+                    proceed_save = True
         else:
             proceed_save = True
         if proceed_save:
             super(SignatureCheck, self).save(*args, **kwargs)
-            batches = self.forum_profile.uptime_batches.filter(active=True)
             latest_batch = batches.last()
             init_check = latest_batch.regular_checks.filter(initial=True).last()
             sc = SignatureCheck.objects.get(id=self.id)
@@ -256,8 +282,8 @@ class PointsCalculation(models.Model):
         if batch.get_total_posts_with_sig() and latest_gs.total_posts_with_sig:
             # Get the sum of the posts with sig for the current batch and for all the 
             # inactive batches in the batch's forum profile
-            sum_posts_with_sig = batch.get_total_posts_with_sig()
-            for item in self.uptime_batch.forum_profile.uptime_batches.filter(active=False):
+            sum_posts_with_sig = 0 #batch.get_total_posts_with_sig()
+            for item in self.uptime_batch.forum_profile.uptime_batches.all():
                 sum_posts_with_sig += item.get_total_posts_with_sig()
             # Now ready to compute the post points
             self.post_points = decimal.Decimal(sum_posts_with_sig * 6000) 
@@ -268,8 +294,8 @@ class PointsCalculation(models.Model):
             if batch.get_total_days():
                 # Get the sum of the total days for the current batch and for all the 
                 # inactive batches in the batch's forum profile
-                sum_total_days = batch.get_total_days()
-                for item in self.uptime_batch.forum_profile.uptime_batches.filter(active=False):
+                sum_total_days = 0 #batch.get_total_days()
+                for item in self.uptime_batch.forum_profile.uptime_batches.all():
                     sum_total_days += item.get_total_days()
                 # Ready to calculate the post days points
                 self.post_days_points = decimal.Decimal(sum_total_days * 3800)

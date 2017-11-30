@@ -92,14 +92,19 @@ def update_global_stats(master_task_id):
     for user in users:
         fps = user.forum_profiles.all()
         for fp in fps:
-            latest_batch = fp.uptime_batches.last()
-            if latest_batch:
-                if latest_batch.active:
+            if fp.uptime_batches.count():
+                latest_batch = fp.uptime_batches.last()
+                increment = False
+                if fp.uptime_batches.count() > 1:
+                    increment = True
+                else:
                     if latest_batch.get_total_posts_with_sig():
-                        total_posts += latest_batch.get_total_posts()
-                        for batch in fp.uptime_batches.all():
-                            total_posts_with_sig += batch.get_total_posts_with_sig()
-                            total_days += batch.get_total_days()
+                        increment = True
+                if increment:
+                    total_posts += latest_batch.get_total_posts()
+                for batch in fp.uptime_batches.all():
+                    total_posts_with_sig += batch.get_total_posts_with_sig()
+                    total_days += batch.get_total_days()
     gstats = GlobalStats(
         total_posts=total_posts,
         total_posts_with_sig=total_posts_with_sig,
@@ -109,15 +114,17 @@ def update_global_stats(master_task_id):
     
 @shared_task
 def calculate_points(master_task_id):
-    batches = UptimeBatch.objects.filter(active=True)
+    batches = UptimeBatch.objects.all()
     for batch in batches:
-        for check in batch.regular_checks.all():
-            if not check.points_calculations.count():
-                calc = PointsCalculation(
-                    uptime_batch=batch,
-                    signature_check=check
-                )
-                calc.save()
+        latest_check = batch.regular_checks.last()
+        calc = PointsCalculation(
+            uptime_batch=batch,
+            signature_check=latest_check
+        )
+        calc.save()
+        #for check in batch.regular_checks.all():
+        #    #latest_check = 
+        #    #if not check.points_calculations.count():
                 
 @shared_task
 def database_cleanup():

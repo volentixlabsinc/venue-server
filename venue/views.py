@@ -162,41 +162,43 @@ def get_stats(request):
         fields = ['postPoints', 'totalPostsWithSig', 'postDaysPoints', 'totalPostDays',
             'influencePoints', 'totalPosts', 'totalPoints', 'VTX_Tokens']
         fp_data = {k: [] for k in fields}
-        for batch in fp.uptime_batches.filter(active=True):
+        latest_batch = fp.uptime_batches.last()
+        fp_data['totalPosts'].append(latest_batch.get_total_posts())
+        # Sum up the credits and points from all batches for this forum profiles
+        for batch in fp.uptime_batches.all():
             latest_check = batch.regular_checks.last()
             latest_calc = latest_check.points_calculations.last()
-            fp_data['postPoints'].append(latest_calc.post_points)
-            fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
-            fp_data['postDaysPoints'].append(latest_calc.post_days_points)
-            fp_data['totalPostDays'].append(batch.get_total_days())
-            fp_data['influencePoints'].append(latest_calc.influence_points)
-            fp_data['totalPosts'].append(batch.get_total_posts())
-            fp_data['totalPoints'].append(latest_calc.total_points)
-            fp_data['VTX_Tokens'].append(latest_calc.get_total_tokens())
+            if latest_calc:
+                fp_data['postPoints'].append(latest_calc.post_points)
+                fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
+                fp_data['postDaysPoints'].append(latest_calc.post_days_points)
+                fp_data['totalPostDays'].append(batch.get_total_days())
+                fp_data['influencePoints'].append(latest_calc.influence_points)
+                fp_data['totalPoints'].append(latest_calc.total_points)
+                fp_data['VTX_Tokens'].append(latest_calc.get_total_tokens())
         sum_up_data = {k:  '{:,}'.format(sum(v)) for k,v in fp_data.items()}
         sum_up_data['User_ID'] = fp.forum_user_id
         sum_up_data['forumSite'] = fp.forum.name
         sum_up_data['forumUserId'] = fp.forum_user_id
         sum_up_data['forumUserRank'] = fp.forum_rank.name
         sum_up_data['_showDetails'] = False
-        batch_ids = []
-        for item in fp.uptime_batches.all().order_by('-id'):
-            if item.active:
-                batch_ids.append(int(item.id))
-            else:
-                if item.get_total_posts_with_sig():
-                    batch_ids.append(int(item.id))
-        sum_up_data['currentUptimeBatch'] = len(batch_ids)
-        if len(batch_ids) > 1:
+        if latest_batch.active == False:
+            sum_up_data['_rowVariant'] = 'danger'
+        current_branch_no = latest_batch.get_batch_number()
+        sum_up_data['currentUptimeBatch'] = {}
+        if fp.uptime_batches.count() > 1:
             sum_up_data['hasPreviousBatches'] = True
             sum_up_data['previousBatches'] = []
-            for i, item in enumerate(batch_ids[1:][::-1], 1):
-                batch_obj = UptimeBatch.objects.get(id=item)
-                data = {
-                    'batch': i,
-                    'totalPostsWithSig': batch_obj.get_total_posts_with_sig(),
-                    'totalPostDays': batch_obj.get_total_days()
-                }
+        for item in fp.uptime_batches.all():
+            batch_no = item.get_batch_number()
+            data = {
+                'batch': batch_no,
+                'totalPostsWithSig': item.get_total_posts_with_sig(),
+                'totalPostDays': item.get_total_days()
+            }
+            if batch_no == current_branch_no:
+                sum_up_data['currentUptimeBatch'] = data
+            else:
                 sum_up_data['previousBatches'].append(data)
         stats.append(sum_up_data)
     return JsonResponse({'status': 'success', 'stats': stats})

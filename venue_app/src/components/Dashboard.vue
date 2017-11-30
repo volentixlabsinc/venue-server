@@ -48,15 +48,15 @@
                   </b-row>
                   <b-row>
                     <b-col sm="9">Batch number:</b-col>
-                    <b-col>{{ row.item.currentUptimeBatch }}</b-col>
+                    <b-col>{{ row.item.currentUptimeBatch.batch }}</b-col>
                   </b-row>
                   <b-row>
                     <b-col sm="9">Posts since signature was found:</b-col>
-                    <b-col>{{ row.item.totalPostsWithSig }}</b-col>
+                    <b-col>{{ row.item.currentUptimeBatch.totalPostsWithSig }}</b-col>
                   </b-row>
                   <b-row>
                     <b-col sm="9">Days since signature was found:</b-col>
-                    <b-col>{{ row.item.totalPostDays }}</b-col>
+                    <b-col>{{ row.item.currentUptimeBatch.totalPostDays }}</b-col>
                   </b-row>
                 </b-col>
                 <b-col>
