@@ -51,7 +51,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     expected_links = signature.expected_links.splitlines()
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
-    verified, posts = scraper.verify_and_scrape(
+    status_code, verified, posts = scraper.verify_and_scrape(
         forum_profile_id, 
         forum_profile.forum_user_id, 
         expected_links,
@@ -93,12 +93,13 @@ def update_global_stats(master_task_id):
         fps = user.forum_profiles.all()
         for fp in fps:
             latest_batch = fp.uptime_batches.last()
-            if latest_batch.active:
-                if latest_batch.get_total_posts_with_sig():
-                    total_posts += latest_batch.get_total_posts()
-                    for batch in fp.uptime_batches.all():
-                        total_posts_with_sig += batch.get_total_posts_with_sig()
-                        total_days += batch.get_total_days()
+            if latest_batch:
+                if latest_batch.active:
+                    if latest_batch.get_total_posts_with_sig():
+                        total_posts += latest_batch.get_total_posts()
+                        for batch in fp.uptime_batches.all():
+                            total_posts_with_sig += batch.get_total_posts_with_sig()
+                            total_days += batch.get_total_days()
     gstats = GlobalStats(
         total_posts=total_posts,
         total_posts_with_sig=total_posts_with_sig,
@@ -206,5 +207,16 @@ def send_email_change_confirmation(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Email Change Confirmation',
+        HtmlBody=html)
+    return mail
+    
+@shared_task
+def send_reset_password(email, name, code):
+    context = {'name': name, 'code': code}
+    html = get_template('venue/reset_password.html').render(context)
+    mail = postmark.emails.send(
+        From=settings.POSTMARK_SENDER_EMAIL,
+        To=email,
+        Subject='Account Password Reset',
         HtmlBody=html)
     return mail

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
     'constance',
     'venue'
 ]
@@ -65,6 +66,7 @@ CONSTANCE_CONFIG = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     #'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -160,3 +162,6 @@ CELERY_BEAT_SCHEDULE = {
 
 POSTMARK_TOKEN = '53ac5b12-1edc-43bc-9581-561c143f7352'
 POSTMARK_SENDER_EMAIL = 'venue@volentix.com'
+
+CORS_ORIGIN_WHITELIST = ('localhost:8080',)
+CSRF_COOKIE_NAME = 'X-CSRFToken'

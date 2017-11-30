@@ -10,7 +10,7 @@
       
       <b-collapse is-nav id="nav_collapse">
         
-        <b-nav is-nav-bar class="ml-auto">
+        <b-navbar-nav class="ml-auto">
           
           <b-nav-item v-if="username" to="/dashboard">
             {{ $t('welcome') }} {{ username }}!
@@ -44,26 +44,25 @@
           <b-nav-item v-if="$store.state.apiToken" @click="logout()">
             {{ $t('logout') }}
           </b-nav-item>
-        </b-nav>
+        </b-navbar-nav>
         
       </b-collapse>
     </b-navbar>
     
     <login-modal></login-modal>
+    <reset-password-modal ref="resetPassword"></reset-password-modal>
     
   </div>
 </template>
 
 <script>
 import LoginModal from '@/components/modals/LoginModal'
+import ResetPasswordModal from '@/components/modals/ResetPasswordModal'
 import axios from 'axios'
-
-axios.defaults.xsrfCookieName = 'csrftoken'
-axios.defaults.xsrfHeaderName = 'X-CSRFToken'
 
 export default {
   name: 'TopNavigation',
-  components: { LoginModal },
+  components: { LoginModal, ResetPasswordModal },
   methods: {
     logout () {
       this.$store.commit('updateApiToken', '')
@@ -87,6 +86,9 @@ export default {
     }
   },
   created () {
+    // Set the CSRF cookie for axios
+    // var csrfCookie = this.$cookies.get('csrftoken')
+    // axios.defaults.headers.common['X-CSRFToken'] = csrfCookie
     if (this.$store.state.apiToken) {
       axios.post('/get-user/', {
         token: this.$store.state.apiToken
@@ -133,6 +135,12 @@ export default {
           closeModal: true
         }
       })
+    }
+  },
+  mounted () {
+    if (this.$route.query.reset_password === '1') {
+      this.$refs.resetPassword.$refs.resetPasswordModal.show()
+      this.$refs.resetPassword.setCode(this.$route.query.code)
     }
   }
 }

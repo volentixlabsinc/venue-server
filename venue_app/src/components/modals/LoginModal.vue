@@ -112,7 +112,10 @@ export default {
     },
     resetPassword () {
       if (this.resetPasswordEmail) {
-        var payload = {'email': this.resetPasswordEmail}
+        var payload = {
+          'email': this.resetPasswordEmail,
+          'action': 'trigger'
+        }
         axios.post('/reset-password/', payload).then(response => {
           if (response.data.success) {
             this.showPasswordResetForm = false

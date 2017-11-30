@@ -1,6 +1,6 @@
 from .tasks import ( verify_profile_signature, 
     send_email_confirmation, send_deletion_confirmation, 
-    send_email_change_confirmation)
+    send_email_change_confirmation, send_reset_password)
 from venue.models import UserProfile, ForumSite, ForumProfile, Signature, ForumUserRank, UptimeBatch
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -14,6 +14,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from constance import config
 from hashids import Hashids
+from operator import itemgetter
 from .utils import RedisTemp
 import json
 
@@ -271,4 +272,38 @@ def change_password(request):
         return JsonResponse(response)
         
 def reset_password(request):
-    return JsonResponse({'success': True})
+    response = {'success': False}
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        data = json.loads(body_unicode)
+        if data['action'] == 'trigger':
+            user = User.objects.get(email=data['email'])
+            code = hashids.encode(int(user.id))
+            send_reset_password.delay(user.email, user.username, code)
+            response['success'] = True
+        elif data['action'] == 'set_password':
+            user_id, = hashids.decode(data['code'])
+            user = User.objects.get(id=user_id)
+            user.set_password(data['password'])
+            user.save()
+            response['success'] = True
+        return JsonResponse(response)
+        
+def get_leaderboard_data(request):
+    response = {'success': False}
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)
+    token_check = Token.objects.filter(key=data['token'])
+    if token_check.exists():
+        user_profiles = UserProfile.objects.all()
+        leaderboard_data = []
+        for user_profile in user_profiles:
+            user_data = {}
+            user_data['username'] = user_profile.user.username
+            user_data['tokens'] = int(user_profile.get_total_tokens())
+            leaderboard_data.append(user_data)
+        # Order according to amount of tokens
+        leaderboard_data = sorted(leaderboard_data, key=itemgetter('tokens'), reverse=True)
+        response['data'] = leaderboard_data
+        response['success'] = True
+    return JsonResponse(response)

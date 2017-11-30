@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-jumbotron id="home-jumbotron" bg-variant="light" fluid="true">
+    <b-jumbotron id="home-jumbotron" bg-variant="light" fluid>
       <template slot="header">
         VENUE
       </template>

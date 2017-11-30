@@ -12,7 +12,12 @@ import VueI18n from 'vue-i18n'
 import messages from '@/translations'
 import VueClipboards from 'vue-clipboards'
 import VueSwal from 'vue-swal'
+import VueCookies from 'vue-cookies'
 
+// import axios from 'axios'
+// axios.defaults.baseURL = 'http://localhost:8000'
+
+Vue.use(VueCookies)
 Vue.use(VueSwal)
 Vue.use(VueClipboards)
 Vue.use(VueI18n)
