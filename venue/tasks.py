@@ -1,12 +1,11 @@
 from __future__ import absolute_import, unicode_literals
 from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumSite, ForumProfile, GlobalStats, Signature
 from django.template.loader import get_template
+from celery import shared_task, chain, group
 from postmarker.core import PostmarkClient
 from django.utils import timezone
 from django.conf import settings
-from celery import shared_task
 from constance import config
-from celery import chain
 import pandas as pd
 import traceback
 
@@ -93,16 +92,6 @@ def update_global_stats(master_task_id):
         fps = user.forum_profiles.all()
         for fp in fps:
             if fp.uptime_batches.count():
-                #latest_batch = fp.uptime_batches.last()
-                #increment = False
-                #if fp.uptime_batches.count() > 1:
-                #    increment = True
-                #else:
-                #    if latest_batch.get_total_posts_with_sig():
-                #        increment = True
-                #if increment:
-                #    total_posts += latest_batch.get_total_posts()
-                #total_posts += latest_batch.get_total_posts()
                 for batch in fp.uptime_batches.all():
                     total_posts += batch.get_total_posts()
                     total_posts_with_sig += batch.get_total_posts_with_sig()
@@ -124,20 +113,23 @@ def calculate_points(master_task_id):
             signature_check=latest_check
         )
         calc.save()
-                
+        
 @shared_task
 def database_cleanup():
     uptime_batches = UptimeBatch.objects.all()
     dt = timezone.now().date()
-    # Delete the regular signature checks, retain only the last one per day
-    # This also deletes the point calculations for each deleted signature check
+    # Delete the regular signature checks, retain only the last one per day,
+    # the last check and the last initial check
     for batch in uptime_batches:
         checks = batch.regular_checks.all()
         if checks.count() > 1:
+            latest_check = checks.last()
+            latest_initial = checks.filter(initial=True).last()
             df = pd.DataFrame(list(checks.values('id', 'date_checked')))
             dfs = df.groupby([df['date_checked'].dt.date]).agg('max')
-            checks.exclude(id__in=list(dfs['id'])).delete()
-    # Retain only the latest row in global stats
+            excluded = list(dfs['id']) + [latest_check.id, latest_initial.id]
+            checks.exclude(id__in=excluded).delete()
+    # Retain only the latest row per day in global stats
     stats = GlobalStats.objects.all()
     df = pd.DataFrame(list(stats.values('id', 'date_updated')))
     dfs = df.groupby([df['date_updated'].dt.date]).agg('max')
@@ -152,7 +144,7 @@ def mark_master_task_complete(master_task_id):
     else:
         master_task.success = True
     master_task.save()
-    
+
 @shared_task
 def update_data(forum_profile_id=None):
     # Save this data update task
@@ -164,13 +156,13 @@ def update_data(forum_profile_id=None):
         forum_profiles = ForumProfile.objects.filter(id__in=[forum_profile_id])
     else:
         forum_profiles = ForumProfile.objects.filter(active=True, verified=True)
-    scraping_tasks = scrape_forum_profile.group([(fp.id, task_id) for fp in forum_profiles])
+    scraping_tasks = group(scrape_forum_profile.s(fp.id, task_id) for fp in forum_profiles)
     workflow = chain(
         scraping_tasks, # Execute scraping tasks
         update_global_stats.si(task_id), # Execute task to update global stats
         calculate_points.si(task_id), # Execute task to calculate points
         mark_master_task_complete.si(task_id), # Mark the data update run as complete
-        #database_cleanup.si() # Trigger the database cleanup task
+        database_cleanup.si() # Trigger the database cleanup task
     )
     # Send to the workflow to the queue
     workflow.apply_async()

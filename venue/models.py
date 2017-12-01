@@ -58,17 +58,6 @@ class UserProfile(models.Model):
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
                 if site.uptime_batches.count():
-                    #latest_batch = site.uptime_batches.last()
-                    #if latest_batch:
-                    #    increment = False
-                    #    if site.uptime_batches.count() > 1:
-                    #        increment = True
-                    #    else:
-                    #        if latest_batch.get_total_posts_with_sig():
-                    #            increment = True
-                    #    if increment:
-                    #        total_per_forum.append(latest_batch.get_total_posts())
-                    #total_per_forum.append(latest_batch.get_total_posts())
                     for batch in site.uptime_batches.all():
                         total_per_forum.append(batch.get_total_posts())
             value = sum(total_per_forum)
@@ -229,7 +218,6 @@ class SignatureCheck(models.Model):
         return str(self.id)
     
     def save(self, *args, **kwargs):
-        proceed_save = False
         batches = self.forum_profile.uptime_batches.all()
         if self._state.adding == True:
             # Automatically assign to old or new uptime batch
@@ -241,29 +229,23 @@ class SignatureCheck(models.Model):
                     latest_batch.active = False
                     latest_batch.date_ended = timezone.now()
                     latest_batch.save()
-                proceed_save = True
             else:
                 if self.signature_found:
                     batch = UptimeBatch(forum_profile=self.forum_profile)
                     batch.save()
                     self.uptime_batch = batch
                     self.initial = True
-                    proceed_save = True
                 else:
                     latest_batch = batches.last()
                     self.uptime_batch = latest_batch
                     # Copy the total post of the last regular check
                     self.total_posts = latest_batch.regular_checks.last().total_posts
-                    proceed_save = True
-        else:
-            proceed_save = True
-        if proceed_save:
-            super(SignatureCheck, self).save(*args, **kwargs)
-            latest_batch = batches.last()
-            init_check = latest_batch.regular_checks.filter(initial=True).last()
-            sc = SignatureCheck.objects.get(id=self.id)
-            if sc.total_posts <= init_check.total_posts:
-                SignatureCheck.objects.filter(id=self.id).update(initial=True)
+        super(SignatureCheck, self).save(*args, **kwargs)
+        latest_batch = batches.last()
+        init_check = latest_batch.regular_checks.filter(initial=True).last()
+        sc = SignatureCheck.objects.get(id=self.id)
+        if sc.total_posts <= init_check.total_posts:
+            SignatureCheck.objects.filter(id=self.id).update(initial=True)
 
 class PointsCalculation(models.Model):
     """ Results of calculations of points for the given signature check in an uptime batch. """
