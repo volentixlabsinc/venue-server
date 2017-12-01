@@ -4,6 +4,7 @@ from venue.models import (
     GlobalStats, ForumUserRank, DataUpdateTask, ScrapingError
 )
 from django.contrib import admin
+import decimal
 
 # Customize the titles in the headers and index template
 admin.site.site_title = 'Volentix Venue Administration'
@@ -20,7 +21,8 @@ class ScrapingErrorAdmin(admin.ModelAdmin):
 admin.site.register(ScrapingError, ScrapingErrorAdmin)
 
 class UptimeBatchAdmin(admin.ModelAdmin):
-    list_display = ['user', 'forum_profile', 'batch_number', 'active', 'date_started', 'date_ended']
+    list_display = ['user', 'forum_profile', 'batch_number', 'total_posts', 'total_posts_with_sig',
+         'total_days', 'post_points', 'post_days_points', 'influence_points', 'active', 'date_started', 'date_ended']
     list_filter = ['forum_profile', 'forum_profile__user_profile']
     
     def user(self, obj):
@@ -31,6 +33,33 @@ class UptimeBatchAdmin(admin.ModelAdmin):
         
     def batch_number(self, obj):
         return obj.get_batch_number()
+        
+    def total_posts(self, obj):
+        return obj.get_total_posts()
+        
+    def total_posts_with_sig(self, obj):
+        return obj.get_total_posts_with_sig()
+        
+    def total_days(self, obj):
+        return obj.get_total_days()
+        
+    def post_points(self, obj):
+        latest_gs = GlobalStats.objects.last()
+        pts = decimal.Decimal(obj.get_total_posts_with_sig() * 6000)
+        pts /= latest_gs.total_posts_with_sig
+        return round(pts, 4)
+        
+    def post_days_points(self, obj):
+        latest_gs = GlobalStats.objects.last()
+        pts = decimal.Decimal(obj.get_total_days() * 3800)
+        pts /= latest_gs.total_days
+        return round(pts, 4)
+        
+    def influence_points(self, obj):
+        latest_gs = GlobalStats.objects.last()
+        pts = decimal.Decimal(obj.get_total_posts() * 200)
+        pts /= latest_gs.total_posts
+        return round(pts, 4)
     
 admin.site.register(UptimeBatch, UptimeBatchAdmin)
 
@@ -102,7 +131,7 @@ class UserProfileAdmin(admin.ModelAdmin):
         return round(obj.get_total_days(), 2)
         
     def total_points(self, obj):
-        return obj.get_total_points()
+        return round(obj.get_total_points(), 2)
         
     def total_tokens(self, obj):
         return obj.get_total_tokens()

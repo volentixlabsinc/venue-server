@@ -23,3 +23,7 @@ def sync():
 def restart(program):
     with cd(BASE_DIR + '/volentix_venue'):
         run('supervisorctl restart ' + program)
+        
+def stop(program):
+    with cd(BASE_DIR + '/volentix_venue'):
+        run('supervisorctl stop ' + program)

@@ -93,16 +93,18 @@ def update_global_stats(master_task_id):
         fps = user.forum_profiles.all()
         for fp in fps:
             if fp.uptime_batches.count():
-                latest_batch = fp.uptime_batches.last()
-                increment = False
-                if fp.uptime_batches.count() > 1:
-                    increment = True
-                else:
-                    if latest_batch.get_total_posts_with_sig():
-                        increment = True
-                if increment:
-                    total_posts += latest_batch.get_total_posts()
+                #latest_batch = fp.uptime_batches.last()
+                #increment = False
+                #if fp.uptime_batches.count() > 1:
+                #    increment = True
+                #else:
+                #    if latest_batch.get_total_posts_with_sig():
+                #        increment = True
+                #if increment:
+                #    total_posts += latest_batch.get_total_posts()
+                #total_posts += latest_batch.get_total_posts()
                 for batch in fp.uptime_batches.all():
+                    total_posts += batch.get_total_posts()
                     total_posts_with_sig += batch.get_total_posts_with_sig()
                     total_days += batch.get_total_days()
     gstats = GlobalStats(
@@ -122,9 +124,6 @@ def calculate_points(master_task_id):
             signature_check=latest_check
         )
         calc.save()
-        #for check in batch.regular_checks.all():
-        #    #latest_check = 
-        #    #if not check.points_calculations.count():
                 
 @shared_task
 def database_cleanup():
@@ -165,7 +164,7 @@ def update_data(forum_profile_id=None):
         forum_profiles = ForumProfile.objects.filter(id__in=[forum_profile_id])
     else:
         forum_profiles = ForumProfile.objects.filter(active=True, verified=True)
-    scraping_tasks = scrape_forum_profile.starmap([(fp.id, task_id) for fp in forum_profiles])
+    scraping_tasks = scrape_forum_profile.group([(fp.id, task_id) for fp in forum_profiles])
     workflow = chain(
         scraping_tasks, # Execute scraping tasks
         update_global_stats.si(task_id), # Execute task to update global stats
