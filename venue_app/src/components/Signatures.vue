@@ -104,9 +104,18 @@
             :img-src="signature.image"
             img-alt="Signature"
             img-bottom>
-            <p class="card-text">
-              {{ signature.name }}
-            </p>
+            <b-row style="margin: 0; padding: 0;">
+              <b-col style="margin: 0; padding: 0;">
+                <p class="card-text">
+                  {{ signature.name }}
+                </p>
+              </b-col>
+              <b-col style="margin: 0; padding: 0;">
+                <p style="text-align: right;">
+                  <span>Verification code: {{ signature.verification_code }}</span>
+                </p>
+              </b-col>
+            </b-row>
           </b-card>
         </b-card-group>
       </b-col>

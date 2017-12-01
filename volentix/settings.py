@@ -68,7 +68,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -164,4 +164,4 @@ POSTMARK_TOKEN = '53ac5b12-1edc-43bc-9581-561c143f7352'
 POSTMARK_SENDER_EMAIL = 'venue@volentix.com'
 
 CORS_ORIGIN_WHITELIST = ('localhost:8080',)
-CSRF_COOKIE_NAME = 'X-CSRFToken'
+CSRF_COOKIE_NAME = "csrftoken"

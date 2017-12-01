@@ -62,10 +62,11 @@ class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
 
 class SignatureSerializer(serializers.ModelSerializer):
     user_ranks = serializers.StringRelatedField(many=True)
+    verification_code = serializers.CharField(max_length=10)
     
     class Meta:
         model = Signature
-        fields = ('id', 'name', 'forum_site', 'user_ranks', 'code', 'image', 'active')
+        fields = ('id', 'name', 'forum_site', 'user_ranks', 'code', 'image', 'active', 'verification_code')
         
 def inject_verification_code(sig_code, verification_code):
     def repl(m):
@@ -87,15 +88,21 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter the queryset according to the query parameters
         own_sigs = self.request.query_params.get('own_sigs', None)
         if own_sigs:
-            my_fps = ForumProfile.objects.filter(user_profile__user=self.request.user, verified=True)
+            my_fps = ForumProfile.objects.filter(
+                user_profile__user=self.request.user,
+                uptime_batches__active=True,
+                verified=True)
             name_map = {}
+            vcode_map = {}
             for fp in my_fps:
                 name = 'Forum site: %s / User ID: %s' % (fp.forum.name, fp.forum_user_id)
                 name_map[fp.signature.id] = name
+                vcode_map[fp.signature.id] = fp.verification_code
             my_sigs = my_fps.values_list('signature_id', flat=True)
             my_sigs = queryset.filter(id__in=list(my_sigs))
             for sig in my_sigs:
                 sig.name = name_map[sig.id]
+                sig.verification_code = vcode_map[sig.id]
             return my_sigs
         else:
             forum_site_id = self.request.query_params.get('forum_site_id', None)

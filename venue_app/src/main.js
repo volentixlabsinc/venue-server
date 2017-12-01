@@ -14,7 +14,10 @@ import VueClipboards from 'vue-clipboards'
 import VueSwal from 'vue-swal'
 import VueCookies from 'vue-cookies'
 
-// import axios from 'axios'
+import axios from 'axios'
+axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN'
+axios.defaults.xsrfCookieName = 'csrftoken'
+
 // axios.defaults.baseURL = 'http://localhost:8000'
 
 Vue.use(VueCookies)

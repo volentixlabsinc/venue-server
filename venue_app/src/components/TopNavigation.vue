@@ -37,15 +37,15 @@
             {{ $t('signatures') }}
           </b-nav-item>
           
-          <b-nav-item v-if="$store.state.apiToken" to="/settings">
-            {{ $t('settings') }}
-          </b-nav-item>
-          
-          <b-nav-item v-if="$store.state.apiToken" @click="logout()">
-            {{ $t('logout') }}
-          </b-nav-item>
+          <b-nav-item-dropdown right v-if="$store.state.apiToken">
+            <!-- Using button-content slot -->
+            <template slot="button-content">
+              Account
+            </template>
+            <b-dropdown-item to="/settings">Settings</b-dropdown-item>
+            <b-dropdown-item @click="logout()" href="#">Logout</b-dropdown-item>
+          </b-nav-item-dropdown>
         </b-navbar-nav>
-        
       </b-collapse>
     </b-navbar>
     

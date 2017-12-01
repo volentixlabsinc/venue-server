@@ -16,6 +16,13 @@
           </template>
           <template slot="row-details" scope="row">
             <b-card>
+              <b-row v-if="row.item._rowVariant === 'danger'">
+                <b-col>
+                  <b-alert show variant="danger">
+                    The latest check did not find our signature in your profile.
+                  </b-alert>
+                </b-col>
+              </b-row>
               <b-row>
                 <b-col sm="4">
                   <b-row class="mb-2">
@@ -47,8 +54,8 @@
                     </b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="9">Batch number:</b-col>
-                    <b-col>{{ row.item.currentUptimeBatch.batch }}</b-col>
+                    <b-col sm="9">Batch number {{ row.item.currentUptimeBatch.batch }}:</b-col>
+                    <b-col></b-col>
                   </b-row>
                   <b-row>
                     <b-col sm="9">Posts since signature was found:</b-col>
@@ -67,8 +74,8 @@
                   </b-row>
                   <div v-for="batch in row.item.previousBatches">
                     <b-row>
-                      <b-col sm="9">Batch number:</b-col>
-                      <b-col>{{ batch.batch }}</b-col>
+                      <b-col sm="9">Batch number {{ batch.batch }}:</b-col>
+                      <b-col></b-col>
                     </b-row>
                     <b-row>
                       <b-col sm="9">Posts since signature was found:</b-col>
