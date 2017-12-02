@@ -58,10 +58,8 @@ class UserProfile(models.Model):
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
                 if site.uptime_batches.count():
-                    latest_batch = site.uptime_batches.last()
-                    total_per_forum.append(latest_batch.get_total_posts())
-                    #for batch in site.uptime_batches.all():
-                    #    total_per_forum.append(batch.get_total_posts())
+                    for batch in site.uptime_batches.all():
+                        total_per_forum.append(batch.get_total_posts())
             value = sum(total_per_forum)
         return value
         
@@ -286,17 +284,16 @@ class PointsCalculation(models.Model):
             self.post_points /= latest_gs.total_posts_with_sig
         # Calculate post days points
         self.post_days_points = 0.0
-        if batch.get_total_posts() and batch.get_total_posts_with_sig() and latest_gs.total_days:
-            if batch.get_total_days():
-                sum_total_days = 0
-                for item in self.uptime_batch.forum_profile.uptime_batches.all():
-                    sum_total_days += item.get_total_days()
-                # Ready to calculate the post days points
-                self.post_days_points = decimal.Decimal(sum_total_days * 3800)
-                self.post_days_points /= latest_gs.total_days
+        if batch.get_total_days() and latest_gs.total_days:
+            sum_total_days = 0
+            for item in self.uptime_batch.forum_profile.uptime_batches.all():
+                sum_total_days += item.get_total_days()
+            # Ready to calculate the post days points
+            self.post_days_points = decimal.Decimal(sum_total_days * 3800)
+            self.post_days_points /= latest_gs.total_days
         # Calculate influence points
         self.influence_points = 0.0
-        if batch.get_total_posts() and batch.get_total_posts_with_sig() and latest_gs.total_posts:
+        if batch.get_total_posts() and latest_gs.total_posts:
             sum_total_posts = 0
             for item in self.uptime_batch.forum_profile.uptime_batches.all():
                 sum_total_posts += item.get_total_posts()

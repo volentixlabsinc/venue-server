@@ -94,10 +94,10 @@ def update_global_stats(master_task_id):
         fps = user.forum_profiles.all()
         for fp in fps:
             if fp.uptime_batches.count():
-                latest_batch = fp.uptime_batches.last()
-                total_posts += latest_batch.get_total_posts()
+                #latest_batch = fp.uptime_batches.last()
+                #total_posts += latest_batch.get_total_posts()
                 for batch in fp.uptime_batches.all():
-                    #total_posts += batch.get_total_posts()
+                    total_posts += batch.get_total_posts()
                     total_posts_with_sig += batch.get_total_posts_with_sig()
                     total_days += batch.get_total_days()
     gstats = GlobalStats(
