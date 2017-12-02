@@ -76,6 +76,8 @@ def get_user_position(forum_site_id, profile_url, user_id):
         result['own'] = False
         if fp.user_profile.user.id == user_id:
             result['own'] = True
+            if fp.uptime_batches.filter(active=True).count():
+                result['active'] = True
         result['verified'] = fp.verified
         result['with_signature'] = False
         if fp.signature:
@@ -92,8 +94,10 @@ def update_global_stats(master_task_id):
         fps = user.forum_profiles.all()
         for fp in fps:
             if fp.uptime_batches.count():
+                latest_batch = fp.uptime_batches.last()
+                total_posts += latest_batch.get_total_posts()
                 for batch in fp.uptime_batches.all():
-                    total_posts += batch.get_total_posts()
+                    #total_posts += batch.get_total_posts()
                     total_posts_with_sig += batch.get_total_posts_with_sig()
                     total_days += batch.get_total_days()
     gstats = GlobalStats(
@@ -125,9 +129,10 @@ def database_cleanup():
         if checks.count() > 1:
             latest_check = checks.last()
             latest_initial = checks.filter(initial=True).last()
+            latest_found = checks.filter(signature_found=True).last()
             df = pd.DataFrame(list(checks.values('id', 'date_checked')))
             dfs = df.groupby([df['date_checked'].dt.date]).agg('max')
-            excluded = list(dfs['id']) + [latest_check.id, latest_initial.id]
+            excluded = list(dfs['id']) + [latest_check.id, latest_initial.id, latest_found.id]
             checks.exclude(id__in=excluded).delete()
     # Retain only the latest row per day in global stats
     stats = GlobalStats.objects.all()

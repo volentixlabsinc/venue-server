@@ -139,14 +139,18 @@
         </b-row>
       </b-col>
     </b-row>
+    
+    <signature-code-modal ref="signatureCode"></signature-code-modal>
   </div>
 </template>
 
 <script>
+import SignatureCodeModal from '@/components/modals/SignatureCodeModal'
 import axios from 'axios'
 
 export default {
   name: 'Signatures',
+  components: { SignatureCodeModal },
   data () {
     return {
       initial: false,
@@ -222,6 +226,7 @@ export default {
     checkProfile () {
       this.showCheckSpinner = true
       var payload = {
+        apiToken: this.$store.state.apiToken,
         forum: this.forumSite,
         profile_url: this.profileUrl
       }
@@ -236,13 +241,22 @@ export default {
               if (response.data.verified === true) {
                 if (response.data.own === true) {
                   if (response.data.with_signature === true) {
-                    this.flashAlreadyExistsNotice(self, 'You already placed a signature on that profile.')
+                    if (response.data.active) {
+                      this.flashAlreadyExistsNotice(self, 'You already placed a signature on that profile.')
+                    } else {
+                      this.profileChecked = true
+                      this.getSignatures(
+                        this.forumSite,
+                        this.forumUserPosition,
+                        response.data.forum_profile_id
+                      )
+                    }
                   }
                 } else {
                   this.flashAlreadyExistsNotice(self, 'Somebody else already claimed that profile.')
                 }
               } else {
-                // Get the forum profile
+                // Create the forum profile
                 var params = {
                   forum_id: response.data.forum_id,
                   forum_user_id: response.data.forum_user_id

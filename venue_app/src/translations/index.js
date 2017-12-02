@@ -31,7 +31,8 @@ const messages = {
     'change_password_form': 'Change Password Form',
     'delete_account_form': 'Delete Account Form',
     'send_reset_link': 'Send Reset Link',
-    'leaderboard': 'Leaderboard'
+    'leaderboard': 'Leaderboard',
+    'signature_code': 'Signature Code'
   },
   'fr': {
     'username': "Nom d'utilisateur",

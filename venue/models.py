@@ -58,8 +58,10 @@ class UserProfile(models.Model):
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
                 if site.uptime_batches.count():
-                    for batch in site.uptime_batches.all():
-                        total_per_forum.append(batch.get_total_posts())
+                    latest_batch = site.uptime_batches.last()
+                    total_per_forum.append(latest_batch.get_total_posts())
+                    #for batch in site.uptime_batches.all():
+                    #    total_per_forum.append(batch.get_total_posts())
             value = sum(total_per_forum)
         return value
         
@@ -114,8 +116,11 @@ class ForumProfile(models.Model):
     date_updated = models.DateTimeField(default=timezone.now)
     
     def get_total_posts(self):
+        value = 0
         latest_batch = self.uptime_batches.last()
-        return latest_batch.get_total_posts()
+        if latest_batch:
+            value = latest_batch.get_total_posts()
+        return value
         
     def get_total_posts_with_sig(self):
         value = 0
@@ -173,8 +178,13 @@ class UptimeBatch(models.Model):
         return sorted(batch_ids).index(self.id) + 1
         
     def get_total_posts(self):
-        latest_check = self.regular_checks.last()
-        return latest_check.total_posts
+        value = 0
+        latest_batch = self.forum_profile.uptime_batches.last()
+        if latest_batch:
+            if latest_batch.id == self.id:
+                latest_check = latest_batch.regular_checks.last()
+                value = latest_check.total_posts
+        return value
         
     def get_total_posts_with_sig(self):
         value = 0
@@ -190,7 +200,7 @@ class UptimeBatch(models.Model):
         value = 0
         if self.regular_checks.count() > 1 and self.get_total_posts_with_sig():
             earliest_check = self.regular_checks.filter(initial=True).last()
-            latest_check = self.regular_checks.last()
+            latest_check = self.regular_checks.filter(signature_found=True).last()
             earliest_check_date = earliest_check.date_checked
             latest_check_date = latest_check.date_checked
             tdiff = latest_check_date - earliest_check_date
@@ -238,8 +248,9 @@ class SignatureCheck(models.Model):
                 else:
                     latest_batch = batches.last()
                     self.uptime_batch = latest_batch
-                    # Copy the total post of the last regular check
-                    self.total_posts = latest_batch.regular_checks.last().total_posts
+                    self.initial = False
+                    # Copy the total post of the last regular check that found the signature
+                    self.total_posts = latest_batch.regular_checks.filter(signature_found=True).total_posts
         super(SignatureCheck, self).save(*args, **kwargs)
         latest_batch = batches.last()
         init_check = latest_batch.regular_checks.filter(initial=True).last()

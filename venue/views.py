@@ -109,7 +109,8 @@ def check_profile(request):
     data = json.loads(body_unicode)
     forum = ForumSite.objects.get(id=data['forum'])
     response = {'found': False, 'forum_id': data['forum']}
-    info = get_user_position(forum.id, data['profile_url'], request.user.id)
+    token = Token.objects.get(key=data['apiToken'])
+    info = get_user_position(forum.id, data['profile_url'], token.user.id)
     if info['status_code'] == 200 and info['position']:
         response['position'] = info['position']
         forum_rank = ForumUserRank.objects.get(forum_site=forum, name__iexact=info['position'].strip())
@@ -120,6 +121,7 @@ def check_profile(request):
         if info['exists']:
             response['verified'] = info['verified']
             response['own'] = info['own']
+            response['active'] = info['active']
             response['with_signature'] = info['with_signature']
             response['forum_profile_id'] = info['forum_profile_id']
     response['status_code'] = info['status_code']
@@ -169,13 +171,13 @@ def get_stats(request):
             latest_check = batch.regular_checks.last()
             latest_calc = latest_check.points_calculations.last()
             if latest_calc:
-                fp_data['postPoints'].append(latest_calc.post_points)
+                fp_data['postPoints'].append(int(latest_calc.post_points))
                 fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
-                fp_data['postDaysPoints'].append(latest_calc.post_days_points)
+                fp_data['postDaysPoints'].append(int(latest_calc.post_days_points))
                 fp_data['totalPostDays'].append(batch.get_total_days())
-                fp_data['influencePoints'].append(latest_calc.influence_points)
-                fp_data['totalPoints'].append(latest_calc.total_points)
-                fp_data['VTX_Tokens'].append(latest_calc.get_total_tokens())
+                fp_data['influencePoints'].append(int(latest_calc.influence_points))
+                fp_data['totalPoints'].append(int(latest_calc.total_points))
+                fp_data['VTX_Tokens'].append(int(latest_calc.get_total_tokens()))
         sum_up_data = {k:  '{:,}'.format(sum(v)) for k,v in fp_data.items()}
         sum_up_data['User_ID'] = fp.forum_user_id
         sum_up_data['forumSite'] = fp.forum.name

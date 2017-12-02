@@ -62,7 +62,7 @@ class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
 
 class SignatureSerializer(serializers.ModelSerializer):
     user_ranks = serializers.StringRelatedField(many=True)
-    verification_code = serializers.CharField(max_length=10)
+    verification_code = serializers.CharField(max_length=10, required=False)
     
     class Meta:
         model = Signature
