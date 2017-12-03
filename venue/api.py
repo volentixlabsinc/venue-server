@@ -66,7 +66,8 @@ class SignatureSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Signature
-        fields = ('id', 'name', 'forum_site', 'user_ranks', 'code', 'image', 'active', 'verification_code')
+        fields = ('id', 'name', 'forum_site', 'user_ranks', 'code', 
+            'image', 'active', 'verification_code')
         
 def inject_verification_code(sig_code, verification_code):
     def repl(m):
@@ -90,7 +91,6 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
         if own_sigs:
             my_fps = ForumProfile.objects.filter(
                 user_profile__user=self.request.user,
-                uptime_batches__active=True,
                 verified=True)
             name_map = {}
             vcode_map = {}

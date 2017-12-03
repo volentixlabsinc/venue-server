@@ -177,11 +177,12 @@ class UptimeBatch(models.Model):
         
     def get_total_posts(self):
         value = 0
-        latest_batch = self.forum_profile.uptime_batches.last()
-        if latest_batch:
-            if latest_batch.id == self.id:
-                latest_check = latest_batch.regular_checks.last()
-                value = latest_check.total_posts
+        if self.forum_profile.get_total_posts_with_sig():
+            latest_batch = self.forum_profile.uptime_batches.last()
+            if latest_batch:
+                if latest_batch.id == self.id:
+                    latest_check = latest_batch.regular_checks.last()
+                    value = latest_check.total_posts
         return value
         
     def get_total_posts_with_sig(self):
@@ -295,8 +296,9 @@ class PointsCalculation(models.Model):
         self.influence_points = 0.0
         if batch.get_total_posts() and latest_gs.total_posts:
             sum_total_posts = 0
-            for item in self.uptime_batch.forum_profile.uptime_batches.all():
-                sum_total_posts += item.get_total_posts()
+            if self.uptime_batch.forum_profile.get_total_posts_with_sig():
+                for item in self.uptime_batch.forum_profile.uptime_batches.all():
+                    sum_total_posts += item.get_total_posts()
             self.influence_points = decimal.Decimal(sum_total_posts * 200) 
             self.influence_points /= latest_gs.total_posts
         # Calculate total points

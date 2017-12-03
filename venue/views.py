@@ -176,8 +176,8 @@ def get_stats(request):
                 fp_data['postDaysPoints'].append(int(latest_calc.post_days_points))
                 fp_data['totalPostDays'].append(batch.get_total_days())
                 fp_data['influencePoints'].append(int(latest_calc.influence_points))
-                fp_data['totalPoints'].append(int(latest_calc.total_points))
-                fp_data['VTX_Tokens'].append(int(latest_calc.get_total_tokens()))
+                fp_data['totalPoints'].append(round(latest_calc.total_points, 0))
+                fp_data['VTX_Tokens'].append(round(latest_calc.get_total_tokens(), 0))
         sum_up_data = {k:  '{:,}'.format(sum(v)) for k,v in fp_data.items()}
         sum_up_data['User_ID'] = fp.forum_user_id
         sum_up_data['forumSite'] = fp.forum.name
