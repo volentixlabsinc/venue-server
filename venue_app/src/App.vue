@@ -1,6 +1,7 @@
 <template>
   <div id="app" v-cloak>
     <top-navigation></top-navigation>
+    <vue-progress-bar></vue-progress-bar>
     <b-container id="main-container">
       <router-view></router-view>
     </b-container>

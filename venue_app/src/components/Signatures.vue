@@ -401,6 +401,7 @@ export default {
     }
   },
   created () {
+    this.$Progress.start()
     // Check if it's the user first time to generate a signature
     this.initial = this.$route.query.initial
     this.showAddForm = this.$route.query.initial
@@ -409,11 +410,13 @@ export default {
       for (var elem of response.data) {
         this.forumSites.push({value: elem.id, text: elem.name})
       }
+      this.$Progress.finish()
     })
     // Get my signatures
     var params = { 'own_sigs': 1 }
     axios.get('/api/signatures/', {params: params}).then(response => {
       this.mySignatures = response.data
+      this.$Progress.finish()
     })
   }
 }

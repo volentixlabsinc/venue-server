@@ -121,6 +121,7 @@ export default {
     }
   },
   created () {
+    this.$Progress.start()
     var payload = { apiToken: this.$store.state.apiToken }
     axios.post('/get-stats/', payload).then(response => {
       this.stats = response.data.stats
@@ -131,6 +132,7 @@ export default {
         })
       } else {
         this.showPage = true
+        this.$Progress.finish()
       }
     })
   }

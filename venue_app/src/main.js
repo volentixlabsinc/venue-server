@@ -13,8 +13,25 @@ import messages from '@/translations'
 import VueClipboards from 'vue-clipboards'
 import VueSwal from 'vue-swal'
 import VueCookies from 'vue-cookies'
-
+import VueProgressBar from 'vue-progressbar'
 import axios from 'axios'
+
+const options = {
+  color: '#bffaf3',
+  failedColor: '#874b4b',
+  thickness: '5px',
+  transition: {
+    speed: '0.2s',
+    opacity: '0.6s',
+    termination: 300
+  },
+  autoRevert: true,
+  location: 'top',
+  inverse: false
+}
+
+Vue.use(VueProgressBar, options)
+
 axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN'
 axios.defaults.xsrfCookieName = 'csrftoken'
 
