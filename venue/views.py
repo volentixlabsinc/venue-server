@@ -165,7 +165,7 @@ def get_stats(request):
             'influencePoints', 'totalPosts', 'totalPoints', 'VTX_Tokens']
         fp_data = {k: [] for k in fields}
         latest_batch = fp.uptime_batches.last()
-        fp_data['totalPosts'].append(latest_batch.get_total_posts())
+        fp_data['totalPosts'].append(latest_batch.get_total_posts(actual=True))
         # Sum up the credits and points from all batches for this forum profiles
         for batch in fp.uptime_batches.all():
             latest_check = batch.regular_checks.last()

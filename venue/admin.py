@@ -149,7 +149,7 @@ class ForumProfileAdmin(admin.ModelAdmin):
         'total_posts', 'total_posts_with_sig', 'total_days']
         
     def total_posts(self, obj):
-        return obj.get_total_posts()
+        return obj.get_total_posts(actual=True)
         
     def total_posts_with_sig(self, obj):
         return obj.get_total_posts_with_sig()

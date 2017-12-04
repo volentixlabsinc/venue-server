@@ -113,11 +113,11 @@ class ForumProfile(models.Model):
     date_added = models.DateTimeField(default=timezone.now)
     date_updated = models.DateTimeField(default=timezone.now)
     
-    def get_total_posts(self):
+    def get_total_posts(self, actual=True):
         value = 0
         latest_batch = self.uptime_batches.last()
         if latest_batch:
-            value = latest_batch.get_total_posts()
+            value = latest_batch.get_total_posts(actual=actual)
         return value
         
     def get_total_posts_with_sig(self):
@@ -175,14 +175,19 @@ class UptimeBatch(models.Model):
         batch_ids = list(batch_ids)
         return sorted(batch_ids).index(self.id) + 1
         
-    def get_total_posts(self):
+    def get_total_posts(self, actual=False):
         value = 0
-        if self.forum_profile.get_total_posts_with_sig():
-            latest_batch = self.forum_profile.uptime_batches.last()
-            if latest_batch:
-                if latest_batch.id == self.id:
-                    latest_check = latest_batch.regular_checks.last()
+        latest_batch = self.forum_profile.uptime_batches.last()
+        if latest_batch:
+            if actual:
+                latest_check = latest_batch.regular_checks.last()
+                if latest_check:
                     value = latest_check.total_posts
+            else:
+                if self.forum_profile.get_total_posts_with_sig():
+                    if latest_batch.id == self.id:
+                        latest_check = latest_batch.regular_checks.last()
+                        value = latest_check.total_posts
         return value
         
     def get_total_posts_with_sig(self):
