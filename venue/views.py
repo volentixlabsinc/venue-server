@@ -7,6 +7,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from venue.tasks import get_user_position, update_data
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render, redirect
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -21,6 +22,7 @@ import json
 # Instantiate a Hashids instance to be used later
 hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
 
+@ensure_csrf_cookie
 def frontend_app(request):
     return render(request, 'index.html')
     
