@@ -120,7 +120,7 @@
         </b-card-group>
       </b-col>
     </b-row>
-    <b-row v-if="profileChecked">
+    <b-row v-if="profileChecked && showAddForm">
       <b-col id="signatures-list">
         <p>Select signature:</p>
         <b-row v-for="signature in signatureOptions">
@@ -166,7 +166,8 @@ export default {
       forumUserPosition: '',
       showCheckSpinner: false,
       showVerifySpinner: false,
-      forumProfileId: null
+      forumProfileId: null,
+      disableListButton: false
     }
   },
   methods: {
@@ -418,6 +419,22 @@ export default {
       this.mySignatures = response.data
       this.$Progress.finish()
     })
+  },
+  beforeRouteLeave (to, from, next) {
+    if (this.profileUrl && this.profileChecked) {
+      this.$swal({
+        title: 'Page Change Confirmation',
+        text: 'This form will reset if you navigate away. Are you sure you want to abandon profile verification?',
+        icon: 'warning',
+        buttons: ['Cancel', 'Yes']
+      }).then((yes) => {
+        if (yes) {
+          next()
+        }
+      })
+    } else {
+      next()
+    }
   }
 }
 </script>

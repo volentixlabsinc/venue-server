@@ -78,6 +78,8 @@ def get_user_position(forum_site_id, profile_url, user_id):
             result['own'] = True
             if fp.uptime_batches.filter(active=True).count():
                 result['active'] = True
+            else:
+                result['active'] = False
         result['verified'] = fp.verified
         result['with_signature'] = False
         if fp.signature:
