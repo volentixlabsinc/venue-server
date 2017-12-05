@@ -33,6 +33,10 @@
             {{ $t('dashboard') }}
           </b-nav-item>
           
+          <b-nav-item v-if="$store.state.apiToken" v-b-modal.leaderboard-modal>
+            {{ $t('leaderboard') }}
+          </b-nav-item>
+          
           <b-nav-item v-if="$store.state.apiToken" to="/signatures">
             {{ $t('signatures') }}
           </b-nav-item>

@@ -394,6 +394,9 @@ export default {
   watch: {
     forumSite: function (newForumSite) {
       this.selectedSignature = null
+      this.profileChecked = false
+      this.profileUrl = ''
+      this.$validator.clean()
     },
     selectedSignature: function (newSig) {
       if (newSig !== null) {
