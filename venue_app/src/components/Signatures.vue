@@ -424,7 +424,7 @@ export default {
     })
   },
   beforeRouteLeave (to, from, next) {
-    if (this.profileUrl && this.profileChecked) {
+    if (this.profileUrl && this.profileChecked && !this.signitureVerified) {
       this.$swal({
         title: 'Page Change Confirmation',
         text: 'This form will reset if you navigate away. Are you sure you want to abandon profile verification?',

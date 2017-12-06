@@ -28,7 +28,8 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
             sigcheck = SignatureCheck(
                 forum_profile=forum_profile,
                 total_posts=total_posts,
-                signature_found=signature_found
+                signature_found=signature_found,
+                status_code=status_code
             )
             sigcheck.save()
     except Exception as exc:

@@ -73,7 +73,7 @@ class BitcoinForum(object):
         return elem[2].text.split()[0]
         
     def get_user_position(self):
-        position = None
+        position = 'No rank'
         elem = self.soup.select('div.bg1 dl.left-box dd')
         if elem:
             try:
@@ -88,9 +88,8 @@ class BitcoinForum(object):
                 key = dk.text.strip().replace(':', '')
                 if dt_values[i]:
                     details[key] = dt_values[i].text.strip()
-            position = details['Rank']
-        else:
-            position = 'No rank'
+            if 'Rank' in details.keys():
+                position = details['Rank']
         return position
         
     def verify_code(self, code, forum_profile_id, forum_user_id):

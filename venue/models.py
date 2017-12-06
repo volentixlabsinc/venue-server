@@ -226,6 +226,7 @@ class SignatureCheck(models.Model):
     date_checked = models.DateTimeField(default=timezone.now)
     total_posts = models.IntegerField(default=0)
     signature_found = models.BooleanField(default=True)
+    status_code = models.IntegerField()
     initial = models.BooleanField(default=False)
     
     def __str__(self):
@@ -234,27 +235,28 @@ class SignatureCheck(models.Model):
     def save(self, *args, **kwargs):
         batches = self.forum_profile.uptime_batches.all()
         if self._state.adding == True:
-            # Automatically assign to old or new uptime batch
-            if batches.filter(active=True).count():
-                latest_batch = batches.last()
-                if self.signature_found:
-                    self.uptime_batch = latest_batch
-                else:
-                    latest_batch.active = False
-                    latest_batch.date_ended = timezone.now()
-                    latest_batch.save()
-            else:
-                if self.signature_found:
-                    batch = UptimeBatch(forum_profile=self.forum_profile)
-                    batch.save()
-                    self.uptime_batch = batch
-                    self.initial = True
-                else:
+            if self.status_code == 200:
+                # Automatically assign to old or new uptime batch
+                if batches.filter(active=True).count():
                     latest_batch = batches.last()
-                    self.uptime_batch = latest_batch
-                    self.initial = False
-                    # Copy the total post of the last regular check that found the signature
-                    self.total_posts = latest_batch.regular_checks.filter(signature_found=True).total_posts
+                    if self.signature_found:
+                        self.uptime_batch = latest_batch
+                    else:
+                        latest_batch.active = False
+                        latest_batch.date_ended = timezone.now()
+                        latest_batch.save()
+                else:
+                    if self.signature_found:
+                        batch = UptimeBatch(forum_profile=self.forum_profile)
+                        batch.save()
+                        self.uptime_batch = batch
+                        self.initial = True
+                    else:
+                        latest_batch = batches.last()
+                        self.uptime_batch = latest_batch
+                        self.initial = False
+                        # Copy the total post of the last regular check that found the signature
+                        self.total_posts = latest_batch.regular_checks.filter(signature_found=True).total_posts
         super(SignatureCheck, self).save(*args, **kwargs)
         latest_batch = batches.last()
         init_check = latest_batch.regular_checks.filter(initial=True).last()
