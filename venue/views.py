@@ -296,20 +296,22 @@ def reset_password(request):
         return JsonResponse(response)
         
 def get_leaderboard_data(request):
-    response = {'success': False}
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)
-    token_check = Token.objects.filter(key=data['token'])
-    if token_check.exists():
-        user_profiles = UserProfile.objects.all()
-        leaderboard_data = []
-        for user_profile in user_profiles:
-            user_data = {}
-            user_data['username'] = user_profile.user.username
-            user_data['tokens'] = int(user_profile.get_total_tokens())
-            leaderboard_data.append(user_data)
-        # Order according to amount of tokens
-        leaderboard_data = sorted(leaderboard_data, key=itemgetter('tokens'), reverse=True)
-        response['data'] = leaderboard_data
-        response['success'] = True
+    #response = {'success': False}
+    #body_unicode = request.body.decode('utf-8')
+    #data = json.loads(body_unicode)
+    #token_check = Token.objects.filter(key=data['token'])
+    #if token_check.exists():
+    response = {}
+    user_profiles = UserProfile.objects.all()
+    leaderboard_data = []
+    for user_profile in user_profiles:
+        user_data = {}
+        user_data['username'] = user_profile.user.username
+        user_data['tokens_raw'] = int(user_profile.get_total_tokens())
+        user_data['tokens'] = '{:,}'.format(user_data['tokens_raw']) 
+        leaderboard_data.append(user_data)
+    # Order according to amount of tokens
+    leaderboard_data = sorted(leaderboard_data, key=itemgetter('tokens_raw'), reverse=True)
+    response['data'] = leaderboard_data
+    response['success'] = True
     return JsonResponse(response)

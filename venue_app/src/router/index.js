@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Home from '@/components/Home'
 import Dashboard from '@/components/Dashboard'
+import Leaderboard from '@/components/Leaderboard'
 import Signatures from '@/components/Signatures'
 import Settings from '@/components/Settings'
 import store from '@/store'
@@ -21,6 +22,11 @@ const router = new Router({
       name: 'Dashboard',
       component: Dashboard,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/leaderboard',
+      name: 'Leaderboard',
+      component: Leaderboard
     },
     {
       path: '/signatures',

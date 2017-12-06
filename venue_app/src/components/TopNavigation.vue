@@ -21,6 +21,18 @@
             <b-dropdown-item @click="setLanguage('fr')">French</b-dropdown-item>
           </b-nav-item-dropdown>
           
+          <b-nav-item to="/" exact>
+            {{ $t('home') }}
+          </b-nav-item>
+
+          <b-nav-item v-if="$store.state.apiToken" to="/dashboard">
+            {{ $t('dashboard') }}
+          </b-nav-item>
+          
+          <b-nav-item to="/leaderboard">
+            {{ $t('leaderboard') }}
+          </b-nav-item>
+
           <b-nav-form>
             <b-button size="sm" 
               class="my-2 my-sm-0" 
@@ -28,14 +40,6 @@
               {{ $t('login') }}
             </b-button>
           </b-nav-form>
-          
-          <b-nav-item v-if="$store.state.apiToken" to="/dashboard">
-            {{ $t('dashboard') }}
-          </b-nav-item>
-          
-          <b-nav-item v-if="$store.state.apiToken" v-b-modal.leaderboard-modal>
-            {{ $t('leaderboard') }}
-          </b-nav-item>
           
           <b-nav-item v-if="$store.state.apiToken" to="/signatures">
             {{ $t('signatures') }}
