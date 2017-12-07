@@ -25,9 +25,11 @@ export default {
     }
   },
   created () {
+    this.$Progress.start()
     axios.post('/get-leaderboard-data/').then(response => {
       if (response.data.success) {
         this.items = response.data.data
+        this.$Progress.finish()
       }
     })
   }

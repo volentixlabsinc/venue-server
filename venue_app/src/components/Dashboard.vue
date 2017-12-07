@@ -5,29 +5,8 @@
         <h2>{{ $t('dashboard') }}</h2>
       </b-col>
     </b-row>
-    <b-row class="justify-content-md-center">
-      <b-col sm="2">
-        <p style="text-align: center;">Post Points</p>
-        <points-chart :height="320" label="My Post Points" :myPoints="points.postPoints" :totalPoints="6000"></points-chart>
-      </b-col>
-      <b-col sm="2">
-        <p style="text-align: center;">Post Days Points</p>
-        <points-chart :height="320" label="My Post Days Points" :myPoints="points.postDaysPoints" :totalPoints="3800"></points-chart>
-      </b-col>
-      <b-col sm="2">
-        <p style="text-align: center;">Influence Points</p>
-        <points-chart :height="320" label="My Influence Points" :myPoints="points.influencePoints" :totalPoints="200"></points-chart>
-      </b-col>
-      <b-col sm="2">
-        <p style="text-align: center;">Total Points</p>
-        <points-chart :height="320" label="My Total Points" :myPoints="points.totalPoints" :totalPoints="10000"></points-chart>
-      </b-col>
-      <b-col sm="2">
-        <p style="text-align: center;">VTX Tokens</p>
-        <points-chart :height="320" label="My VTX Tokens" :myPoints="points.VTX_Tokens" :totalPoints="120000"></points-chart>
-      </b-col>
-    </b-row>
-    <b-row style="margin-top: 16px;">
+    <dashboard-visuals :points="points"></dashboard-visuals>
+    <b-row style="margin-top: 30px;">
       <b-col>
         <b-table v-if="stats.length > 0" bordered hover :items="stats" :fields="statsFields">
           <template slot="show_details" scope="row">
@@ -119,12 +98,12 @@
 
 <script>
 import LeaderboardModal from '@/components/modals/LeaderboardModal'
-import PointsChart from '@/components/charts/PointsChart'
+import DashboardVisuals from '@/components/DashboardVisuals'
 import axios from 'axios'
 
 export default {
   name: 'Dashboard',
-  components: { LeaderboardModal, PointsChart },
+  components: { LeaderboardModal, DashboardVisuals },
   data () {
     return {
       showPage: false,

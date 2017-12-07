@@ -17,7 +17,7 @@ import VueProgressBar from 'vue-progressbar'
 import axios from 'axios'
 
 const options = {
-  color: '#007bff',
+  color: '#2a96b6',
   failedColor: '#c82333',
   thickness: '5px',
   transition: {

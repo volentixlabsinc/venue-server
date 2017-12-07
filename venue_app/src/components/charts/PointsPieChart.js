@@ -2,17 +2,17 @@ import { Doughnut } from 'vue-chartjs'
 
 export default {
   extends: Doughnut,
-  props: ['label', 'myPoints', 'totalPoints'],
+  props: ['label', 'myPoints', 'totalPoints', 'color'],
   mounted () {
     let myPoints = parseFloat(this.myPoints.toString().replace(/,/g, ''))
     let totalPoints = parseFloat(this.totalPoints.toString().replace(/,/g, ''))
     let restPts = totalPoints - myPoints
     this.renderChart({
-      labels: [' My Points', ' Rest'],
+      labels: [' My Points', ' Others'],
       datasets: [
         {
           label: this.label,
-          backgroundColor: ['#007bff', 'lightgray'],
+          backgroundColor: [this.color, 'lightgray'],
           data: [Math.round(myPoints), Math.round(restPts)]
         }
       ]
