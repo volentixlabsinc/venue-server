@@ -3,7 +3,20 @@
     <b-col sm="5">
       <b-row>
         <b-col>
-          <p style="text-align: center;">Your Current Points Overview</p>
+          <p style="text-align: center;"><strong>Tokens You Earned</strong></p>
+          <div class="iCountUp">
+            <i-count-up
+              :start="0"
+              :end="80500"
+              :decimals="0"
+              :duration="2.5">
+            </i-count-up> VTX
+          </div>
+        </b-col>
+      </b-row>
+      <b-row style="margin-top: 30px;">
+        <b-col>
+          <p style="text-align: center;"><strong>Your Current Points Overview</strong></p>
           <overview-pie-chart :height="250"></overview-pie-chart>
         </b-col>
       </b-row>
@@ -11,7 +24,7 @@
     <b-col>
       <b-row>
         <b-col>
-          <p style="text-align: center;">Your Points Relative to Others</p>
+          <p style="text-align: center;"><strong>Your Points Relative to Others</strong></p>
         </b-col>
       </b-row>
       <b-row class="justify-content-md-center">
@@ -58,8 +71,8 @@
       </b-row>
       <b-row style="margin-top: 40px;">
         <b-col>
-            <p style="text-align: center;">Daily Total Points</p>
-            <points-evolution-chart :height="150"></points-evolution-chart>
+            <p style="text-align: center;"><strong>Daily Total Points and Ranking</strong></p>
+            <points-evolution-chart :height="200"></points-evolution-chart>
         </b-col>
       </b-row>
     </b-col>
@@ -70,10 +83,16 @@
 import PointsPieChart from '@/components/charts/PointsPieChart'
 import OverviewPieChart from '@/components/charts/OverviewPieChart'
 import PointsEvolutionChart from '@/components/charts/PointsEvolutionChart'
+import ICountUp from 'vue-countup-v2'
 
 export default {
   name: 'DashboardVisuals',
-  components: { PointsPieChart, OverviewPieChart, PointsEvolutionChart },
+  components: {
+    PointsPieChart,
+    OverviewPieChart,
+    PointsEvolutionChart,
+    ICountUp
+  },
   props: ['points'],
   data () {
     return {
@@ -82,3 +101,13 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+  .iCountUp {
+    font-size: 45px;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    color: #232c3b;
+  }
+</style>

@@ -1546,6 +1546,10 @@ cosmiconfig@^2.1.0, cosmiconfig@^2.1.1:
     parse-json "^2.2.0"
     require-from-string "^1.1.0"
 
+countup.js@^1.8.1:
+  version "1.9.3"
+  resolved "https://registry.yarnpkg.com/countup.js/-/countup.js-1.9.3.tgz#ce3e50cd7160441e478f07da31895edcc0f1c9dd"
+
 create-ecdh@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/create-ecdh/-/create-ecdh-4.0.0.tgz#888c723596cdf7612f6498233eebd7a35301737d"
@@ -6359,6 +6363,13 @@ vue-cookies@^1.5.4:
   version "1.5.4"
   resolved "https://registry.yarnpkg.com/vue-cookies/-/vue-cookies-1.5.4.tgz#c897fd43f5c7edead3e993d4d3d116100bb8a3bb"
 
+vue-countup-v2@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/vue-countup-v2/-/vue-countup-v2-0.1.2.tgz#ca3b7b7a6c9e293164f4f6e3130c51721548cd8e"
+  dependencies:
+    countup.js "^1.8.1"
+    vue "^2.1.8"
+
 vue-functional-data-merge@^1.0.6:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/vue-functional-data-merge/-/vue-functional-data-merge-1.0.7.tgz#0c8876c91bc5968882dff3f7ef91f62619e1fdfe"
@@ -6420,6 +6431,10 @@ vue-template-compiler@^2.5.2:
 vue-template-es2015-compiler@^1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.6.0.tgz#dc42697133302ce3017524356a6c61b7b69b4a18"
+
+vue@^2.1.8:
+  version "2.5.9"
+  resolved "https://registry.yarnpkg.com/vue/-/vue-2.5.9.tgz#b2380cd040915dca69881dafd121d760952e65f7"
 
 vue@^2.5.2:
   version "2.5.2"
