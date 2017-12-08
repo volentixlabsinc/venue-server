@@ -20,6 +20,7 @@
           <overview-pie-chart :data="stats" :height="250"></overview-pie-chart>
         </b-col>
       </b-row>
+      <!--
       <b-row style="margin-top: 35px;">
         <b-col>
           <p style="text-align: center;"><strong>Your Current Rank</strong></p>
@@ -34,13 +35,9 @@
           </div>
         </b-col>
       </b-row>
+      -->
     </b-col>
     <b-col>
-      <b-row>
-        <b-col>
-          <p style="text-align: center;"><strong>Your Points Relative to Others</strong></p>
-        </b-col>
-      </b-row>
       <b-row class="justify-content-md-center">
         <b-col sm="3">
           <p style="text-align: center;">Post Points</p>
@@ -85,7 +82,7 @@
       </b-row>
       <b-row style="margin-top: 40px;">
         <b-col>
-            <p style="text-align: center;"><strong>Daily Total Points and Ranking</strong></p>
+            <p style="text-align: center;"><strong>Daily Posts and Ranking</strong></p>
             <points-evolution-chart :data="stats.daily_stats" :height="200"></points-evolution-chart>
         </b-col>
       </b-row>

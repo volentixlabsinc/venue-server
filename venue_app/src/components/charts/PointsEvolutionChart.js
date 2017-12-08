@@ -7,8 +7,8 @@ export default {
     let dates = this.data.map(function (value, index) {
       return value.date
     })
-    let points = this.data.map(function (value, index) {
-      return value.points
+    let posts = this.data.map(function (value, index) {
+      return value.posts
     })
     let rankings = this.data.map(function (value, index) {
       return value.rank
@@ -16,11 +16,17 @@ export default {
     this.renderChart({
       labels: dates,
       datasets: [{
-        label: 'Points',
+        label: 'Posts',
         yAxisID: 'A',
         lineTension: 0,
         backgroundColor: 'rgba(221, 76, 61, 0.5)', // '#dd4c3d',
-        data: points
+        data: posts.map(function (v, i, a) {
+          if (i === 0) {
+            return 0
+          } else {
+            return (v - a[i - 1])
+          }
+        })
       }, {
         label: 'Ranking',
         yAxisID: 'B',

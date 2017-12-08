@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import models
 from constance import config
 from hashids import Hashids
+import pandas as pd
 
 class ForumSite(models.Model):
     """ Forum site names and addresses """
@@ -51,6 +52,18 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+    def get_daily_total_posts(self, date):
+        value = 0
+        checks = SignatureCheck.objects.filter(
+            forum_profile__user_profile_id=self.id,
+            date_checked__date=date)
+        if checks.exists():
+            data = [{'id': x.id, 'profile': x.forum_profile.id, 'posts': x.total_posts} for x in checks]
+            df = pd.DataFrame(data)
+            df = df.groupby('profile').agg({'posts': 'max'})
+            value = int(df['posts'].sum())
+        return value
 
     def get_total_posts(self):
         value = 0

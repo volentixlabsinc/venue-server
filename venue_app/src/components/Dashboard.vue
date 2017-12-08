@@ -6,9 +6,9 @@
       </b-col>
     </b-row>
     <dashboard-visuals :stats="stats.user_level"></dashboard-visuals>
-    <b-row style="margin-top: 30px;">
+    <b-row style="margin-top: 45px;">
       <b-col>
-        <b-table v-if="stats.length > 0" bordered hover :items="stats.profile_level" :fields="statsFields">
+        <b-table v-if="stats.profile_level.length > 0" bordered hover :items="stats.profile_level" :fields="statsFields">
           <template slot="show_details" scope="row">
             <b-form-checkbox v-model="row.item._showDetails"></b-form-checkbox>
           </template>
@@ -117,7 +117,7 @@ export default {
         {key: 'VTX_Tokens', sortable: true},
         'show_details'
       ],
-      stats: []
+      stats: {}
     }
   },
   created () {
@@ -125,8 +125,6 @@ export default {
     var payload = { apiToken: this.$store.state.apiToken }
     axios.post('/get-stats/', payload).then(response => {
       this.stats = response.data.stats
-      this.userlevel = response.data.userlevel
-      this.points = this.stats[0]
       if (this.stats.length === 0) {
         this.$router.push({
           path: '/signatures',

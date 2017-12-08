@@ -1,23 +1,65 @@
 <template>
-  <!-- Reset Password Modal -->
   <b-modal 
     id="signature-code-modal" 
     :title="$i18n.t('signature_code')" 
     ref="signatureCodeModal" centered hide-footer>
-    <p>Signature code goes here</p>
+    <b-row>
+      <b-col>
+        <b-form-group id="signature-code">
+          <b-form-textarea 
+            id="signature-code-textarea"
+            v-model.trim="signatureCode" 
+            disabled
+            :rows="3">
+          </b-form-textarea>
+        </b-form-group>
+      </b-col>
+    </b-row>
+    <b-row>
+      <b-col>
+        <b-button 
+          v-clipboard="signatureCode" 
+          @success="signatureCopySuccess">
+          Copy
+        </b-button>
+      </b-col>
+    </b-row>
   </b-modal>
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   name: 'SignatureCodeModal',
   data () {
     return {
-      verificationCode: ''
+      signatureCode: ''
     }
   },
-  created () {
-    console.log('signature code modal shown: ' + this.verificationCode)
+  methods: {
+    getSignatureCode (verificationCode) {
+      let payload = {
+        verificationCode: verificationCode,
+        apiToken: this.$store.state.apiToken
+      }
+      axios.post('/get-signature-code/', payload).then(response => {
+        if (response.data.success) {
+          this.signatureCode = response.data.signature_code
+        }
+      })
+    },
+    signatureCopySuccess () {
+      this.$swal({
+        title: 'Copied to clipboard!',
+        icon: 'success',
+        button: {
+          text: 'OK',
+          className: 'btn-primary',
+          closeModal: true
+        }
+      })
+    }
   }
 }
 </script>

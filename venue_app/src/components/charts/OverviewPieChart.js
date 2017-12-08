@@ -15,7 +15,8 @@ export default {
       ]
     }, {
       legend: {
-        display: false
+        position: 'bottom',
+        maxWidth: 200
       }
     })
   }

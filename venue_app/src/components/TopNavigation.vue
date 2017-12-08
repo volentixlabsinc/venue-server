@@ -12,18 +12,10 @@
         
         <b-navbar-nav class="ml-auto">
           
-          <b-nav-item v-if="username" to="/dashboard">
-            {{ $t('welcome') }} {{ username }}!
-          </b-nav-item>
-          
-          <b-nav-item-dropdown :text="$i18n.t('language')" right>
+          <b-nav-item-dropdown v-if="!$store.state.apiToken" :text="$i18n.t('language')" right>
             <b-dropdown-item @click="setLanguage('en')">English</b-dropdown-item>
             <b-dropdown-item @click="setLanguage('fr')">French</b-dropdown-item>
           </b-nav-item-dropdown>
-          
-          <b-nav-item to="/" exact>
-            {{ $t('home') }}
-          </b-nav-item>
 
           <b-nav-item v-if="$store.state.apiToken" to="/dashboard">
             {{ $t('dashboard') }}
@@ -46,9 +38,8 @@
           </b-nav-item>
           
           <b-nav-item-dropdown right v-if="$store.state.apiToken">
-            <!-- Using button-content slot -->
             <template slot="button-content">
-              Account
+              {{ username }}
             </template>
             <b-dropdown-item to="/settings">Settings</b-dropdown-item>
             <b-dropdown-item @click="logout()" href="#">Logout</b-dropdown-item>

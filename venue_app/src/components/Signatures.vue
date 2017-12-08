@@ -112,7 +112,7 @@
               </b-col>
               <b-col style="margin: 0; padding: 0;">
                 <p style="text-align: right;">
-                  <span>Verification code: {{ signature.verification_code }}</span>
+                  <span @click="showSignatureCode(signature.verification_code)">Show Code</span>
                 </p>
               </b-col>
             </b-row>
@@ -381,6 +381,10 @@ export default {
     },
     addNewSignature (value) {
       this.showAddForm = value
+    },
+    showSignatureCode (verificationCode) {
+      this.$refs.signatureCode.getSignatureCode(verificationCode)
+      this.$refs.signatureCode.$refs.signatureCodeModal.show()
     }
   },
   computed: {

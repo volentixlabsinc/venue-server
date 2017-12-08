@@ -5,6 +5,7 @@ from venue.models import UserProfile, ForumSite, ForumProfile, Signature, ForumU
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from venue.tasks import get_user_position, update_data
+from venue.api import inject_verification_code
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -33,9 +34,9 @@ def authenticate(request):
     response = {'success': False}
     try:
         if '@' in data['username']:
-            user = User.objects.get(email=data['username'])
+            user = User.objects.get(email__iexact=data['username'])
         else:
-            user = User.objects.get(username=data['username'])
+            user = User.objects.get(username__iexact=data['username'])
         token, created = Token.objects.get_or_create(user=user)
         user.last_login = timezone.now()
         user.save()
@@ -227,7 +228,7 @@ def get_stats(request):
     # Iterate over the reversed list
     for day in days[::-1]:
         data = {}
-        data['points'] = user_profile.get_total_points(date=day)
+        data['posts'] = user_profile.get_daily_total_posts(date=day)
         data['rank'] = user_profile.get_ranking(date=day)
         data['date'] = day
         userlevel_stats['daily_stats'].append(data)
@@ -331,22 +332,34 @@ def reset_password(request):
         return JsonResponse(response)
         
 def get_leaderboard_data(request):
-    #response = {'success': False}
-    #body_unicode = request.body.decode('utf-8')
-    #data = json.loads(body_unicode)
-    #token_check = Token.objects.filter(key=data['token'])
-    #if token_check.exists():
     response = {}
     user_profiles = UserProfile.objects.all()
     leaderboard_data = []
     for user_profile in user_profiles:
         user_data = {}
+        user_data['rank'] = user_profile.get_ranking()
         user_data['username'] = user_profile.user.username
-        user_data['tokens_raw'] = int(user_profile.get_total_tokens())
-        user_data['tokens'] = '{:,}'.format(user_data['tokens_raw']) 
+        points = round(user_profile.get_total_points(), 0)
+        user_data['points'] = '{:,}'.format(int(points))
+        tokens = round(user_profile.get_total_tokens(), 0)
+        user_data['tokens'] = '{:,}'.format(int(tokens))
         leaderboard_data.append(user_data)
     # Order according to amount of tokens
-    leaderboard_data = sorted(leaderboard_data, key=itemgetter('tokens_raw'), reverse=True)
+    leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
     response['data'] = leaderboard_data
     response['success'] = True
+    return JsonResponse(response)
+
+def get_signature_code(request):
+    response = {'success': False}
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        data = json.loads(body_unicode)
+        token = Token.objects.filter(key=data['apiToken'])
+        if token.exists():
+            vcode = data['verificationCode']
+            forum_profile = ForumProfile.objects.get(verification_code=vcode)
+            sig_code = forum_profile.signature.code
+            response['signature_code'] = inject_verification_code(sig_code, vcode)
+            response['success'] = True
     return JsonResponse(response)
