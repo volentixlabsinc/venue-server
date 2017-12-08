@@ -1,13 +1,17 @@
 from __future__ import absolute_import, unicode_literals
-from .models import UserProfile, UptimeBatch, GlobalStats, SignatureCheck, PointsCalculation, DataUpdateTask, ScrapingError, ForumSite, ForumProfile, GlobalStats, Signature
+import traceback
+from operator import itemgetter
 from django.template.loader import get_template
-from celery import shared_task, chain, group
-from postmarker.core import PostmarkClient
 from django.utils import timezone
 from django.conf import settings
+from celery import shared_task, chain, group
+from postmarker.core import PostmarkClient
 from constance import config
 import pandas as pd
-import traceback
+from .models import (UserProfile, UptimeBatch, GlobalStats, SignatureCheck, 
+                     PointsCalculation, DataUpdateTask, ScrapingError, ForumSite,
+                     ForumProfile, Signature, Ranking)
+
 
 def load_scraper(name):
     name = name.strip('.py')
@@ -88,7 +92,7 @@ def get_user_position(forum_site_id, profile_url, user_id):
     return result
     
 @shared_task
-def update_global_stats(master_task_id):
+def update_global_stats():
     users = UserProfile.objects.all()
     total_posts = 0
     total_posts_with_sig = 0
@@ -109,9 +113,9 @@ def update_global_stats(master_task_id):
         total_days=total_days
     )
     gstats.save()
-    
+
 @shared_task
-def calculate_points(master_task_id):
+def calculate_points():
     batches = UptimeBatch.objects.all()
     for batch in batches:
         latest_check = batch.regular_checks.last()
@@ -120,7 +124,28 @@ def calculate_points(master_task_id):
             signature_check=latest_check
         )
         calc.save()
-        
+
+@shared_task
+def calculate_rankings():
+    """ Calculates the rankings and saves to DB """
+    users = UserProfile.objects.filter(email_confirmed=True)
+    users_points = []
+    # Generate the rankings
+    for user in users:
+        user_data = {
+            'user_profile_id': user.id,
+            'points': user.get_total_points()
+        }
+        users_points.append(user_data)
+    users_points.sort(key=itemgetter('points'), reverse=True)
+    # Save the rankings
+    for rank, user in enumerate(users_points, 1):
+        ranking = Ranking(
+            user_profile_id=user['user_profile_id'],
+            rank=rank)
+        ranking.save()
+
+
 @shared_task
 def database_cleanup():
     uptime_batches = UptimeBatch.objects.all()
@@ -167,22 +192,23 @@ def update_data(forum_profile_id=None):
     scraping_tasks = group(scrape_forum_profile.s(fp.id, task_id) for fp in forum_profiles)
     workflow = chain(
         scraping_tasks, # Execute scraping tasks
-        update_global_stats.si(task_id), # Execute task to update global stats
-        calculate_points.si(task_id), # Execute task to calculate points
+        update_global_stats.si(), # Execute task to update global stats
+        calculate_points.si(), # Execute task to calculate points
         mark_master_task_complete.si(task_id), # Mark the data update run as complete
+        calculate_rankings.si(),
         database_cleanup.si() # Trigger the database cleanup task
     )
     # Send to the workflow to the queue
     workflow.apply_async()
-    
+
 #-----------------------------------
 # Tasks for sending automated emails
 #-----------------------------------
-    
+
 postmark = PostmarkClient(
-    server_token=settings.POSTMARK_TOKEN, 
+    server_token=settings.POSTMARK_TOKEN,
     account_token=settings.POSTMARK_TOKEN)
-        
+      
 @shared_task
 def send_email_confirmation(email, name, code):
     context = {'name': name, 'code': code}

@@ -1,7 +1,7 @@
 from venue.models import (
     ForumSite, Signature, UserProfile, ForumProfile, 
     UptimeBatch, SignatureCheck, PointsCalculation, 
-    GlobalStats, ForumUserRank, DataUpdateTask, ScrapingError
+    GlobalStats, ForumUserRank, DataUpdateTask, ScrapingError, Ranking
 )
 from django.contrib import admin
 import decimal
@@ -14,6 +14,14 @@ admin.site.index_template = 'admin/custom_index.html'
 
 admin.site.register(ForumSite)
 admin.site.register(Signature)
+
+class RankingAdmin(admin.ModelAdmin):
+    list_display = ['username', 'rank', 'ranking_date']
+
+    def username(self, obj):
+        return obj.user_profile.user.username
+
+admin.site.register(Ranking, RankingAdmin)
 
 class ScrapingErrorAdmin(admin.ModelAdmin):
     list_display = ['error_type', 'forum_profile', 'date_created']
@@ -44,22 +52,25 @@ class UptimeBatchAdmin(admin.ModelAdmin):
         return obj.get_total_days()
         
     def post_points(self, obj):
-        latest_gs = GlobalStats.objects.last()
-        pts = decimal.Decimal(obj.get_total_posts_with_sig() * 6000)
-        pts /= latest_gs.total_posts_with_sig
-        return round(pts, 4)
+        return obj.get_post_points()
+        #latest_gs = GlobalStats.objects.last()
+        #pts = decimal.Decimal(obj.get_total_posts_with_sig() * 6000)
+        #pts /= latest_gs.total_posts_with_sig
+        #return round(pts, 4)
         
     def post_days_points(self, obj):
-        latest_gs = GlobalStats.objects.last()
-        pts = decimal.Decimal(obj.get_total_days() * 3800)
-        pts /= latest_gs.total_days
-        return round(pts, 4)
+        return obj.get_post_days_points()
+        #latest_gs = GlobalStats.objects.last()
+        #pts = decimal.Decimal(obj.get_total_days() * 3800)
+        #pts /= latest_gs.total_days
+        #return round(pts, 4)
         
     def influence_points(self, obj):
-        latest_gs = GlobalStats.objects.last()
-        pts = decimal.Decimal(obj.get_total_posts() * 200)
-        pts /= latest_gs.total_posts
-        return round(pts, 4)
+        return obj.get_influence_points()
+        #latest_gs = GlobalStats.objects.last()
+        #pts = decimal.Decimal(obj.get_total_posts() * 200)
+        #pts /= latest_gs.total_posts
+        #return round(pts, 4)
     
 admin.site.register(UptimeBatch, UptimeBatchAdmin)
 

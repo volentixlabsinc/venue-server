@@ -2,21 +2,31 @@ import { Line } from 'vue-chartjs'
 
 export default {
   extends: Line,
+  props: ['data'],
   mounted () {
+    let dates = this.data.map(function (value, index) {
+      return value.date
+    })
+    let points = this.data.map(function (value, index) {
+      return value.points
+    })
+    let rankings = this.data.map(function (value, index) {
+      return value.rank
+    })
     this.renderChart({
-      labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+      labels: dates,
       datasets: [{
-        label: 'Points Evolution',
+        label: 'Points',
         yAxisID: 'A',
         lineTension: 0,
         backgroundColor: 'rgba(221, 76, 61, 0.5)', // '#dd4c3d',
-        data: [40, 20, 12, 39, 10, 40, 39, 80, 40, 20, 12, 11]
+        data: points
       }, {
-        label: 'Ranking Evolution',
+        label: 'Ranking',
         yAxisID: 'B',
         lineTension: 0,
         backgroundColor: 'rgba(46, 56, 71, 0.5)', // '#2e3847',
-        data: [3, 5, 4, 8, 10, 9, 7, 4, 8, 10, 10, 9]
+        data: rankings
       }]
     }, {
       legend: {

@@ -11,6 +11,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.utils import timezone
+from datetime import timedelta
 from django.conf import settings
 from django.http import JsonResponse
 from constance import config
@@ -159,12 +160,19 @@ def get_site_configs(request):
 def get_stats(request):
     body_unicode = request.body.decode('utf-8')
     data = json.loads(body_unicode)
-    stats = []
+    # Authenticate using the token
     token = Token.objects.get(key=data['apiToken'])
+    response = {'success': False}
+    # Initialize empty stats container dictionary
+    stats = {}
+    #-----------------------------------
+    # Generate forum profile level stats
+    #-----------------------------------
+    profile_stats = []
     fps = ForumProfile.objects.filter(user_profile__user=token.user, verified=True)
     for fp in fps:
         fields = ['postPoints', 'totalPostsWithSig', 'postDaysPoints', 'totalPostDays',
-            'influencePoints', 'totalPosts', 'totalPoints', 'VTX_Tokens']
+                  'influencePoints', 'totalPosts', 'totalPoints', 'VTX_Tokens']
         fp_data = {k: [] for k in fields}
         latest_batch = fp.uptime_batches.last()
         fp_data['totalPosts'].append(latest_batch.get_total_posts(actual=True))
@@ -180,13 +188,13 @@ def get_stats(request):
                 fp_data['influencePoints'].append(int(latest_calc.influence_points))
                 fp_data['totalPoints'].append(round(latest_calc.total_points, 0))
                 fp_data['VTX_Tokens'].append(round(latest_calc.get_total_tokens(), 0))
-        sum_up_data = {k:  '{:,}'.format(sum(v)) for k,v in fp_data.items()}
+        sum_up_data = {k:  '{:,}'.format(sum(v)) for k, v in fp_data.items()}
         sum_up_data['User_ID'] = fp.forum_user_id
         sum_up_data['forumSite'] = fp.forum.name
         sum_up_data['forumUserId'] = fp.forum_user_id
         sum_up_data['forumUserRank'] = fp.forum_rank.name
         sum_up_data['_showDetails'] = False
-        if latest_batch.active == False:
+        if not latest_batch.active:
             sum_up_data['_rowVariant'] = 'danger'
         current_branch_no = latest_batch.get_batch_number()
         sum_up_data['currentUptimeBatch'] = {}
@@ -204,9 +212,36 @@ def get_stats(request):
                 sum_up_data['currentUptimeBatch'] = data
             else:
                 sum_up_data['previousBatches'].append(data)
-        stats.append(sum_up_data)
-    return JsonResponse({'status': 'success', 'stats': stats})
-    
+        profile_stats.append(sum_up_data)
+    stats['profile_level'] = profile_stats
+    #--------------------------
+    # Generate user-level stats
+    #--------------------------
+    userlevel_stats = {}
+    # Get the date string for the last seven days
+    now = timezone.now()
+    days = [now - timedelta(days=x) for x in range(7)]
+    days = [str(x.date()) for x in days]
+    user_profile = UserProfile.objects.get(user=token.user)
+    userlevel_stats['daily_stats'] = []
+    # Iterate over the reversed list
+    for day in days[::-1]:
+        data = {}
+        data['points'] = user_profile.get_total_points(date=day)
+        data['rank'] = user_profile.get_ranking(date=day)
+        data['date'] = day
+        userlevel_stats['daily_stats'].append(data)
+    userlevel_stats['post_points'] = round(user_profile.get_post_points(), 0)
+    userlevel_stats['post_days_points'] = round(user_profile.get_post_days_points(), 0)
+    userlevel_stats['influence_points'] = round(user_profile.get_influence_points(), 0)
+    userlevel_stats['total_points'] = round(user_profile.get_total_points(), 0)
+    userlevel_stats['total_tokens'] = round(user_profile.get_total_tokens(), 0)
+    userlevel_stats['overall_rank'] = user_profile.get_ranking()
+    stats['user_level'] = userlevel_stats
+    response['stats'] = stats
+    response['success'] = True
+    return JsonResponse(response)
+
 def delete_account(request):
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
