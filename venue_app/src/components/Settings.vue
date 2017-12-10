@@ -50,6 +50,14 @@
             </b-button>
           </b-card>
           <b-card 
+            header="Language"
+            header-tag="header">
+            <p class="card-text">Set the site language</p>
+            <b-form-group>
+              <b-form-select v-model="language" :options="languages" class="mb-3"></b-form-select>
+            </b-form-group>
+          </b-card>
+          <b-card 
             header="Two-Factor Authentication"
             header-tag="header">
             <p class="card-text">Enable two-factor authentication</p>
@@ -58,12 +66,14 @@
               <b-badge variant="warning">Coming Soon</b-badge>
             </b-button>
           </b-card>
+          <!--
           <b-card 
             header="Delete Account"
             header-tag="header">
             <p class="card-text">Delete your account permanently</p>
             <b-button variant="danger" @click="deleteAccount()">Delete</b-button>
           </b-card>
+          -->
         </b-card-group>
       </b-col>
     </b-row>
@@ -87,6 +97,31 @@ export default {
     ChangeEmailModal,
     ChangeUsernameModal,
     ChangePasswordModal
+  },
+  data () {
+    return {
+      language: this.$store.state.language,
+      languages: [
+        {value: 'en', text: 'English'},
+        {value: 'fr', text: 'French'}
+      ]
+    }
+  },
+  watch: {
+    language: function (newLanguage) {
+      this.$Progress.start()
+      this.$store.commit('updateLanguage', newLanguage)
+      let payload = {
+        apiToken: this.$store.state.apiToken,
+        language: this.language
+      }
+      axios.post('/change-language/', payload).then((response) => {
+        if (response.data.success) {
+          this.$i18n.locale = newLanguage
+          this.$Progress.finish()
+        }
+      })
+    }
   },
   methods: {
     deleteAccount () {

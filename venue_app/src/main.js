@@ -35,7 +35,7 @@ Vue.use(VueProgressBar, options)
 axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN'
 axios.defaults.xsrfCookieName = 'csrftoken'
 
-// axios.defaults.baseURL = 'http://localhost:8000'
+axios.defaults.baseURL = 'https://venue.volentix.com'
 
 Vue.use(VueCookies)
 Vue.use(VueSwal)

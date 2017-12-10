@@ -1,7 +1,8 @@
-import { Line } from 'vue-chartjs'
+import { Line, mixins } from 'vue-chartjs'
 
 export default {
   extends: Line,
+  mixins: [mixins.reactiveProp],
   props: ['data'],
   mounted () {
     let dates = this.data.map(function (value, index) {
@@ -16,22 +17,19 @@ export default {
     this.renderChart({
       labels: dates,
       datasets: [{
-        label: 'Posts',
+        label: 'New Posts',
         yAxisID: 'A',
-        lineTension: 0,
+        lineTension: 0.2,
         backgroundColor: 'rgba(221, 76, 61, 0.5)', // '#dd4c3d',
-        data: posts.map(function (v, i, a) {
-          if (i === 0) {
-            return 0
-          } else {
-            return (v - a[i - 1])
-          }
-        })
+        borderColor: '#dd4c3d',
+        data: posts
       }, {
         label: 'Ranking',
         yAxisID: 'B',
-        lineTension: 0,
+        lineTension: 0.2,
+        fill: 'bottom',
         backgroundColor: 'rgba(46, 56, 71, 0.5)', // '#2e3847',
+        borderColor: '#2e3847',
         data: rankings
       }]
     }, {
@@ -42,11 +40,27 @@ export default {
         yAxes: [{
           id: 'A',
           type: 'linear',
-          position: 'left'
+          position: 'left',
+          ticks: {
+            beginAtZero: true
+          },
+          scaleLabel: {
+            display: true,
+            fontColor: '#dd4c3d',
+            labelString: 'Number of New Posts'
+          }
         }, {
           id: 'B',
           type: 'linear',
-          position: 'right'
+          position: 'right',
+          ticks: {
+            reverse: true
+          },
+          scaleLabel: {
+            display: true,
+            fontColor: '#2e3847',
+            labelString: 'Ranking'
+          }
         }]
       }
     })

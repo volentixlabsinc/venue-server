@@ -1,11 +1,12 @@
-import { Doughnut } from 'vue-chartjs'
+import { Doughnut, mixins } from 'vue-chartjs'
 
 export default {
   extends: Doughnut,
+  mixins: [mixins.reactiveProp],
   props: ['data'],
   mounted () {
     this.renderChart({
-      labels: [' Post Points', ' Post Days Points', ' Influence Points'],
+      labels: [' Post Points', ' Post Uptime Points', ' Influence Points'],
       datasets: [
         {
           label: 'Overview Pie Chart',
@@ -15,8 +16,7 @@ export default {
       ]
     }, {
       legend: {
-        position: 'bottom',
-        maxWidth: 200
+        display: false
       }
     })
   }

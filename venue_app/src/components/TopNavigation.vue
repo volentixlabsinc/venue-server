@@ -17,11 +17,15 @@
             <b-dropdown-item @click="setLanguage('fr')">French</b-dropdown-item>
           </b-nav-item-dropdown>
 
-          <b-nav-item v-if="$store.state.apiToken" to="/dashboard">
+          <b-nav-item v-if="$store.state.apiToken" to="/dashboard" exact>
             {{ $t('dashboard') }}
           </b-nav-item>
+
+          <b-nav-item v-if="!$store.state.apiToken" to="/leaderboard" exact>
+            {{ $t('leaderboard') }}
+          </b-nav-item>
           
-          <b-nav-item to="/leaderboard">
+          <b-nav-item v-if="$store.state.apiToken" to="/dashboard/?leaderboard=1">
             {{ $t('leaderboard') }}
           </b-nav-item>
 

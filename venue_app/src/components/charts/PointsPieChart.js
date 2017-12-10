@@ -18,7 +18,8 @@ export default {
       ]
     }, {
       legend: {
-        display: false
+        display: true,
+        position: 'bottom'
       }
     })
   }

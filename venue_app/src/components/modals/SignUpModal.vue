@@ -75,11 +75,14 @@ export default {
     },
     register (event) {
       event.preventDefault()
-      axios.post('/create-user/', {
+      let payload = {
         email: this.email,
+        language: this.$i18n.locale,
         username: this.username,
         password: this.password1
-      }).then(response => {
+      }
+      console.log(payload)
+      axios.post('/create-user/', payload).then(response => {
         if (response.data.status === 'error') {
           this.signUpError = true
         } else {

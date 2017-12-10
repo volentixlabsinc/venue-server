@@ -151,16 +151,20 @@ def database_cleanup():
     uptime_batches = UptimeBatch.objects.all()
     dt = timezone.now().date()
     # Delete the regular signature checks, retain only the last one per day,
-    # the last check and the last initial check
+    # the last check, the last initial check, and the very first check per batch
     for batch in uptime_batches:
         checks = batch.regular_checks.all()
         if checks.count() > 1:
+            earliest_check = checks.first()
             latest_check = checks.last()
             latest_initial = checks.filter(initial=True).last()
             latest_found = checks.filter(signature_found=True).last()
             df = pd.DataFrame(list(checks.values('id', 'date_checked')))
             dfs = df.groupby([df['date_checked'].dt.date]).agg('max')
-            excluded = list(dfs['id']) + [latest_check.id, latest_initial.id, latest_found.id]
+            excluded = list(dfs['id']) + [earliest_check.id, latest_check.id, latest_initial.id, latest_found.id]
+            # Retain also anything with new posts
+            with_new_posts = checks.filter(new_posts__gt=0)
+            excluded += list(with_new_posts.values_list('id', flat=True))
             checks.exclude(id__in=excluded).delete()
     # Retain only the latest row per day in global stats
     stats = GlobalStats.objects.all()

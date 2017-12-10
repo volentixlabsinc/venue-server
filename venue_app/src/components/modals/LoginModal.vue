@@ -71,6 +71,7 @@ export default {
       this.$store.commit('updateApiToken', data.token)
       this.$store.commit('updateUserName', data.username)
       this.$store.commit('updateUserEmail', data.email)
+      this.$store.commit('updateLanguage', data.language)
     },
     login (event) {
       event.preventDefault()

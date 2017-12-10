@@ -1,12 +1,25 @@
 <template>
   <div class="page-container" v-if="showPage">
     <b-row>
-      <b-col>
+      <b-col v-if="!showLeaderboard">
         <h2>{{ $t('dashboard') }}</h2>
       </b-col>
+      <b-col v-if="showLeaderboard">
+        <h2>{{ $t('leaderboard') }}</h2>
+      </b-col>
+      <b-col v-if="!showLeaderboard">
+        <p style="text-align: right;" @click="refreshData()" v-if="!refreshing">
+          Refresh
+        </p>
+        <img v-if="refreshing" style="float: right;" src="../assets/animated_spinner.gif" height="30">
+      </b-col>
     </b-row>
-    <dashboard-visuals :stats="stats.user_level"></dashboard-visuals>
-    <b-row style="margin-top: 45px;">
+    <dashboard-visuals 
+      :userstats="stats.user_level" 
+      :sitestats="stats.sitewide" 
+      :leaderboard="showLeaderboard">
+    </dashboard-visuals>
+    <b-row style="margin-top: 45px;" v-if="!showLeaderboard">
       <b-col>
         <b-table v-if="stats.profile_level.length > 0" bordered hover :items="stats.profile_level" :fields="statsFields">
           <template slot="show_details" scope="row">
@@ -91,22 +104,33 @@
         </b-table>
       </b-col>
     </b-row>
-
-    <leaderboard-modal></leaderboard-modal>
+    <b-row v-if="showLeaderboard" style="margin-top: 45px;" id="leaderboard">
+      <b-col>
+        <b-table bordered hover :items="leaderboardData" :fields="leaderboardFields"></b-table>
+      </b-col>
+    </b-row>
   </div>
 </template>
 
 <script>
-import LeaderboardModal from '@/components/modals/LeaderboardModal'
 import DashboardVisuals from '@/components/DashboardVisuals'
 import axios from 'axios'
 
 export default {
   name: 'Dashboard',
-  components: { LeaderboardModal, DashboardVisuals },
+  components: { DashboardVisuals },
   data () {
     return {
       showPage: false,
+      showLeaderboard: null,
+      leaderboardData: [],
+      leaderboardFields: [
+        {key: 'rank', sortable: true},
+        {key: 'username', sortable: true},
+        {key: 'total_posts', sortable: true},
+        {key: 'total_points', sortable: true},
+        {key: 'total_tokens', sortable: true}
+      ],
       statsFields: [
         {key: 'forumSite', sortable: true},
         {key: 'User_ID', sortable: true},
@@ -117,24 +141,65 @@ export default {
         {key: 'VTX_Tokens', sortable: true},
         'show_details'
       ],
-      stats: {}
+      stats: {},
+      refreshing: false
+    }
+  },
+  methods: {
+    refreshData () {
+      this.$Progress.start()
+      this.refreshing = true
+      var payload = { apiToken: this.$store.state.apiToken }
+      axios.post('/get-stats/', payload).then(response => {
+        this.stats = response.data.stats
+        if (this.stats.fresh === true) {
+          this.$router.push({
+            path: '/signatures',
+            query: { initial: true }
+          })
+        } else {
+          this.showPage = true
+          // Get leaderboard data
+          axios.post('/get-leaderboard-data/').then(response => {
+            if (response.data.success) {
+              this.leaderboardData = response.data.data
+              this.$Progress.finish()
+              this.refreshing = false
+            }
+          })
+        }
+      })
     }
   },
   created () {
-    this.$Progress.start()
-    var payload = { apiToken: this.$store.state.apiToken }
-    axios.post('/get-stats/', payload).then(response => {
-      this.stats = response.data.stats
-      if (this.stats.length === 0) {
-        this.$router.push({
-          path: '/signatures',
-          query: { initial: true }
-        })
-      } else {
-        this.showPage = true
-        this.$Progress.finish()
+    // Fetch data from the server
+    this.refreshData()
+    /*
+    // Refresh dashboard data every 1 minute
+    this.interval = setInterval(function () {
+      this.refreshData()
+    }.bind(this), 60000)
+    */
+    if (this.$route.query.leaderboard === '1') {
+      this.showLeaderboard = true
+      window.scrollTo(0, document.body.scrollHeight)
+    }
+  },
+  watch: {
+    showLeaderboard: function (value) {
+      if (value) {
+        window.scrollTo(0, document.body.scrollHeight)
       }
-    })
+    }
+  },
+  beforeRouteUpdate (to, from, next) {
+    // Detect leaderboard query param
+    if (to.query.leaderboard === '1') {
+      this.showLeaderboard = true
+    } else {
+      this.showLeaderboard = false
+    }
+    next()
   }
 }
 </script>

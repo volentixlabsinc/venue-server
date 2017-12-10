@@ -10,7 +10,7 @@ export default new Vuex.Store({
     apiToken: '',
     userName: null,
     userEmail: null,
-    language: 'English',
+    language: 'en',
     showLoginForm: false
   },
   mutations: {
@@ -25,6 +25,9 @@ export default new Vuex.Store({
     },
     updateShowLoginForm (state, value) {
       state.showLoginForm = value
+    },
+    updateLanguage (state, value) {
+      state.language = value
     }
   }
 })

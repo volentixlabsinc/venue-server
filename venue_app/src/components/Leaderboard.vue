@@ -20,7 +20,7 @@ export default {
   name: 'Leaderboard',
   data () {
     return {
-      fields: ['rank', 'username', 'points', 'tokens'],
+      fields: ['rank', 'username', 'total_posts', 'total_points', 'total_tokens'],
       items: []
     }
   },

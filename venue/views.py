@@ -1,7 +1,8 @@
 from .tasks import ( verify_profile_signature, 
     send_email_confirmation, send_deletion_confirmation, 
     send_email_change_confirmation, send_reset_password)
-from venue.models import UserProfile, ForumSite, ForumProfile, Signature, ForumUserRank, UptimeBatch
+from venue.models import (UserProfile, ForumSite, ForumProfile, 
+    Language, Signature, ForumUserRank, UptimeBatch)
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from venue.tasks import get_user_position, update_data
@@ -40,13 +41,15 @@ def authenticate(request):
         token, created = Token.objects.get_or_create(user=user)
         user.last_login = timezone.now()
         user.save()
+        user_profile = user.profiles.first()
         response = {
             'success': True,
             'token': token.key, 
             'username': user.username, 
             'email': token.user.email,
-            'user_profile_id': user.profiles.first().id,
-            'email_confirmed': user.profiles.first().email_confirmed
+            'user_profile_id': user_profile.id,
+            'email_confirmed': user_profile.email_confirmed,
+            'language': user_profile.language.code,
         }
     except Exception as exc:
         response['message'] = str(exc)
@@ -60,12 +63,14 @@ def get_user(request):
         token = Token.objects.filter(key=data['token'])
         if token.exists():
             token = token.first()
+            user_profile = token.user.profiles.first()
             data = {
                 'found': True,
                 'token': token.key, 
                 'username': token.user.username, 
                 'email': token.user.email,
-                'email_confirmed': token.user.profiles.first().email_confirmed
+                'language': user_profile.language.code,
+                'email_confirmed': user_profile.email_confirmed
             }
     except TypeError:
         pass
@@ -77,6 +82,8 @@ def create_user(request):
     user_check = User.objects.filter(email=data['email'])
     response = {}
     try:
+        language = data['language']
+        del data['language']
         if user_check.exists():
             response['status'] = 'exists'
             user = user_check.first()
@@ -91,6 +98,7 @@ def create_user(request):
         }
         response['user'] = user_data
         user_profile = UserProfile(user=user)
+        user_profile.language = Language.objects.get(code=language)
         user_profile.save()
         # Send confirmation email
         code = hashids.encode(int(user.id))
@@ -165,80 +173,99 @@ def get_stats(request):
     token = Token.objects.get(key=data['apiToken'])
     response = {'success': False}
     # Initialize empty stats container dictionary
-    stats = {}
+    stats = {'fresh': False}
     #-----------------------------------
     # Generate forum profile level stats
     #-----------------------------------
     profile_stats = []
     fps = ForumProfile.objects.filter(user_profile__user=token.user, verified=True)
-    for fp in fps:
-        fields = ['postPoints', 'totalPostsWithSig', 'postDaysPoints', 'totalPostDays',
-                  'influencePoints', 'totalPosts', 'totalPoints', 'VTX_Tokens']
-        fp_data = {k: [] for k in fields}
-        latest_batch = fp.uptime_batches.last()
-        fp_data['totalPosts'].append(latest_batch.get_total_posts(actual=True))
-        # Sum up the credits and points from all batches for this forum profiles
-        for batch in fp.uptime_batches.all():
-            latest_check = batch.regular_checks.last()
-            latest_calc = latest_check.points_calculations.last()
-            if latest_calc:
-                fp_data['postPoints'].append(int(latest_calc.post_points))
-                fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
-                fp_data['postDaysPoints'].append(int(latest_calc.post_days_points))
-                fp_data['totalPostDays'].append(batch.get_total_days())
-                fp_data['influencePoints'].append(int(latest_calc.influence_points))
-                fp_data['totalPoints'].append(round(latest_calc.total_points, 0))
-                fp_data['VTX_Tokens'].append(round(latest_calc.get_total_tokens(), 0))
-        sum_up_data = {k:  '{:,}'.format(sum(v)) for k, v in fp_data.items()}
-        sum_up_data['User_ID'] = fp.forum_user_id
-        sum_up_data['forumSite'] = fp.forum.name
-        sum_up_data['forumUserId'] = fp.forum_user_id
-        sum_up_data['forumUserRank'] = fp.forum_rank.name
-        sum_up_data['_showDetails'] = False
-        if not latest_batch.active:
-            sum_up_data['_rowVariant'] = 'danger'
-        current_branch_no = latest_batch.get_batch_number()
-        sum_up_data['currentUptimeBatch'] = {}
-        if fp.uptime_batches.count() > 1:
-            sum_up_data['hasPreviousBatches'] = True
-            sum_up_data['previousBatches'] = []
-        for item in fp.uptime_batches.all():
-            batch_no = item.get_batch_number()
-            data = {
-                'batch': batch_no,
-                'totalPostsWithSig': item.get_total_posts_with_sig(),
-                'totalPostDays': item.get_total_days()
-            }
-            if batch_no == current_branch_no:
-                sum_up_data['currentUptimeBatch'] = data
-            else:
-                sum_up_data['previousBatches'].append(data)
-        profile_stats.append(sum_up_data)
-    stats['profile_level'] = profile_stats
-    #--------------------------
-    # Generate user-level stats
-    #--------------------------
-    userlevel_stats = {}
-    # Get the date string for the last seven days
-    now = timezone.now()
-    days = [now - timedelta(days=x) for x in range(7)]
-    days = [str(x.date()) for x in days]
-    user_profile = UserProfile.objects.get(user=token.user)
-    userlevel_stats['daily_stats'] = []
-    # Iterate over the reversed list
-    for day in days[::-1]:
-        data = {}
-        data['posts'] = user_profile.get_daily_total_posts(date=day)
-        data['rank'] = user_profile.get_ranking(date=day)
-        data['date'] = day
-        userlevel_stats['daily_stats'].append(data)
-    userlevel_stats['post_points'] = round(user_profile.get_post_points(), 0)
-    userlevel_stats['post_days_points'] = round(user_profile.get_post_days_points(), 0)
-    userlevel_stats['influence_points'] = round(user_profile.get_influence_points(), 0)
-    userlevel_stats['total_points'] = round(user_profile.get_total_points(), 0)
-    userlevel_stats['total_tokens'] = round(user_profile.get_total_tokens(), 0)
-    userlevel_stats['overall_rank'] = user_profile.get_ranking()
-    stats['user_level'] = userlevel_stats
+    if fps.count():
+        fps_batch_initials = 0 # Used later for userlevel stats
+        for fp in fps:
+            fields = ['postPoints', 'totalPostsWithSig', 'postDaysPoints', 'totalPostDays',
+                    'influencePoints', 'totalPosts', 'totalPoints', 'VTX_Tokens']
+            fp_data = {k: [] for k in fields}
+            latest_batch = fp.uptime_batches.last()
+            fp_data['totalPosts'].append(latest_batch.get_total_posts(actual=True))
+            # Sum up the credits and points from all batches for this forum profiles
+            for batch in fp.uptime_batches.all():
+                latest_check = batch.regular_checks.last()
+                latest_calc = latest_check.points_calculations.last()
+                if latest_calc:
+                    fp_data['postPoints'].append(int(latest_calc.post_points))
+                    fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
+                    fp_data['postDaysPoints'].append(int(latest_calc.post_days_points))
+                    fp_data['totalPostDays'].append(batch.get_total_days())
+                    fp_data['influencePoints'].append(int(latest_calc.influence_points))
+                    fp_data['totalPoints'].append(round(latest_calc.total_points, 0))
+                    fp_data['VTX_Tokens'].append(round(latest_calc.get_total_tokens(), 0))
+            sum_up_data = {k:  '{:,}'.format(sum(v)) for k, v in fp_data.items()}
+            sum_up_data['User_ID'] = fp.forum_user_id
+            sum_up_data['forumSite'] = fp.forum.name
+            sum_up_data['forumUserId'] = fp.forum_user_id
+            sum_up_data['forumUserRank'] = fp.forum_rank.name
+            sum_up_data['_showDetails'] = False
+            if not latest_batch.active:
+                sum_up_data['_rowVariant'] = 'danger'
+            current_branch_no = latest_batch.get_batch_number()
+            sum_up_data['currentUptimeBatch'] = {}
+            if fp.uptime_batches.count() > 1:
+                sum_up_data['hasPreviousBatches'] = True
+                sum_up_data['previousBatches'] = []
+            for item in fp.uptime_batches.all():
+                batch_no = item.get_batch_number()
+                data = {
+                    'batch': batch_no,
+                    'totalPostsWithSig': item.get_total_posts_with_sig(),
+                    'totalPostDays': item.get_total_days()
+                }
+                if batch_no == current_branch_no:
+                    sum_up_data['currentUptimeBatch'] = data
+                else:
+                    sum_up_data['previousBatches'].append(data)
+            profile_stats.append(sum_up_data)
+            # Get the initial count of posts from initial batches
+            earliest_batch = fp.uptime_batches.first()
+            earliest_check = earliest_batch.regular_checks.filter(initial=True).first()
+            fps_batch_initials += earliest_check.total_posts
+        stats['profile_level'] = profile_stats
+        #--------------------------
+        # Generate user-level stats
+        #--------------------------
+        userlevel_stats = {}
+        # Get the date string for the last seven days
+        now = timezone.now()
+        days = [now - timedelta(days=x) for x in range(7)]
+        days = [str(x.date()) for x in days]
+        user_profile = UserProfile.objects.get(user=token.user)
+        userlevel_stats['daily_stats'] = []
+        # Iterate over the reversed list
+        for day in days[::-1]:
+            data = {}
+            data['posts'] = user_profile.get_daily_new_posts(date=day)
+            data['rank'] = user_profile.get_ranking(date=day)
+            data['date'] = day
+            userlevel_stats['daily_stats'].append(data)
+        userlevel_stats['fps_batch_initials'] = fps_batch_initials
+        userlevel_stats['post_points'] = round(user_profile.get_post_points(), 0)
+        userlevel_stats['post_days_points'] = round(user_profile.get_post_days_points(), 0)
+        userlevel_stats['influence_points'] = round(user_profile.get_influence_points(), 0)
+        userlevel_stats['total_points'] = round(user_profile.get_total_points(), 0)
+        userlevel_stats['total_tokens'] = round(user_profile.get_total_tokens(), 0)
+        userlevel_stats['overall_rank'] = user_profile.get_ranking()
+        stats['user_level'] = userlevel_stats
+        #-------------------------
+        # Generate site-wide stats
+        #-------------------------
+        sitewide_stats = {}
+        users = UserProfile.objects.filter(email_confirmed=True)
+        total_posts = [x.get_total_posts_with_sig() for x in users]
+        sitewide_stats['total_users'] = users.count()
+        sitewide_stats['total_posts'] = int(sum(total_posts))
+        stats['sitewide'] = sitewide_stats
+    else:
+        stats['fresh'] = True
+    # Prepare the response
     response['stats'] = stats
     response['success'] = True
     return JsonResponse(response)
@@ -312,6 +339,18 @@ def change_password(request):
         except Exception as exc:
             response['message'] = str(exc)
         return JsonResponse(response)
+
+def change_language(request):
+    response = {'success': False}
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        data = json.loads(body_unicode)
+        token = Token.objects.get(key=data['apiToken'])
+        user_profile = token.user.profiles.first()
+        user_profile.language = Language.objects.get(code=data['language'])
+        user_profile.save()
+        response['success'] = True
+    return JsonResponse(response)
         
 def reset_password(request):
     response = {'success': False}
@@ -336,17 +375,20 @@ def get_leaderboard_data(request):
     user_profiles = UserProfile.objects.all()
     leaderboard_data = []
     for user_profile in user_profiles:
-        user_data = {}
-        user_data['rank'] = user_profile.get_ranking()
-        user_data['username'] = user_profile.user.username
-        points = round(user_profile.get_total_points(), 0)
-        user_data['points'] = '{:,}'.format(int(points))
-        tokens = round(user_profile.get_total_tokens(), 0)
-        user_data['tokens'] = '{:,}'.format(int(tokens))
-        leaderboard_data.append(user_data)
+        if user_profile.forum_profiles.count():
+            user_data = {}
+            user_data['rank'] = user_profile.get_ranking()
+            user_data['username'] = user_profile.user.username
+            user_data['total_posts'] = user_profile.get_total_posts_with_sig()
+            points = round(user_profile.get_total_points(), 0)
+            user_data['total_points'] = '{:,}'.format(int(points))
+            tokens = round(user_profile.get_total_tokens(), 0)
+            user_data['total_tokens'] = '{:,}'.format(int(tokens))
+            leaderboard_data.append(user_data)
     # Order according to amount of tokens
-    leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
-    response['data'] = leaderboard_data
+    if leaderboard_data:
+        leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
+        response['data'] = leaderboard_data
     response['success'] = True
     return JsonResponse(response)
 

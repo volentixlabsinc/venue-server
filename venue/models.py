@@ -45,9 +45,18 @@ class Signature(models.Model):
     def __str__(self):
         return self.name
 
+class Language(models.Model):
+    """ Site-wide language selection options """
+    name = models.CharField(max_length=30)
+    code = models.CharField(max_length=5)
+
+    def __str__(self):
+        return self.name
+
 class UserProfile(models.Model):
     """ Custom internal user profiles """
     user = models.ForeignKey(User, related_name='profiles')
+    language = models.ForeignKey(Language, null=True, blank=True, related_name='profiles')
     email_confirmed = models.BooleanField(default=False)
 
     def __str__(self):
@@ -63,6 +72,15 @@ class UserProfile(models.Model):
             df = pd.DataFrame(data)
             df = df.groupby('profile').agg({'posts': 'max'})
             value = int(df['posts'].sum())
+        return value
+
+    def get_daily_new_posts(self, date):
+        value = 0
+        checks = SignatureCheck.objects.filter(
+            forum_profile__user_profile_id=self.id,
+            date_checked__date=date, new_posts__gt=0)
+        if checks.exists():
+            value = sum([x.new_posts for x in checks])
         return value
 
     def get_total_posts(self):
@@ -304,6 +322,7 @@ class SignatureCheck(models.Model):
     uptime_batch = models.ForeignKey(UptimeBatch, related_name='regular_checks')
     date_checked = models.DateTimeField(default=timezone.now)
     total_posts = models.IntegerField(default=0)
+    new_posts = models.IntegerField(default=0)
     signature_found = models.BooleanField(default=True)
     status_code = models.IntegerField()
     initial = models.BooleanField(default=False)
@@ -330,15 +349,26 @@ class SignatureCheck(models.Model):
                         batch.save()
                         self.uptime_batch = batch
                         self.initial = True
+                        self.new_posts = 0
                     else:
                         latest_batch = batches.last()
                         self.uptime_batch = latest_batch
+                        self.new_posts = 0
                         self.initial = False
                         # Copy the total post of the last regular check that found the signature
                         self.total_posts = latest_batch.regular_checks.filter(
                             signature_found=True).total_posts
         super(SignatureCheck, self).save(*args, **kwargs)
         latest_batch = batches.last()
+        # Compute the number of new posts in this check
+        checks_ids = latest_batch.regular_checks.all().order_by('id').values_list('id', flat=True)
+        if len(checks_ids) > 1:
+            previous_check_index = list(checks_ids).index(int(self.id)) - 1
+            previous_check_id = checks_ids[previous_check_index]
+            previous_check = SignatureCheck.objects.get(id=previous_check_id)
+            new_posts = int(self.total_posts) - int(previous_check.total_posts)
+            SignatureCheck.objects.filter(id=self.id).update(new_posts=new_posts)
+        # Compare this to initial value and flag this as such, if needed
         init_check = latest_batch.regular_checks.filter(initial=True).last()
         sc = SignatureCheck.objects.get(id=self.id)
         if sc.total_posts <= init_check.total_posts:
@@ -361,30 +391,16 @@ class PointsCalculation(models.Model):
         # Calculate points for posts with sig
         self.post_points = 0.0
         if batch.get_total_posts_with_sig() and latest_gs.total_posts_with_sig:
-            # Get the sum of the posts with sig for the current batch and for all the
-            # inactive batches in the batch's forum profile
-            #sum_posts_with_sig = 0 #batch.get_total_posts_with_sig()
-            #for item in self.uptime_batch.forum_profile.uptime_batches.all():
-            #    sum_posts_with_sig += item.get_total_posts_with_sig()
-            # Now ready to compute the post points
             self.post_points = decimal.Decimal(batch.get_total_posts_with_sig() * 6000)
             self.post_points /= latest_gs.total_posts_with_sig
         # Calculate post days points
         self.post_days_points = 0.0
         if batch.get_total_days() and latest_gs.total_days:
-            #sum_total_days = 0
-            #for item in self.uptime_batch.forum_profile.uptime_batches.all():
-            #    sum_total_days += item.get_total_days()
-            # Ready to calculate the post days points
             self.post_days_points = decimal.Decimal(batch.get_total_days() * 3800)
             self.post_days_points /= latest_gs.total_days
         # Calculate influence points
         self.influence_points = 0.0
         if batch.get_total_posts() and latest_gs.total_posts:
-            #sum_total_posts = 0
-            #if self.uptime_batch.forum_profile.get_total_posts_with_sig():
-            #    for item in self.uptime_batch.forum_profile.uptime_batches.all():
-            #        sum_total_posts += item.get_total_posts()
             self.influence_points = decimal.Decimal(batch.get_total_posts() * 200)
             self.influence_points /= latest_gs.total_posts
         # Calculate total points

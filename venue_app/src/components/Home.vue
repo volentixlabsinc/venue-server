@@ -20,7 +20,7 @@
         {{ $t('login') }}
       </b-btn>
     </b-jumbotron>
-    
+
     <sign-up-modal></sign-up-modal>
   </div>
 </template>

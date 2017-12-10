@@ -1,6 +1,6 @@
 from venue.models import (
     ForumSite, Signature, UserProfile, ForumProfile, 
-    UptimeBatch, SignatureCheck, PointsCalculation, 
+    UptimeBatch, SignatureCheck, PointsCalculation, Language,
     GlobalStats, ForumUserRank, DataUpdateTask, ScrapingError, Ranking
 )
 from django.contrib import admin
@@ -12,6 +12,7 @@ admin.site.site_header = 'Volentix Venue Administration'
 admin.site.index_title = 'Apps and Data'
 admin.site.index_template = 'admin/custom_index.html'
 
+admin.site.register(Language)
 admin.site.register(ForumSite)
 admin.site.register(Signature)
 
@@ -53,24 +54,12 @@ class UptimeBatchAdmin(admin.ModelAdmin):
         
     def post_points(self, obj):
         return obj.get_post_points()
-        #latest_gs = GlobalStats.objects.last()
-        #pts = decimal.Decimal(obj.get_total_posts_with_sig() * 6000)
-        #pts /= latest_gs.total_posts_with_sig
-        #return round(pts, 4)
         
     def post_days_points(self, obj):
         return obj.get_post_days_points()
-        #latest_gs = GlobalStats.objects.last()
-        #pts = decimal.Decimal(obj.get_total_days() * 3800)
-        #pts /= latest_gs.total_days
-        #return round(pts, 4)
         
     def influence_points(self, obj):
         return obj.get_influence_points()
-        #latest_gs = GlobalStats.objects.last()
-        #pts = decimal.Decimal(obj.get_total_posts() * 200)
-        #pts /= latest_gs.total_posts
-        #return round(pts, 4)
     
 admin.site.register(UptimeBatch, UptimeBatchAdmin)
 
@@ -94,7 +83,7 @@ admin.site.register(GlobalStats, GlobalStatsAdmin)
 
 class SignatureCheckAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'forum_profile', 
-        'uptime_batch', 'total_posts', 'signature_found', 'date_checked', 'initial']
+        'uptime_batch', 'total_posts', 'new_posts', 'signature_found', 'date_checked', 'initial']
     list_filter = ['forum_profile', 'forum_profile__user_profile']
         
     def user(self, obj):
