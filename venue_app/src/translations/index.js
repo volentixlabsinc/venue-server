@@ -20,7 +20,7 @@ const messages = {
     'logout': 'Logout',
     'signup': 'Sign Up',
     'venue_title': 'Autonomous signature campaign tracking',
-    'venue_description': 'VENUE tracks and displays sophisticated user rankings and accurate payout information LIVE.',
+    'venue_description': 'VENUE tracks and displays sophisticated user rankings and accurate payout information live.',
     'dashboard': 'Dashboard',
     'signatures': 'Signatures',
     'settings': 'Settings',

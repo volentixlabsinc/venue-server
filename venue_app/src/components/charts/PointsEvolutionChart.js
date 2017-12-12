@@ -19,14 +19,14 @@ export default {
       datasets: [{
         label: 'New Posts',
         yAxisID: 'A',
-        lineTension: 0.2,
+        lineTension: 0.01,
         backgroundColor: 'rgba(221, 76, 61, 0.5)', // '#dd4c3d',
         borderColor: '#dd4c3d',
         data: posts
       }, {
         label: 'Ranking',
         yAxisID: 'B',
-        lineTension: 0.2,
+        lineTension: 0.01,
         fill: 'bottom',
         backgroundColor: 'rgba(46, 56, 71, 0.5)', // '#2e3847',
         borderColor: '#2e3847',
@@ -42,7 +42,8 @@ export default {
           type: 'linear',
           position: 'left',
           ticks: {
-            beginAtZero: true
+            beginAtZero: true,
+            stepSize: 1
           },
           scaleLabel: {
             display: true,
@@ -54,7 +55,9 @@ export default {
           type: 'linear',
           position: 'right',
           ticks: {
-            reverse: true
+            reverse: true,
+            max: Math.max(...rankings) + 1,
+            stepSize: 1
           },
           scaleLabel: {
             display: true,

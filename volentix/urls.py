@@ -17,7 +17,8 @@ from venue.views import (
     frontend_app, get_user, create_user, check_profile,
     save_signature, get_site_configs, get_stats, confirm_email, delete_account,
     change_email, change_username, change_password, authenticate, reset_password,
-    get_leaderboard_data, get_signature_code, change_language
+    get_leaderboard_data, get_signature_code, change_language, check_email_exists,
+    check_username_exists
 )
 from venue.api import (
     ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
@@ -54,7 +55,9 @@ urlpatterns = [
     url(r'^delete-account', delete_account),
     url(r'^reset-password/', reset_password),
     url(r'^change-password/', change_password),
-    url(r'^authenticate/', authenticate)
+    url(r'^authenticate/', authenticate),
+    url(r'^check-email-exists/', check_email_exists),
+    url(r'^check-username-exists/', check_username_exists)
 ]
 
 urlpatterns += [

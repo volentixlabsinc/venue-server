@@ -111,7 +111,7 @@
                 </p>
               </b-col>
               <b-col style="margin: 0; padding: 0;">
-                <p style="text-align: right;">
+                <p style="text-align: right; cursor: pointer;">
                   <span @click="showSignatureCode(signature.verification_code)">Show Code</span>
                 </p>
               </b-col>
@@ -185,13 +185,15 @@ export default {
     signatureCopySuccess () {
       this.$swal({
         title: 'Copied to clipboard!',
-        text: 'Paste the copied code to your profile signature.',
+        text: 'Paste the copied code to your profile signature and click the Verify button.',
         icon: 'success',
         button: {
-          text: 'OK',
+          text: 'Verify',
           className: 'btn-primary',
           closeModal: true
         }
+      }).then(() => {
+        this.verify()
       })
     },
     flashCheckProfileError (vueThis) {

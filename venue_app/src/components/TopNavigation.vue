@@ -20,12 +20,8 @@
           <b-nav-item v-if="$store.state.apiToken" to="/dashboard" exact>
             {{ $t('dashboard') }}
           </b-nav-item>
-
-          <b-nav-item v-if="!$store.state.apiToken" to="/leaderboard" exact>
-            {{ $t('leaderboard') }}
-          </b-nav-item>
           
-          <b-nav-item v-if="$store.state.apiToken" to="/dashboard/?leaderboard=1">
+          <b-nav-item to="/leaderboard">
             {{ $t('leaderboard') }}
           </b-nav-item>
 
@@ -153,5 +149,10 @@ export default {
 <style scoped>
   .topnav {
     margin-bottom: 20px;
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    left: 0px;
+    z-index: 100;
   }
 </style>

@@ -8,7 +8,7 @@
         <h2>{{ $t('leaderboard') }}</h2>
       </b-col>
       <b-col v-if="!showLeaderboard">
-        <p style="text-align: right;" @click="refreshData()" v-if="!refreshing">
+        <p style="text-align: right; cursor: pointer;" @click="refreshData()" v-if="!refreshing">
           Refresh
         </p>
         <img v-if="refreshing" style="float: right;" src="../assets/animated_spinner.gif" height="30">
@@ -104,11 +104,6 @@
         </b-table>
       </b-col>
     </b-row>
-    <b-row v-if="showLeaderboard" style="margin-top: 45px;" id="leaderboard">
-      <b-col>
-        <b-table bordered hover :items="leaderboardData" :fields="leaderboardFields"></b-table>
-      </b-col>
-    </b-row>
   </div>
 </template>
 
@@ -159,27 +154,15 @@ export default {
           })
         } else {
           this.showPage = true
-          // Get leaderboard data
-          axios.post('/get-leaderboard-data/').then(response => {
-            if (response.data.success) {
-              this.leaderboardData = response.data.data
-              this.$Progress.finish()
-              this.refreshing = false
-            }
-          })
         }
+        this.$Progress.finish()
+        this.refreshing = false
       })
     }
   },
   created () {
     // Fetch data from the server
     this.refreshData()
-    /*
-    // Refresh dashboard data every 1 minute
-    this.interval = setInterval(function () {
-      this.refreshData()
-    }.bind(this), 60000)
-    */
     if (this.$route.query.leaderboard === '1') {
       this.showLeaderboard = true
       window.scrollTo(0, document.body.scrollHeight)

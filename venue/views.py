@@ -79,6 +79,7 @@ def get_user(request):
 def create_user(request):
     body_unicode = request.body.decode('utf-8')
     data = json.loads(body_unicode)
+    data['email'] = data['email'].lower()
     user_check = User.objects.filter(email=data['email'])
     response = {}
     try:
@@ -250,7 +251,8 @@ def get_stats(request):
         userlevel_stats['post_points'] = round(user_profile.get_post_points(), 0)
         userlevel_stats['post_days_points'] = round(user_profile.get_post_days_points(), 0)
         userlevel_stats['influence_points'] = round(user_profile.get_influence_points(), 0)
-        userlevel_stats['total_points'] = round(user_profile.get_total_points(), 0)
+        userlevel_stats['total_points'] = '{:,}'.format(round(user_profile.get_total_points(), 0))
+        userlevel_stats['total_posts'] = round(user_profile.get_total_posts_with_sig(), 0)
         userlevel_stats['total_tokens'] = round(user_profile.get_total_tokens(), 0)
         userlevel_stats['overall_rank'] = user_profile.get_ranking()
         stats['user_level'] = userlevel_stats
@@ -262,6 +264,7 @@ def get_stats(request):
         total_posts = [x.get_total_posts_with_sig() for x in users]
         sitewide_stats['total_users'] = users.count()
         sitewide_stats['total_posts'] = int(sum(total_posts))
+        sitewide_stats['available_tokens'] = '{:,}'.format(config.VTX_AVAILABLE)
         stats['sitewide'] = sitewide_stats
     else:
         stats['fresh'] = True
@@ -388,7 +391,28 @@ def get_leaderboard_data(request):
     # Order according to amount of tokens
     if leaderboard_data:
         leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
-        response['data'] = leaderboard_data
+        response['rankings'] = leaderboard_data
+        users = UserProfile.objects.filter(email_confirmed=True)
+        # Get site-wide stats
+        response['sitewide'] = {
+            'available_points': '10,000',
+            'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
+            'total_users': users.count(),
+            'total_posts': int(sum([x.get_total_posts_with_sig() for x in users]))
+        }
+        try:
+            if request.method == 'POST':
+                body_unicode = request.body.decode('utf-8')
+                data = json.loads(body_unicode)
+                token = Token.objects.get(key=data['apiToken'])
+                user_profile = UserProfile.objects.get(user=token.user)
+                total_tokens = user_profile.get_total_tokens()
+                response['userstats'] = {
+                    'overall_rank': user_profile.get_ranking(),
+                    'total_tokens': int(round(total_tokens, 0))
+                }
+        except Token.DoesNotExist:
+            response['userstats'] = {}
     response['success'] = True
     return JsonResponse(response)
 
@@ -404,4 +428,22 @@ def get_signature_code(request):
             sig_code = forum_profile.signature.code
             response['signature_code'] = inject_verification_code(sig_code, vcode)
             response['success'] = True
+    return JsonResponse(response)
+
+def check_email_exists(request):
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)
+    response = {'success': True, 'email_exists': True}
+    user_check = User.objects.filter(email=data['email'].lower())
+    if not user_check.exists():
+        response['email_exists'] = False
+    return JsonResponse(response)
+
+def check_username_exists(request):
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)
+    response = {'success': True, 'username_exists': True}
+    user_check = User.objects.filter(username=data['username'].lower())
+    if not user_check.exists():
+        response['username_exists'] = False
     return JsonResponse(response)

@@ -5,15 +5,17 @@
     <b-container id="main-container">
       <router-view></router-view>
     </b-container>
+    <content-footer></content-footer>
   </div>
 </template>
 
 <script>
 import TopNavigation from '@/components/TopNavigation'
+import ContentFooter from '@/components/ContentFooter'
 
 export default {
   name: 'app',
-  components: { TopNavigation }
+  components: { TopNavigation, ContentFooter }
 }
 </script>
 
@@ -21,9 +23,12 @@ export default {
 #app {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height:100%;
+  position:relative;
 }
 #main-container {
-  padding-top: 15px;
+  padding-top: 90px;
+  padding-bottom: 100px;
 }
 .help {
   display: block;

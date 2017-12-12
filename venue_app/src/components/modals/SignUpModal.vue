@@ -3,13 +3,20 @@
   <b-modal id='signup-modal' :title="$i18n.t('sign_up_form')" v-if="!$store.state.apiToken" ref="signUpModal" centered hide-footer>
     <b-form @submit="register($event)" @click="clearSignUpError()">
       <b-form-group :label="$i18n.t('email')">
-        <b-form-input v-model.trim="email" v-validate="{ required: true, email: true }" name="email" :placeholder="$i18n.t('enter_email')"></b-form-input>
+        <b-form-input 
+          v-model.trim="email" 
+          v-validate="{ required: true, email: true, email_exists: true }" 
+          name="email" :placeholder="$i18n.t('enter_email')">
+        </b-form-input>
         <span v-show="errors.has('email')" class="help is-danger">
           {{ errors.first('email') }}
         </span>
       </b-form-group>
       <b-form-group label="Username">
-        <b-form-input v-model.trim="username" v-validate="{ required: true }" name="email" placeholder="Assign a username"></b-form-input>
+        <b-form-input 
+          v-model.trim="username" 
+          v-validate="{ required: true, username_exists: true }" 
+          name="username" placeholder="Assign a username"></b-form-input>
         <span v-show="errors.has('username')" class="help is-danger">
           {{ errors.first('username') }}
         </span>
@@ -60,11 +67,6 @@ export default {
       return Object.keys(this.fields).some(key => this.fields[key].pristine)
     }
   },
-  watch: {
-    email: function (newEmail) {
-      this.username = newEmail.split('@')[0]
-    }
-  },
   methods: {
     clearSignUpError () {
       this.signUpError = false
@@ -81,7 +83,6 @@ export default {
         username: this.username,
         password: this.password1
       }
-      console.log(payload)
       axios.post('/create-user/', payload).then(response => {
         if (response.data.status === 'error') {
           this.signUpError = true
@@ -104,6 +105,30 @@ export default {
         this.signUpError = true
       })
     }
+  },
+  created () {
+    this.$validator.extend('email_exists', {
+      getMessage: field => 'This email already exists in our system',
+      validate: value => {
+        let payload = {'email': value}
+        return axios.post('/check-email-exists/', payload).then(response => {
+          if (response.data.email_exists) {
+            return false
+          }
+        })
+      }
+    })
+    this.$validator.extend('username_exists', {
+      getMessage: field => 'This username already exists in our system',
+      validate: value => {
+        let payload = {'username': value}
+        return axios.post('/check-username-exists/', payload).then(response => {
+          if (response.data.username_exists) {
+            return false
+          }
+        })
+      }
+    })
   }
 }
 </script>

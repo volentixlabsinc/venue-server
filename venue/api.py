@@ -92,17 +92,13 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
             my_fps = ForumProfile.objects.filter(
                 user_profile__user=self.request.user,
                 verified=True)
-            name_map = {}
-            vcode_map = {}
+            my_sigs = []
             for fp in my_fps:
                 name = 'Forum site: %s / User ID: %s' % (fp.forum.name, fp.forum_user_id)
-                name_map[fp.signature.id] = name
-                vcode_map[fp.signature.id] = fp.verification_code
-            my_sigs = my_fps.values_list('signature_id', flat=True)
-            my_sigs = queryset.filter(id__in=list(my_sigs))
-            for sig in my_sigs:
-                sig.name = name_map[sig.id]
-                sig.verification_code = vcode_map[sig.id]
+                sig = fp.signature
+                sig.name = name
+                sig.verification_code = fp.verification_code
+                my_sigs.append(sig)
             return my_sigs
         else:
             forum_site_id = self.request.query_params.get('forum_site_id', None)

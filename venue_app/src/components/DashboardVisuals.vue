@@ -3,7 +3,7 @@
     <b-col sm="5">
       <b-row>
         <b-col>
-          <p style="text-align: center;"><strong>Tokens You Earned</strong></p>
+          <p style="text-align: center;"><strong>Your Current Tokens</strong></p>
           <div class="iCountUp">
             <i-count-up
               :start="0"
@@ -34,10 +34,6 @@
             <div class="legend-color" style="background-color: #b62da9;"></div> 
             <span class="legend-text">Influence Points - {{ userstats.influence_points }} out of 200</span>
           </div>
-          <div>
-            <div class="legend-color"></div> 
-            <span class="legend-text">Total Points - {{ userstats.total_points }} out of 10000</span>
-          </div>
         </b-col>
       </b-row>
     </b-col>
@@ -48,14 +44,14 @@
             <p class="card-text">#{{ userstats.overall_rank }}</p>
           </b-card>
         </b-col>
-        <b-col sm="4">
-          <b-card header="Total Users" class="text-center">
-            <p class="card-text">{{ sitestats.total_users }}</p>
+        <b-col sm="4" v-if="!leaderboard">
+          <b-card header="Your Total Posts" class="text-center">
+            <p class="card-text">{{ userstats.total_posts }}</p>
           </b-card>
         </b-col>
-        <b-col sm="4">
-          <b-card header="Total Posts Sitewide" class="text-center">
-            <p class="card-text">{{ sitestats.total_posts }}</p>
+        <b-col sm="4" v-if="!leaderboard">
+          <b-card header="Your Total Points" class="text-center">
+            <p class="card-text">{{ userstats.total_points }}</p>
           </b-card>
         </b-col>
       </b-row>
