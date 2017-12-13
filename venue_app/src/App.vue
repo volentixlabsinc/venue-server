@@ -1,11 +1,11 @@
 <template>
-  <div id="app" v-cloak>
+  <div id="app" v-cloak @scroll="handleScroll($event)">
     <top-navigation></top-navigation>
     <vue-progress-bar></vue-progress-bar>
     <b-container id="main-container">
       <router-view></router-view>
     </b-container>
-    <content-footer></content-footer>
+    <content-footer v-if="$store.state.showFooter"></content-footer>
   </div>
 </template>
 
@@ -15,7 +15,22 @@ import ContentFooter from '@/components/ContentFooter'
 
 export default {
   name: 'app',
-  components: { TopNavigation, ContentFooter }
+  components: { TopNavigation, ContentFooter },
+  methods: {
+    handleScroll () {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+        this.$store.commit('updateShowFooter', true)
+      } else {
+        this.$store.commit('updateShowFooter', false)
+      }
+    }
+  },
+  mounted () {
+    window.addEventListener('scroll', this.handleScroll)
+  },
+  destroyed () {
+    window.removeEventListener('scroll', this.handleScroll)
+  }
 }
 </script>
 
@@ -27,8 +42,7 @@ export default {
   position:relative;
 }
 #main-container {
-  padding-top: 90px;
-  padding-bottom: 100px;
+  padding-bottom: 90px;
 }
 .help {
   display: block;

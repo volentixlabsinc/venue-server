@@ -3,19 +3,24 @@ import { HorizontalBar, mixins } from 'vue-chartjs'
 export default {
   extends: HorizontalBar,
   mixins: [mixins.reactiveProp],
-  props: ['data'],
+  props: ['data', 'title'],
   mounted () {
+    let sites = this.data.map(function (i) {
+      return i.forumSite
+    })
+    let values = this.data.map(function (i) {
+      return i.value
+    })
+    let colors = this.data.map(function (i) {
+      return i.color
+    })
     this.renderChart({
+      labels: sites,
       datasets: [
         {
-          label: 'Bitcoin Forum',
-          backgroundColor: 'red',
-          data: [35]
-        },
-        {
-          label: 'Bitcoin Talk',
-          backgroundColor: 'yellow',
-          data: [89]
+          label: this.title,
+          backgroundColor: colors,
+          data: values
         }
       ]
     }, {
@@ -23,12 +28,18 @@ export default {
         display: false
       },
       scales: {
-        xAxes: {
-          stacked: true
-        },
-        yAxes: {
-          stacked: true
-        }
+        yAxes: [{
+          ticks: {
+            display: true
+          }
+        }],
+        xAxes: [{
+          ticks: {
+            min: 0,
+            beginAtZero: true,
+            stepSize: 1
+          }
+        }]
       }
     })
   }

@@ -17,6 +17,18 @@ class BitcoinForum(object):
         self.cookies = {}
         self.status_code = None
         self.login(username, password)
+        self.user_detals = {}
+        self.soup = None
+
+    def get_user_details(self):
+        details = {}
+        dt_keys = self.soup.select('div.bg1 dl.profile-details dt')
+        dt_values = self.soup.select('div.bg1 dl.profile-details dd')
+        for i, dk in enumerate(dt_keys):
+            key = dk.text.strip().replace(':', '')
+            if dt_values[i]:
+                details[key] = dt_values[i].text.strip()
+        self.user_details = details
         
     def list_forum_positions(self):
         positions = [
@@ -67,6 +79,7 @@ class BitcoinForum(object):
             url = 'https://forum.bitcoin.com/hungnx-u%s/' % user_id
         self.response = self.send_get(url)
         self.soup = BeautifulSoup(self.response.content, 'html.parser')
+        self.get_user_details()
         
     def get_total_posts(self):
         elem = self.soup.select('div.bg2 div.column2 dl.details dd')
@@ -81,16 +94,12 @@ class BitcoinForum(object):
             except AttributeError:
                 pass
         if not position:
-            details = {}
-            dt_keys = self.soup.select('div.bg1 dl.profile-details dt')
-            dt_values = self.soup.select('div.bg1 dl.profile-details dd')
-            for i, dk in enumerate(dt_keys):
-                key = dk.text.strip().replace(':', '')
-                if dt_values[i]:
-                    details[key] = dt_values[i].text.strip()
-            if 'Rank' in details.keys():
+            if 'Rank' in self.user_details.keys():
                 position = details['Rank']
         return position
+
+    def get_username(self):
+        return self.user_details['Username']
         
     def verify_code(self, code, forum_profile_id, forum_user_id):
         hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -145,14 +154,15 @@ def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode
     scraper = BitcoinForum(credentials['username'], credentials['password'])
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
     scraper.get_profile(forum_user_id)
+    username = scraper.get_username()
     if test_mode:
-        data = (scraper.status_code, True, scraper.get_total_posts())
+        data = (scraper.status_code, True, scraper.get_total_posts(), username)
     else:
         verified = scraper.check_signature()
         posts = 0
         if verified:
             posts = scraper.get_total_posts()
-        data = (scraper.status_code, verified, posts)
+        data = (scraper.status_code, verified, posts, username)
     return data
     
 def get_user_position(forum_user_id, credentials=None):

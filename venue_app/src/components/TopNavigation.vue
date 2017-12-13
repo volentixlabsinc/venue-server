@@ -1,11 +1,11 @@
 <template>
   <div class="topnav">
-    <b-navbar toggleable="md" type="dark" variant="dark">
+    <b-navbar toggleable="md" type="dark" variant="dark" class="bg-dark">
       
       <b-nav-toggle target="nav_collapse"></b-nav-toggle>
       
-      <b-navbar-brand href="/">
-        <img src="../assets/logo.png" alt="BV">
+      <b-navbar-brand style="font-size: 26px;" href="/">
+        VENUE
       </b-navbar-brand>
       
       <b-collapse is-nav id="nav_collapse">
@@ -148,11 +148,9 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
   .topnav {
-    margin-bottom: 20px;
-    position: fixed;
-    top: 0px;
-    right: 0px;
-    left: 0px;
-    z-index: 100;
+    margin-bottom: 60px;
+  }
+  .bg-dark {
+    background-color: #232c3b !important;
   }
 </style>

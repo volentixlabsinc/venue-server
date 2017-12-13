@@ -429,6 +429,9 @@ export default {
       this.$Progress.finish()
     })
   },
+  mounted () {
+    console.log(document.body.offsetHeight)
+  },
   beforeRouteLeave (to, from, next) {
     if (this.profileUrl && this.profileChecked && !this.signitureVerified) {
       this.$swal({
@@ -444,6 +447,13 @@ export default {
     } else {
       next()
     }
+  },
+  updated () {
+    this.$nextTick(function () {
+      if (document.body.offsetHeight <= window.innerHeight) {
+        this.$store.commit('updateShowFooter', true)
+      }
+    })
   }
 }
 </script>

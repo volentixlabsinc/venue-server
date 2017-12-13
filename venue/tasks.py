@@ -23,7 +23,7 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     try:
         scraper = load_scraper(forum_profile.forum.scraper_name)
-        status_code, signature_found, total_posts = scraper.verify_and_scrape(
+        status_code, signature_found, total_posts, username = scraper.verify_and_scrape(
             forum_profile.id,
             forum_profile.forum_user_id,
             forum_profile.signature.expected_links.splitlines(),
@@ -55,11 +55,15 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     expected_links = signature.expected_links.splitlines()
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
-    status_code, verified, posts = scraper.verify_and_scrape(
+    status_code, verified, posts, username = scraper.verify_and_scrape(
         forum_profile_id, 
         forum_profile.forum_user_id, 
         expected_links,
         test_mode=config.TEST_MODE)
+    if verified:
+        # Save the forum username
+        forum_profile.forum_username = username
+        forum_profile.save()
     return verified
     
 @shared_task

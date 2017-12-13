@@ -69,11 +69,11 @@
                     <b-col></b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="9">Posts since signature was found:</b-col>
+                    <b-col sm="9">Total posts with signature:</b-col>
                     <b-col>{{ row.item.currentUptimeBatch.totalPostsWithSig }}</b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="9">Days since signature was found:</b-col>
+                    <b-col sm="9">Total posts uptime (in days):</b-col>
                     <b-col>{{ row.item.currentUptimeBatch.totalPostDays }}</b-col>
                   </b-row>
                 </b-col>
@@ -89,11 +89,11 @@
                       <b-col></b-col>
                     </b-row>
                     <b-row>
-                      <b-col sm="9">Posts since signature was found:</b-col>
+                      <b-col sm="9">Total posts with signature:</b-col>
                       <b-col>{{ batch.totalPostsWithSig }}</b-col>
                     </b-row>
                     <b-row>
-                      <b-col sm="9" class="mb-2">Days since signature was found:</b-col>
+                      <b-col sm="9" class="mb-2">Total posts uptime (in days):</b-col>
                       <b-col>{{ batch.totalPostDays }}</b-col>
                     </b-row>
                   </div>
@@ -117,7 +117,6 @@ export default {
   data () {
     return {
       showPage: false,
-      showLeaderboard: null,
       leaderboardData: [],
       leaderboardFields: [
         {key: 'rank', sortable: true},
@@ -130,7 +129,7 @@ export default {
         {key: 'forumSite', sortable: true},
         {key: 'User_ID', sortable: true},
         {key: 'postPoints', sortable: true},
-        {key: 'postDaysPoints', sortable: true},
+        {key: 'postDaysPoints', sortable: true, label: 'Post Uptime Points'},
         {key: 'influencePoints', sortable: true},
         {key: 'totalPoints', sortable: true},
         {key: 'VTX_Tokens', sortable: true},
@@ -163,26 +162,13 @@ export default {
   created () {
     // Fetch data from the server
     this.refreshData()
-    if (this.$route.query.leaderboard === '1') {
-      this.showLeaderboard = true
-      window.scrollTo(0, document.body.scrollHeight)
-    }
   },
-  watch: {
-    showLeaderboard: function (value) {
-      if (value) {
-        window.scrollTo(0, document.body.scrollHeight)
+  updated () {
+    this.$nextTick(function () {
+      if (document.body.offsetHeight <= window.innerHeight) {
+        this.$store.commit('updateShowFooter', true)
       }
-    }
-  },
-  beforeRouteUpdate (to, from, next) {
-    // Detect leaderboard query param
-    if (to.query.leaderboard === '1') {
-      this.showLeaderboard = true
-    } else {
-      this.showLeaderboard = false
-    }
-    next()
+    })
   }
 }
 </script>

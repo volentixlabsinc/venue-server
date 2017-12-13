@@ -8,12 +8,12 @@
         <b-row style="margin-bottom: 45px;">
           <b-col>
             <b-card class="text-center">
-              <p class="card-text">Total Points Available: {{ sitewideStats.available_points }}</p>
+              <p class="card-text sm">Total Points Available: {{ sitewideStats.available_points }}</p>
             </b-card>
           </b-col>
           <b-col>
             <b-card class="text-center">
-              <p class="card-text">Total Tokens Available: {{ sitewideStats.available_tokens }}</p>
+              <p class="card-text sm">Total Tokens Available: {{ sitewideStats.available_tokens }}</p>
             </b-card>
           </b-col>
         </b-row>
@@ -69,7 +69,7 @@
             </b-row>
           </b-col>
         </b-row>
-        <b-row style="margin-top: 40px;">
+        <b-row style="margin-top: 40px;" v-if="false">
           <b-col>
             <div>
               <div class="graph-div" style="background: #dd4c3d; height: 30px; display: inlibe-block; width: 30%; float: right;">
@@ -95,24 +95,44 @@
             </div>
           </b-col>
         </b-row>
+        <b-row style="margin-top: 35px;">
+          <b-col>
+            <p style="text-align: center;"><strong>Total Users Per Forum Site</strong></p>
+            <forums-overview :data="forumUsers" title="Total Users" :height="90"></forums-overview>
+          </b-col>
+          <b-col>
+            <p style="text-align: center;"><strong>Total Posts Per Forum Site</strong></p>
+            <forums-overview :data="forumPosts" title="Total Posts" :height="90"></forums-overview>
+          </b-col>
+        </b-row>
         <b-row style="margin-top: 45px;">
             <b-col>
-                <b-table bordered hover :items="leaderboardData" :fields="leaderboardFields"></b-table>
+                <b-table bordered hover 
+                  :per-page="perPage" 
+                  :current-page="currentPage" 
+                  :items="leaderboardData" 
+                  :fields="leaderboardFields">
+                </b-table>
+                <b-pagination 
+                  v-if="leaderboardData.length > perPage"  
+                  :total-rows="leaderboardData.length" 
+                  :per-page="perPage" 
+                  v-model="currentPage" />
             </b-col>
         </b-row>
-
         <sign-up-modal></sign-up-modal>
     </div>
 </template>
 
 <script>
 import SignUpModal from '@/components/modals/SignUpModal'
+import ForumsOverview from '@/components/charts/ForumsOverview'
 import ICountUp from 'vue-countup-v2'
 import axios from 'axios'
 
 export default {
   name: 'Leaderboard',
-  components: { ICountUp, SignUpModal },
+  components: { ICountUp, SignUpModal, ForumsOverview },
   data () {
     return {
       showPage: false,
@@ -125,7 +145,13 @@ export default {
       ],
       leaderboardData: [],
       sitewideStats: {},
-      userStats: {}
+      userStats: {},
+      perPage: 10,
+      currentPage: 1,
+      forumPosts: [
+        {forumSite: 'Bitcointalk', value: 30, color: 'red'},
+        {forumSite: 'Bitcoin Forum', value: 7, color: 'blue'}
+      ]
     }
   },
   created () {
@@ -136,8 +162,17 @@ export default {
         this.leaderboardData = response.data.rankings
         this.sitewideStats = response.data.sitewide
         this.userStats = response.data.userstats
+        this.forumPosts = response.data.forumstats.posts
+        this.forumUsers = response.data.forumstats.users
         this.$Progress.finish()
         this.showPage = true
+      }
+    })
+  },
+  updated () {
+    this.$nextTick(function () {
+      if (document.body.offsetHeight <= window.innerHeight) {
+        this.$store.commit('updateShowFooter', true)
       }
     })
   }
@@ -154,5 +189,11 @@ export default {
 }
 .graph-div {
   padding: 5px 5px;
+}
+.card-text {
+  font-size: 24px;
+}
+.card-text.sm {
+  font-size: 20px;
 }
 </style>

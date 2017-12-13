@@ -175,8 +175,9 @@ class Ranking(models.Model):
 class ForumProfile(models.Model):
     """ Record of forum profile details per user """
     user_profile = models.ForeignKey(UserProfile, related_name='forum_profiles')
-    forum = models.ForeignKey(ForumSite, null=True, blank=True, related_name='users')
+    forum = models.ForeignKey(ForumSite, null=True, blank=True, related_name='forum_profiles')
     forum_rank = models.ForeignKey(ForumUserRank, null=True, blank=True, related_name='users')
+    forum_username = models.CharField(max_length=50, blank=True)
     forum_user_id = models.CharField(max_length=50, blank=True)
     profile_url = models.CharField(max_length=200)
     signature = models.ForeignKey(Signature, null=True, blank=True, related_name='users')

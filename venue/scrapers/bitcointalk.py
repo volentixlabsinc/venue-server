@@ -62,6 +62,17 @@ class BitcoinTalk(object):
                 raise ScraperError('Cannot get user position')
         except IndexError:
             return ''
+
+    def get_username(self):
+        try:
+            row = self.soup.select('div#bodyarea tr')[3]
+            if 'Name' in row.text:
+                pos_td = row.find_all('td')[1]
+                return pos_td.text.strip()
+            else:
+                raise ScraperError('Cannot get username')
+        except IndexError:
+            return ''
             
     def verify_code(self, code, forum_profile_id, forum_user_id):
         hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -109,14 +120,15 @@ def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode
     scraper = BitcoinTalk()
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
     scraper.get_profile(forum_user_id)
+    username = scraper.get_username()
     if test_mode:
-        data = (scraper.status_code, True, scraper.get_total_posts())
+        data = (scraper.status_code, True, scraper.get_total_posts(), username)
     else:
         verified = scraper.check_signature()
         posts = 0
         if verified:
             posts = scraper.get_total_posts()
-        data = (scraper.status_code, verified, posts)
+        data = (scraper.status_code, verified, posts, username)
     return data
     
 def get_user_position(forum_user_id):

@@ -145,7 +145,7 @@ class ForumUserRankAdmin(admin.ModelAdmin):
 admin.site.register(ForumUserRank, ForumUserRankAdmin)
 
 class ForumProfileAdmin(admin.ModelAdmin):
-    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_rank', 'verified',
+    list_display = ['user_profile', 'forum', 'forum_user_id', 'forum_username', 'forum_rank', 'verified',
         'total_posts', 'total_posts_with_sig', 'total_days']
         
     def total_posts(self, obj):

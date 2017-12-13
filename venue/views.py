@@ -413,6 +413,29 @@ def get_leaderboard_data(request):
                 }
         except Token.DoesNotExist:
             response['userstats'] = {}
+    # Generate forum stats
+    forum_stats = {
+        'posts': [],
+        'users': []}
+    sites = ForumSite.objects.all()
+    colors = ['#2a96b6', '#5a2998', '#b62da9']
+    for i, site in enumerate(sites):
+        total_posts = 0
+        fps = site.forum_profiles.filter(verified=True)
+        for fp in fps:
+            total_posts += fp.get_total_posts_with_sig()
+        total_users = fps.count()
+        forum_stats['posts'].append({
+            'forumSite': site.name,
+            'value': total_posts,
+            'color': colors[i]
+        })
+        forum_stats['users'].append({
+            'forumSite': site.name,
+            'value': total_users,
+            'color': colors[i]
+        })
+    response['forumstats'] = forum_stats
     response['success'] = True
     return JsonResponse(response)
 

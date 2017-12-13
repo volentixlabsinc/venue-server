@@ -45,6 +45,13 @@ export default {
         this.disableSignUp = response.data.disable_sign_up
       })
     }
+  },
+  updated () {
+    this.$nextTick(function () {
+      if (document.body.offsetHeight <= window.innerHeight) {
+        this.$store.commit('updateShowFooter', true)
+      }
+    })
   }
 }
 </script>

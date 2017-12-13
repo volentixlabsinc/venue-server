@@ -2,8 +2,8 @@
   <b-containter>
     <b-row id="footer">
       <b-col>
-        <span>Volentix Labs, Inc.</span>
-        <span style="float: right;">Frequently Asked Questions (FAQs)</span>
+        <img src="../assets/logo.png" height="40">
+        <span style="float: right; line-height: 40px;">Frequently Asked Questions (FAQs)</span>
       </b-col>
     </b-row>
   </b-containter>
@@ -11,41 +11,14 @@
 
 <<script>
 export default {
-  name: 'ContentFooter',
-  methods: {
-    getDocumentHeight () {
-      let body = document.body
-      let html = document.documentElement
-
-      return Math.max(body.scrollHeight, body.offsetHeight,
-          html.clientHeight, html.scrollHeight, html.offsetHeight)
-    },
-    getWindowHeight () {
-      return document.documentElement.clientHeight
-    },
-    getWindowWidth () {
-      return document.documentElement.clientWidth
-    }
-  },
-  mounted () {
-    let footerBox = this.$refs.footer.getBoundingClientRect()
-    console.log(footerBox.y)
-    console.log(this.getDocumentHeight())
-    console.log(this.getWindowHeight())
-    let docHeight = this.getDocumentHeight()
-    let winHeight = this.getWindowHeight()
-    // let winWidth = this.getWindowWidth()
-    if (docHeight === winHeight) {
-      document.getElementById('footer').setAttribute('style', 'background: red;')
-    }
-  }
+  name: 'ContentFooter'
 }
 </script>
 
 <style scoped>
 #footer {
-  background-color: rgb(52, 58, 63);
-  padding: 20px;
+  background-color: #232C3B;
+  padding: 10px;
   position: fixed;
   right: 0;
   left: 0;

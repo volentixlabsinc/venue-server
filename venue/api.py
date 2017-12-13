@@ -94,7 +94,8 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
                 verified=True)
             my_sigs = []
             for fp in my_fps:
-                name = 'Forum site: %s / User ID: %s' % (fp.forum.name, fp.forum_user_id)
+                args = (fp.forum.name, fp.forum_username, fp.forum_user_id)
+                name = 'Forum site: %s / Username: %s / User ID: %s' % args
                 sig = fp.signature
                 sig.name = name
                 sig.verification_code = fp.verification_code

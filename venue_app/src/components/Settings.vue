@@ -146,6 +146,13 @@ export default {
         }
       })
     }
+  },
+  updated () {
+    this.$nextTick(function () {
+      if (document.body.offsetHeight <= window.innerHeight) {
+        this.$store.commit('updateShowFooter', true)
+      }
+    })
   }
 }
 </script>

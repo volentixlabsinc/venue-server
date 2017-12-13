@@ -11,7 +11,8 @@ export default new Vuex.Store({
     userName: null,
     userEmail: null,
     language: 'en',
-    showLoginForm: false
+    showLoginForm: false,
+    showFooter: false
   },
   mutations: {
     updateApiToken (state, token) {
@@ -28,6 +29,9 @@ export default new Vuex.Store({
     },
     updateLanguage (state, value) {
       state.language = value
+    },
+    updateShowFooter (state, value) {
+      state.showFooter = value
     }
   }
 })
