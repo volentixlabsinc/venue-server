@@ -1,26 +1,28 @@
-from .tasks import ( verify_profile_signature, 
-    send_email_confirmation, send_deletion_confirmation, 
-    send_email_change_confirmation, send_reset_password)
-from venue.models import (UserProfile, ForumSite, ForumProfile, 
-    Language, Signature, ForumUserRank, UptimeBatch)
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.authtoken.views import ObtainAuthToken
-from venue.tasks import get_user_position, update_data
-from venue.api import inject_verification_code
-from rest_framework.authtoken.models import Token
+"""
+Volentix VENUE
+View functions
+"""
+
+import json
+from operator import itemgetter
+from datetime import timedelta
+from hashids import Hashids
+from constance import config
+from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
-from rest_framework.response import Response
 from django.contrib.auth.models import User
-from django.utils import timezone
-from datetime import timedelta
 from django.conf import settings
-from django.http import JsonResponse
-from constance import config
-from hashids import Hashids
-from operator import itemgetter
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from venue.api import inject_verification_code
+from .tasks import (verify_profile_signature, get_user_position, update_data,
+                    send_email_confirmation, send_deletion_confirmation,
+                    send_email_change_confirmation, send_reset_password)
+from .models import (UserProfile, ForumSite, ForumProfile,
+                     Language, Signature, ForumUserRank)
 from .utils import RedisTemp
-import json
 
 # Instantiate a Hashids instance to be used later
 hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -28,10 +30,10 @@ hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
 @ensure_csrf_cookie
 def frontend_app(request):
     return render(request, 'index.html')
-    
+
+@api_view(['POST'])
 def authenticate(request):
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)
+    data = request.data
     response = {'success': False}
     try:
         if '@' in data['username']:
@@ -53,13 +55,13 @@ def authenticate(request):
         }
     except Exception as exc:
         response['message'] = str(exc)
-    return JsonResponse(response)
-        
+    return Response(response)
+
+@api_view(['POST'])
 def get_user(request):
     data = {'found': False}
     try:
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
+        data = request.data
         token = Token.objects.filter(key=data['token'])
         if token.exists():
             token = token.first()
@@ -74,11 +76,11 @@ def get_user(request):
             }
     except TypeError:
         pass
-    return JsonResponse(data)
-    
+    return Response(data)
+
+@api_view(['POST'])
 def create_user(request):
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)
+    data = request.data
     data['email'] = data['email'].lower()
     user_check = User.objects.filter(email=data['email'])
     response = {}
@@ -107,19 +109,20 @@ def create_user(request):
     except Exception as exc:
         response['status'] = 'error'
         response['message'] = str(exc)
-    return JsonResponse(response)
-    
+    return Response(response)
+
+@api_view(['GET'])
 def confirm_email(request):
-    code = request.GET.get('code')
+    code = request.query_params.get('code')
     user_id, = hashids.decode(code)
     user_profile = UserProfile.objects.get(user_id=user_id)
     user_profile.email_confirmed = True
     user_profile.save()
     return redirect('/#/?email_confirmed=1')
-    
+
+@api_view(['POST'])
 def check_profile(request):
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)
+    data = request.data
     forum = ForumSite.objects.get(id=data['forum'])
     response = {'found': False, 'forum_id': data['forum']}
     token = Token.objects.get(key=data['apiToken'])
@@ -138,11 +141,11 @@ def check_profile(request):
             response['with_signature'] = info['with_signature']
             response['forum_profile_id'] = info['forum_profile_id']
     response['status_code'] = info['status_code']
-    return JsonResponse(response)
-    
+    return Response(response)
+
+@api_view(['POST'])
 def save_signature(request):
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)
+    data = request.data
     forum_profile = ForumProfile.objects.get(id=data['forum_profile_id'])
     signature = Signature.objects.get(id=data['signature_id'])
     forum_profile.signature = signature
@@ -159,17 +162,18 @@ def save_signature(request):
     else:
         response['success'] = False
         response['message'] = 'The signature could not be found in the profile page.'
-    return JsonResponse(response)
-    
+    return Response(response)
+
+@api_view(['POST'])
 def get_site_configs(request):
     configs = {
         'disable_sign_up': config.DISABLE_SIGN_UP
     }
-    return JsonResponse(configs)
-    
+    return Response(configs)
+
+@api_view(['POST'])
 def get_stats(request):
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)
+    data = request.data
     # Authenticate using the token
     token = Token.objects.get(key=data['apiToken'])
     response = {'success': False}
@@ -271,27 +275,27 @@ def get_stats(request):
     # Prepare the response
     response['stats'] = stats
     response['success'] = True
-    return JsonResponse(response)
+    return Response(response)
 
+@api_view(['GET', 'POST'])
 def delete_account(request):
     if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
+        data = request.data
         token = Token.objects.get(key=data['apiToken'])
         code = hashids.encode(int(token.user.id))
         send_deletion_confirmation.delay(token.user.email, token.user.username, code)
     elif request.method == 'GET':
-        code = request.GET.get('code')
+        code = request.query_params.get('code')
         if code:
             user_id, = hashids.decode(code)
             User.objects.filter(id=user_id).delete()
     return redirect('/#/?account_deleted=1')
-    
+
+@api_view(['GET', 'POST'])
 def change_email(request):
     rtemp = RedisTemp('new_email')
     if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
+        data = request.data
         token = Token.objects.get(key=data['apiToken'])
         response = {'success': False}
         email_check = User.objects.filter(email=data['email'])
@@ -302,77 +306,74 @@ def change_email(request):
             rtemp.store(code, data['email'])
             send_email_change_confirmation.delay(data['email'], token.user.username, code)
             response['success'] = True
-        return JsonResponse(response)
+        return Response(response)
     elif request.method == 'GET':
-        code = request.GET.get('code')
+        code = request.query_params.get('code')
         if code:
             user_id, = hashids.decode(code)
             new_email = rtemp.retrieve(code)
             User.objects.filter(id=user_id).update(email=new_email)
             rtemp.remove(code)
         return redirect('/#/settings/?updated_email=1')
-        
-def change_username(request):
-    if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
-        token = Token.objects.get(key=data['apiToken'])
-        response = {'success': False}
-        username_check = User.objects.filter(username=data['username'])
-        if username_check.exists():
-            response['message'] = 'Username already exists'
-        else:
-            User.objects.filter(id=token.user_id).update(username=data['username'])
-            response['success'] = True
-            response['username'] = token.user.username
-            response['email'] = token.user.email
-        return JsonResponse(response)
-        
-def change_password(request):
-    if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
-        token = Token.objects.get(key=data['apiToken'])
-        response = {'success': False}
-        try:
-            user = User.objects.get(id=token.user_id)
-            user.set_password(data['password'])
-            user.save()
-            response['success'] = True
-        except Exception as exc:
-            response['message'] = str(exc)
-        return JsonResponse(response)
 
+@api_view(['POST'])
+def change_username(request):
+    data = request.data
+    token = Token.objects.get(key=data['apiToken'])
+    response = {'success': False}
+    username_check = User.objects.filter(username=data['username'])
+    if username_check.exists():
+        response['message'] = 'Username already exists'
+    else:
+        User.objects.filter(id=token.user_id).update(username=data['username'])
+        response['success'] = True
+        response['username'] = token.user.username
+        response['email'] = token.user.email
+    return Response(response)
+
+@api_view(['POST'])
+def change_password(request):
+    data = request.data
+    token = Token.objects.get(key=data['apiToken'])
+    response = {'success': False}
+    try:
+        user = User.objects.get(id=token.user_id)
+        user.set_password(data['password'])
+        user.save()
+        response['success'] = True
+    except Exception as exc:
+        response['message'] = str(exc)
+    return Response(response)
+
+@api_view(['POST'])
 def change_language(request):
     response = {'success': False}
-    if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
-        token = Token.objects.get(key=data['apiToken'])
-        user_profile = token.user.profiles.first()
-        user_profile.language = Language.objects.get(code=data['language'])
-        user_profile.save()
-        response['success'] = True
-    return JsonResponse(response)
-        
+    data = request.data
+    token = Token.objects.get(key=data['apiToken'])
+    user_profile = token.user.profiles.first()
+    user_profile.language = Language.objects.get(code=data['language'])
+    user_profile.save()
+    response['success'] = True
+    return Response(response)
+
+@api_view(['POST'])
 def reset_password(request):
     response = {'success': False}
-    if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
-        if data['action'] == 'trigger':
-            user = User.objects.get(email=data['email'])
-            code = hashids.encode(int(user.id))
-            send_reset_password.delay(user.email, user.username, code)
-            response['success'] = True
-        elif data['action'] == 'set_password':
-            user_id, = hashids.decode(data['code'])
-            user = User.objects.get(id=user_id)
-            user.set_password(data['password'])
-            user.save()
-            response['success'] = True
-        return JsonResponse(response)
-        
+    data = request.data
+    if data['action'] == 'trigger':
+        user = User.objects.get(email=data['email'])
+        code = hashids.encode(int(user.id))
+        send_reset_password.delay(user.email, user.username, code)
+        response['success'] = True
+    elif data['action'] == 'set_password':
+        user_id, = hashids.decode(data['code'])
+        user = User.objects.get(id=user_id)
+        user.set_password(data['password'])
+        user.save()
+        response['success'] = True
+    return Response(response)
+
+@api_view(['POST'])
 def get_leaderboard_data(request):
     response = {}
     user_profiles = UserProfile.objects.all()
@@ -437,36 +438,39 @@ def get_leaderboard_data(request):
         })
     response['forumstats'] = forum_stats
     response['success'] = True
-    return JsonResponse(response)
+    return Response(response)
 
+@api_view(['POST'])
 def get_signature_code(request):
     response = {'success': False}
-    if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
-        token = Token.objects.filter(key=data['apiToken'])
-        if token.exists():
-            vcode = data['verificationCode']
-            forum_profile = ForumProfile.objects.get(verification_code=vcode)
-            sig_code = forum_profile.signature.code
-            response['signature_code'] = inject_verification_code(sig_code, vcode)
-            response['success'] = True
-    return JsonResponse(response)
+    data = request.data
+    token = Token.objects.filter(key=data['apiToken'])
+    if token.exists():
+        vcode = data['verificationCode']
+        forum_profile = ForumProfile.objects.get(verification_code=vcode)
+        sig_code = forum_profile.signature.code
+        response['signature_code'] = inject_verification_code(sig_code, vcode)
+        response['success'] = True
+    return Response(response)
 
+@api_view(['POST'])
 def check_email_exists(request):
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)
+    data = request.data
     response = {'success': True, 'email_exists': True}
     user_check = User.objects.filter(email=data['email'].lower())
     if not user_check.exists():
         response['email_exists'] = False
-    return JsonResponse(response)
+    return Response(response)
 
+@api_view(['POST'])
 def check_username_exists(request):
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)
+    data = request.data
     response = {'success': True, 'username_exists': True}
     user_check = User.objects.filter(username=data['username'].lower())
     if not user_check.exists():
         response['username_exists'] = False
-    return JsonResponse(response)
+    return Response(response)
+
+@api_view(['POST'])
+def get_wallet_details(request):
+    return Response({'success': True})

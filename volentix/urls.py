@@ -18,7 +18,7 @@ from venue.views import (
     save_signature, get_site_configs, get_stats, confirm_email, delete_account,
     change_email, change_username, change_password, authenticate, reset_password,
     get_leaderboard_data, get_signature_code, change_language, check_email_exists,
-    check_username_exists
+    check_username_exists, get_wallet_details
 )
 from venue.api import (
     ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
@@ -30,7 +30,7 @@ from django.contrib import admin
 from rest_framework import routers
 
 # API Routes
-router = routers.DefaultRouter()
+router = routers.SimpleRouter()
 router.register(r'user-profiles', UserProfileViewSet)
 router.register(r'forum-sites', ForumSiteViewSet)
 router.register(r'signatures', SignatureViewSet)
@@ -57,7 +57,8 @@ urlpatterns = [
     url(r'^change-password/', change_password),
     url(r'^authenticate/', authenticate),
     url(r'^check-email-exists/', check_email_exists),
-    url(r'^check-username-exists/', check_username_exists)
+    url(r'^check-username-exists/', check_username_exists),
+    url(r'^get-wallet-details/', get_wallet_details)
 ]
 
 urlpatterns += [

@@ -14,13 +14,13 @@
           </div>
         </b-col>
       </b-row>
-      <b-row style="margin-top: 35px;" v-if="!leaderboard">
+      <b-row style="margin-top: 35px;">
         <b-col>
           <p style="text-align: center;"><strong>Your Current Points Overview</strong></p>
           <overview-pie-chart :data="userstats" :height="250"></overview-pie-chart>
         </b-col>
       </b-row>
-      <b-row style="margin-top: 20px;" v-if="!leaderboard">
+      <b-row style="margin-top: 20px;">
         <b-col offset-sm="2" sm="10">
           <div>
             <div class="legend-color" style="background-color: #2a96b6;"></div> 
@@ -44,18 +44,18 @@
             <p class="card-text">#{{ userstats.overall_rank }}</p>
           </b-card>
         </b-col>
-        <b-col sm="4" v-if="!leaderboard">
+        <b-col sm="4">
           <b-card header="Your Total Posts" class="text-center">
             <p class="card-text">{{ userstats.total_posts }}</p>
           </b-card>
         </b-col>
-        <b-col sm="4" v-if="!leaderboard">
+        <b-col sm="4">
           <b-card header="Your Total Points" class="text-center">
             <p class="card-text">{{ userstats.total_points }}</p>
           </b-card>
         </b-col>
       </b-row>
-      <b-row style="margin-top: 40px;" v-if="!leaderboard">
+      <b-row style="margin-top: 40px;">
         <b-col>
             <p style="text-align: center;"><strong>Daily Posts and Ranking</strong></p>
             <points-evolution-chart :data="userstats.daily_stats" :height="200"></points-evolution-chart>
@@ -79,14 +79,7 @@ export default {
     PointsEvolutionChart,
     ICountUp
   },
-  props: ['userstats', 'sitestats', 'leaderboard'],
-  data () {
-    return {
-      userstats: this.userstats,
-      sitestats: this.sitestats,
-      leaderboard: this.leaderboard
-    }
-  }
+  props: ['userstats', 'sitestats']
 }
 </script>
 

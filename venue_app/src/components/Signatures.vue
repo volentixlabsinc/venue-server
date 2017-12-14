@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" v-if="showPage">
     <b-row>
       <b-col>
         <h2>{{ $t('signatures') }}</h2>
@@ -99,7 +99,7 @@
       <b-col>
         <!-- List of current signatures -->
         <h4>Your current signatures</h4>
-        <b-card-group class="card-group" v-for="signature in mySignatures">
+        <b-card-group class="card-group" v-for="signature in mySignatures" :key="signature.id">
           <b-card 
             :img-src="signature.image"
             img-alt="Signature"
@@ -123,7 +123,7 @@
     <b-row v-if="profileChecked && showAddForm">
       <b-col id="signatures-list">
         <p>Select signature:</p>
-        <b-row v-for="signature in signatureOptions">
+        <b-row v-for="signature in signatureOptions" :key="signature.id">
           <b-col>
             <h5>{{ signature.name }}</h5>
             <div class="sig-select-div">
@@ -153,6 +153,7 @@ export default {
   components: { SignatureCodeModal },
   data () {
     return {
+      showPage: false,
       initial: false,
       showAddForm: false,
       forumSite: 1,
@@ -420,17 +421,16 @@ export default {
       for (var elem of response.data) {
         this.forumSites.push({value: elem.id, text: elem.name})
       }
+      this.showPage = true
       this.$Progress.finish()
     })
     // Get my signatures
     var params = { 'own_sigs': 1 }
     axios.get('/api/signatures/', {params: params}).then(response => {
       this.mySignatures = response.data
+      this.showPage = true
       this.$Progress.finish()
     })
-  },
-  mounted () {
-    console.log(document.body.offsetHeight)
   },
   beforeRouteLeave (to, from, next) {
     if (this.profileUrl && this.profileChecked && !this.signitureVerified) {
@@ -452,6 +452,8 @@ export default {
     this.$nextTick(function () {
       if (document.body.offsetHeight <= window.innerHeight) {
         this.$store.commit('updateShowFooter', true)
+      } else {
+        this.$store.commit('updateShowFooter', false)
       }
     })
   }

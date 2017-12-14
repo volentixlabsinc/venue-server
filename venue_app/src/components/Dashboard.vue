@@ -1,13 +1,10 @@
 <template>
   <div class="page-container" v-if="showPage">
     <b-row>
-      <b-col v-if="!showLeaderboard">
+      <b-col>
         <h2>{{ $t('dashboard') }}</h2>
       </b-col>
-      <b-col v-if="showLeaderboard">
-        <h2>{{ $t('leaderboard') }}</h2>
-      </b-col>
-      <b-col v-if="!showLeaderboard">
+      <b-col>
         <p style="text-align: right; cursor: pointer;" @click="refreshData()" v-if="!refreshing">
           Refresh
         </p>
@@ -16,10 +13,9 @@
     </b-row>
     <dashboard-visuals 
       :userstats="stats.user_level" 
-      :sitestats="stats.sitewide" 
-      :leaderboard="showLeaderboard">
+      :sitestats="stats.sitewide">
     </dashboard-visuals>
-    <b-row style="margin-top: 45px;" v-if="!showLeaderboard">
+    <b-row style="margin-top: 45px;">
       <b-col>
         <b-table v-if="stats.profile_level.length > 0" bordered hover :items="stats.profile_level" :fields="statsFields">
           <template slot="show_details" scope="row">
@@ -83,7 +79,7 @@
                       <b>Credits from previous uptime batches</b>
                     </b-col>
                   </b-row>
-                  <div v-for="batch in row.item.previousBatches">
+                  <div v-for="batch in row.item.previousBatches" :key="batch.batch">
                     <b-row>
                       <b-col sm="9">Batch number {{ batch.batch }}:</b-col>
                       <b-col></b-col>
@@ -117,14 +113,6 @@ export default {
   data () {
     return {
       showPage: false,
-      leaderboardData: [],
-      leaderboardFields: [
-        {key: 'rank', sortable: true},
-        {key: 'username', sortable: true},
-        {key: 'total_posts', sortable: true},
-        {key: 'total_points', sortable: true},
-        {key: 'total_tokens', sortable: true}
-      ],
       statsFields: [
         {key: 'forumSite', sortable: true},
         {key: 'User_ID', sortable: true},
@@ -167,6 +155,8 @@ export default {
     this.$nextTick(function () {
       if (document.body.offsetHeight <= window.innerHeight) {
         this.$store.commit('updateShowFooter', true)
+      } else {
+        this.$store.commit('updateShowFooter', false)
       }
     })
   }

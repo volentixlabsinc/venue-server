@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" v-if="showPage">
     <b-row>
       <b-col>
         <h2>{{ $t('settings') }}</h2>
@@ -100,6 +100,7 @@ export default {
   },
   data () {
     return {
+      showPage: false,
       language: this.$store.state.language,
       languages: [
         {value: 'en', text: 'English'},
@@ -147,10 +148,23 @@ export default {
       })
     }
   },
+  created () {
+    this.$Progress.start()
+    axios.post('/get-wallet-details/').then(response => {
+      this.showPage = true
+      this.$Progress.finish()
+    })
+  },
   updated () {
+    console.log(document.body.offsetHeight)
+    console.log(window.innerHeight)
     this.$nextTick(function () {
+      console.log(document.body.offsetHeight)
+      console.log(window.innerHeight)
       if (document.body.offsetHeight <= window.innerHeight) {
         this.$store.commit('updateShowFooter', true)
+      } else {
+        this.$store.commit('updateShowFooter', false)
       }
     })
   }

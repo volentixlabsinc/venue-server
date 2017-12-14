@@ -173,6 +173,8 @@ export default {
     this.$nextTick(function () {
       if (document.body.offsetHeight <= window.innerHeight) {
         this.$store.commit('updateShowFooter', true)
+      } else {
+        this.$store.commit('updateShowFooter', false)
       }
     })
   }

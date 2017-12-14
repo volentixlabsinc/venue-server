@@ -86,6 +86,10 @@ export default {
             // Fix the authorization header for all HTTP requests
             var authHeader = 'Token ' + this.$store.state.apiToken
             axios.defaults.headers.common['Authorization'] = authHeader
+            // Refresh the login form
+            Object.assign(this.$data, this.$options.data.call(this))
+            this.$validator.clean()
+            this.$refs.loginModal.hide()
             // Redirect to dashboard
             this.$router.push('/dashboard')
           } else {
