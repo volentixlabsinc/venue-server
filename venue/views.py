@@ -403,8 +403,9 @@ def get_leaderboard_data(request):
         }
         try:
             if request.method == 'POST':
-                body_unicode = request.body.decode('utf-8')
-                data = json.loads(body_unicode)
+                #body_unicode = request.body.decode('utf-8')
+                #data = json.loads(body_unicode)
+                data = request.data
                 token = Token.objects.get(key=data['apiToken'])
                 user_profile = UserProfile.objects.get(user=token.user)
                 total_tokens = user_profile.get_total_tokens()
