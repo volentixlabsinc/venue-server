@@ -12,10 +12,12 @@
         
         <b-navbar-nav class="ml-auto">
           
-          <b-nav-item-dropdown v-if="!$store.state.apiToken" :text="$i18n.t('language')" right>
-            <b-dropdown-item @click="setLanguage('en')">English</b-dropdown-item>
-            <b-dropdown-item @click="setLanguage('fr')">French</b-dropdown-item>
-            <b-dropdown-item @click="setLanguage('jp')">Japanese</b-dropdown-item>
+          <b-nav-item-dropdown v-if="!$store.state.apiToken" :text="$t('language')" right>
+            <b-dropdown-item  
+              v-for="lang in languages" :key="lang.value"
+              @click="setLanguage(lang.value)">
+              {{ lang.text }}
+            </b-dropdown-item>
           </b-nav-item-dropdown>
 
           <b-nav-item v-if="$store.state.apiToken" to="/dashboard" exact>
@@ -37,7 +39,7 @@
           <b-nav-item v-if="$store.state.apiToken" to="/signatures">
             {{ $t('signatures') }}
           </b-nav-item>
-          
+
           <b-nav-item-dropdown right v-if="$store.state.apiToken">
             <template slot="button-content">
               {{ username }}
@@ -63,6 +65,11 @@ import axios from 'axios'
 export default {
   name: 'TopNavigation',
   components: { LoginModal, ResetPasswordModal },
+  data () {
+    return {
+      languages: this.$store.state.languages
+    }
+  },
   methods: {
     logout () {
       this.$store.commit('updateApiToken', '')
@@ -92,6 +99,8 @@ export default {
       }).then(response => {
         if (response.data.found === true) {
           this.setUser(response.data)
+          // Localize to selected language
+          this.$i18n.locale = this.$store.state.language
         }
       })
     }

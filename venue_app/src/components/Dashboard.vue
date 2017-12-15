@@ -76,7 +76,7 @@
                 <b-col>
                   <b-row v-if="row.item.hasPreviousBatches" class="mb-2">
                     <b-col>
-                      <b>{{ $('previous_batch_credits') }}</b>
+                      <b>{{ $t('previous_batch_credits') }}</b>
                     </b-col>
                   </b-row>
                   <div v-for="batch in row.item.previousBatches" :key="batch.batch">
@@ -121,7 +121,7 @@ export default {
         {key: 'influencePoints', sortable: true, label: this.$t('influence_points')},
         {key: 'totalPoints', sortable: true, label: this.$t('total_points')},
         {key: 'VTX_Tokens', sortable: true, label: this.$t('vtx_tokens')},
-        'show_details'
+        {key: 'show_details', label: this.$t('show_details')}
       ],
       stats: {},
       refreshing: false

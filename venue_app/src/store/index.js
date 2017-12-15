@@ -11,6 +11,10 @@ export default new Vuex.Store({
     userName: null,
     userEmail: null,
     language: 'en',
+    languages: [
+      {value: 'en', text: 'English'},
+      {value: 'jp', text: 'Japanese'}
+    ],
     showLoginForm: false,
     showFooter: false
   },

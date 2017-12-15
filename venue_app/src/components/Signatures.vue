@@ -5,7 +5,9 @@
         <h2>{{ $t('signatures') }}</h2>
       </b-col>
       <b-col v-if="!showAddForm" style="text-align: right;">
-        <b-button variant="primary" @click="addNewSignature(true)">Add New</b-button>
+        <b-button variant="primary" @click="addNewSignature(true)">
+          {{ $t('add_new') }}
+        </b-button>
       </b-col>
       <b-col v-if="showAddForm" v-show="mySignatures.length > 0" style="text-align: right;">
         <b-button @click="addNewSignature(false)">
@@ -105,14 +107,18 @@
             img-alt="Signature"
             img-bottom>
             <b-row style="margin: 0; padding: 0;">
-              <b-col style="margin: 0; padding: 0;">
+              <b-col sm="9" style="margin: 0; padding: 0;">
                 <p class="card-text">
-                  {{ signature.name }}
+                  {{ $t('forum_site') }}: {{ signature.forum_site_name }} /
+                  {{ $t('username') }}: {{ signature.forum_user_name }} /
+                  {{ $t('user_id') }}: {{ signature.forum_userid }}
                 </p>
               </b-col>
-              <b-col style="margin: 0; padding: 0;">
+              <b-col sm="3" style="margin: 0; padding: 0;">
                 <p style="text-align: right; cursor: pointer;">
-                  <span @click="showSignatureCode(signature.verification_code)">Show Code</span>
+                  <span @click="showSignatureCode(signature.verification_code)">
+                    {{ $t('show_code') }}
+                  </span>
                 </p>
               </b-col>
             </b-row>

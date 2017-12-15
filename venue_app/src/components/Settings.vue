@@ -102,11 +102,7 @@ export default {
     return {
       showPage: false,
       language: this.$store.state.language,
-      languages: [
-        {value: 'en', text: 'English'},
-        {value: 'fr', text: 'French'},
-        {value: 'jp', text: 'Japanese'}
-      ]
+      languages: this.$store.state.languages
     }
   },
   watch: {
@@ -157,11 +153,7 @@ export default {
     })
   },
   updated () {
-    console.log(document.body.offsetHeight)
-    console.log(window.innerHeight)
     this.$nextTick(function () {
-      console.log(document.body.offsetHeight)
-      console.log(window.innerHeight)
       if (document.body.offsetHeight <= window.innerHeight) {
         this.$store.commit('updateShowFooter', true)
       } else {

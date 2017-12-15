@@ -24,7 +24,7 @@
     </b-form>
     <div slot="modal-footer" class="w-100">
       <p class="float-left" v-if="!resetPassswordMessage">
-        <a @click="togglePasswordResetForm()" href="#">Forgot password?</a>
+        <a @click="togglePasswordResetForm()" href="#">{{ $t('forgot_password') }}</a>
       </p>
       <b-alert v-if="resetPassswordMessage" show>{{ resetPassswordMessage }}</b-alert>
       <b-input-group v-if="showPasswordResetForm">
