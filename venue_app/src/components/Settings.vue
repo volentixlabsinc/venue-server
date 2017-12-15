@@ -9,61 +9,61 @@
       <b-col>
         <b-card-group deck style="margin-top: 16px;">
           <b-card 
-            header="VTX Wallet Address"
+            :header="$t('vtx_address')"
             header-tag="header">
-            <p class="card-text">VTX address where to send payouts</p>
+            <p class="card-text">{{ $t('vtx_address_payout') }}</p>
             <b-button disabled>
-              Set VTX Address &nbsp;
-              <b-badge variant="warning">Coming Soon</b-badge>
+              {{ $t('set_vtx_address')}} &nbsp;
+              <b-badge variant="warning">{{ $t('coming_soon') }}</b-badge>
             </b-button>
           </b-card>
           <b-card 
-            header="Email Address"
+            :header="$t('email_address')"
             header-tag="header">
-            <p class="card-text">Change your registered email address</p>
+            <p class="card-text">{{ $t('change_your_email') }}</p>
             <b-button 
               variant="primary"
               v-b-modal.change-email-modal>
-              Change Email
+              {{ $t('change_email') }}
             </b-button>
           </b-card>
           <b-card 
-            header="Account Username"
+            :header="$t('account_username')"
             header-tag="header">
-            <p class="card-text">Change your username</p>
+            <p class="card-text">{{ $t('change_your_username') }}</p>
             <b-button 
               variant="primary" 
               v-b-modal.change-username-modal>
-              Change Username
+              {{ $t('change_username') }}
             </b-button>
           </b-card>
         </b-card-group>
         <b-card-group deck style="margin-top: 20px;">
           <b-card 
-            header="Account Password"
+            :header="$t('account_password')"
             header-tag="header">
-            <p class="card-text">Change your password</p>
+            <p class="card-text">{{ $t('change_your_password') }}</p>
             <b-button 
               variant="primary"
               v-b-modal.change-password-modal>
-              Change Password
+              {{ $t('change_password') }}
             </b-button>
           </b-card>
           <b-card 
-            header="Language"
+            :header="$t('language')"
             header-tag="header">
-            <p class="card-text">Set the site language</p>
+            <p class="card-text">{{ $t('set_language') }}</p>
             <b-form-group>
               <b-form-select v-model="language" :options="languages" class="mb-3"></b-form-select>
             </b-form-group>
           </b-card>
           <b-card 
-            header="Two-Factor Authentication"
+            :header="$t('two_factor_auth')"
             header-tag="header">
-            <p class="card-text">Enable two-factor authentication</p>
+            <p class="card-text">{{ $t('enable_2fa') }}</p>
             <b-button disabled>
-              Enable &nbsp;
-              <b-badge variant="warning">Coming Soon</b-badge>
+              {{ $t('enable') }} &nbsp;
+              <b-badge variant="warning">{{ $t('coming_soon') }}</b-badge>
             </b-button>
           </b-card>
           <!--
@@ -104,7 +104,8 @@ export default {
       language: this.$store.state.language,
       languages: [
         {value: 'en', text: 'English'},
-        {value: 'fr', text: 'French'}
+        {value: 'fr', text: 'French'},
+        {value: 'jp', text: 'Japanese'}
       ]
     }
   },
@@ -127,17 +128,17 @@ export default {
   methods: {
     deleteAccount () {
       this.$swal({
-        title: 'First Confirmation',
-        text: 'Are you sure you want to delete your account?',
+        title: this.$t('first_confirmation'),
+        text: this.$t('first_confirmation_msg'),
         icon: 'warning',
-        buttons: ['Cancel', 'Delete']
+        buttons: [this.$t('cancel'), this.$t('delete')]
       }).then((value) => {
         if (value) {
           this.$swal({
-            title: 'Second Confirmation',
-            text: 'Please click on the link sent to your email to complete the deletion process.',
+            title: this.$t('second_confirmation'),
+            text: this.$t('second_confirmation_msg'),
             icon: 'warning',
-            buttons: ['Cancel', 'Ok']
+            buttons: [this.$t('cancel'), this.$t('ok')]
           }).then((value) => {
             if (value) {
               var payload = { apiToken: this.$store.state.apiToken }

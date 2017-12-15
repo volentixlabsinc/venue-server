@@ -15,6 +15,7 @@
           <b-nav-item-dropdown v-if="!$store.state.apiToken" :text="$i18n.t('language')" right>
             <b-dropdown-item @click="setLanguage('en')">English</b-dropdown-item>
             <b-dropdown-item @click="setLanguage('fr')">French</b-dropdown-item>
+            <b-dropdown-item @click="setLanguage('jp')">Japanese</b-dropdown-item>
           </b-nav-item-dropdown>
 
           <b-nav-item v-if="$store.state.apiToken" to="/dashboard" exact>
@@ -41,8 +42,8 @@
             <template slot="button-content">
               {{ username }}
             </template>
-            <b-dropdown-item to="/settings">Settings</b-dropdown-item>
-            <b-dropdown-item @click="logout()" href="#">Logout</b-dropdown-item>
+            <b-dropdown-item to="/settings">{{ $t('settings') }}</b-dropdown-item>
+            <b-dropdown-item @click="logout()" href="#">{{ $t('logout') }}</b-dropdown-item>
           </b-nav-item-dropdown>
         </b-navbar-nav>
       </b-collapse>
@@ -85,9 +86,6 @@ export default {
     }
   },
   created () {
-    // Set the CSRF cookie for axios
-    // var csrfCookie = this.$cookies.get('csrftoken')
-    // axios.defaults.headers.common['X-CSRFToken'] = csrfCookie
     if (this.$store.state.apiToken) {
       axios.post('/get-user/', {
         token: this.$store.state.apiToken
@@ -99,11 +97,11 @@ export default {
     }
     if (this.$route.query.email_confirmed === '1') {
       this.$swal({
-        title: 'Email Confirmed!',
-        text: 'Thank you! You may login now.',
+        title: this.$t('email_confirmed'),
+        text: this.$t('email_confirmed_msg'),
         icon: 'success',
         button: {
-          text: 'OK',
+          text: this.$t('ok'),
           className: 'btn-primary',
           closeModal: true
         }
@@ -111,11 +109,11 @@ export default {
     }
     if (this.$route.query.account_deleted === '1') {
       this.$swal({
-        title: 'Account Deleted!',
-        text: 'Your account has been successfully deleted.',
+        title: this.$t('account_deleted'),
+        text: this.$t('account_deleted_msg'),
         icon: 'success',
         button: {
-          text: 'OK',
+          text: this.$t('ok'),
           className: 'btn-primary',
           closeModal: true
         }
@@ -125,11 +123,11 @@ export default {
     }
     if (this.$route.query.updated_email === '1') {
       this.$swal({
-        title: 'Updated Email!',
-        text: 'You have successfully changed the email in your account.',
+        title: this.$t('updated_email'),
+        text: this.$t('updated_email_msg'),
         icon: 'success',
         button: {
-          text: 'OK',
+          text: this.$t('ok'),
           className: 'btn-primary',
           closeModal: true
         }

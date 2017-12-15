@@ -9,14 +9,14 @@
       </b-col>
       <b-col v-if="showAddForm" v-show="mySignatures.length > 0" style="text-align: right;">
         <b-button @click="addNewSignature(false)">
-          List Signatures
+          {{ $t('list_signatures') }}
         </b-button>
       </b-col>
     </b-row>
     <b-row>
       <b-col>
         <b-form v-if="showAddForm">
-          <h4>Generate signature for a forum account</h4>
+          <h4>{{ $t('generate_signature') }}</h4>
           <b-row>
             <b-col md="6" sm="12">
               <b-form-group 
@@ -54,7 +54,7 @@
                   @click="checkProfile()" 
                   v-if="!profileChecked" 
                   :disabled="profileUrl.length == 0 || errors.has('profileUrl') || showCheckSpinner">
-                  Check Profile
+                  {{ $t('check_profile') }}
                 </b-button>
                 <img v-if="showCheckSpinner" src="../assets/animated_spinner.gif" height="50">
               </b-form-group>
@@ -79,13 +79,13 @@
                   <b-button 
                     v-clipboard="signatureCode" 
                     @success="signatureCopySuccess">
-                    Copy
+                    {{ $t('copy') }}
                   </b-button>
                   <b-button 
                     :disabled="showVerifySpinner || signitureVerified" 
                     variant="primary" 
                     @click="verify()">
-                    Verify
+                    {{ $t('verify') }}
                   </b-button>
                   <img v-if="showVerifySpinner" src="../assets/animated_spinner.gif" height="50">
                 </b-col>
@@ -98,7 +98,7 @@
     <b-row v-if='!showAddForm'>
       <b-col>
         <!-- List of current signatures -->
-        <h4>Your current signatures</h4>
+        <h4>{{ $t('your_current_signatures') }}</h4>
         <b-card-group class="card-group" v-for="signature in mySignatures" :key="signature.id">
           <b-card 
             :img-src="signature.image"
@@ -122,7 +122,7 @@
     </b-row>
     <b-row v-if="profileChecked && showAddForm">
       <b-col id="signatures-list">
-        <p>Select signature:</p>
+        <p>{{ $t('select_signature') }}:</p>
         <b-row v-for="signature in signatureOptions" :key="signature.id">
           <b-col>
             <h5>{{ signature.name }}</h5>
@@ -185,11 +185,11 @@ export default {
     },
     signatureCopySuccess () {
       this.$swal({
-        title: 'Copied to clipboard!',
-        text: 'Paste the copied code to your profile signature and click the Verify button.',
+        title: this.$t('copied_to_clipboard'),
+        text: this.$t('copied_to_clipboard_msg'),
         icon: 'success',
         button: {
-          text: 'Verify',
+          text: this.$t('verify'),
           className: 'btn-primary',
           closeModal: true
         }
@@ -199,11 +199,11 @@ export default {
     },
     flashCheckProfileError (vueThis) {
       this.$swal({
-        title: 'Checking error!',
-        text: 'The forum site is inaccessible or profile URL is wrong.',
+        title: this.$t('checking_error'),
+        text: this.$t('checking_error_msg'),
         icon: 'error',
         button: {
-          text: 'OK',
+          text: this.$t('ok'),
           className: 'btn-primary',
           closeModal: true
         }
@@ -214,11 +214,11 @@ export default {
     },
     flashAlreadyExistsNotice (vueThis, message) {
       this.$swal({
-        title: 'Profile Already Exists!',
+        title: this.$t('profile_already_exists'),
         text: message,
         icon: 'error',
         button: {
-          text: 'OK',
+          text: this.$t('ok'),
           className: 'btn-primary',
           closeModal: true
         }
@@ -246,7 +246,7 @@ export default {
                 if (response.data.own === true) {
                   if (response.data.with_signature === true) {
                     if (response.data.active) {
-                      this.flashAlreadyExistsNotice(self, 'You already placed a signature on that profile.')
+                      this.flashAlreadyExistsNotice(self, this.$t('profile_already_exists_msg1'))
                     } else {
                       this.profileChecked = true
                       this.getSignatures(
@@ -257,7 +257,7 @@ export default {
                     }
                   }
                 } else {
-                  this.flashAlreadyExistsNotice(self, 'Somebody else already claimed that profile.')
+                  this.flashAlreadyExistsNotice(self, this.$t('profile_already_exists_msg2'))
                 }
               } else {
                 // Create the forum profile
@@ -287,19 +287,19 @@ export default {
                 })
               } else {
                 this.$swal({
-                  title: 'Insufficient Rank!',
-                  text: 'Your profile does not meet the required minimum forum rank/position.',
+                  title: this.$t('insufficient_rank'),
+                  text: this.$t('insufficient_rank_msg'),
                   icon: 'error'
                 })
               }
             }
           } else {
             this.$swal({
-              title: 'Does not exist!',
-              text: 'The profile does not exist in the selected forum site.',
+              title: this.$t('does_not_exist'),
+              text: this.$t('does_not_exist_msg'),
               icon: 'error',
               button: {
-                text: 'OK',
+                text: this.$t('ok'),
                 className: 'btn-primary',
                 closeModal: true
               }
@@ -327,11 +327,11 @@ export default {
         if (response.status === 200) {
           if (response.data.success === true) {
             this.$swal({
-              title: 'Signature placement verified!',
-              text: 'Thank you for participating in our signature campaign.',
+              title: this.$t('signature_placement_verified'),
+              text: this.$t('signature_placement_verified_msg'),
               icon: 'success',
               button: {
-                text: 'OK',
+                text: this.$t('ok'),
                 className: 'btn-primary',
                 closeModal: true
               }
@@ -341,8 +341,8 @@ export default {
             this.signitureVerified = true
           } else {
             this.$swal({
-              title: 'Signature not found!',
-              text: response.data.message,
+              title: this.$t('signature_not_found'),
+              text: this.$t('signature_not_found_msg'),
               icon: 'error',
               button: {
                 text: 'OK',
@@ -357,11 +357,11 @@ export default {
         var alreadyExists = error.response.data[0].includes('already contains')
         if (error.response.status === 400 && alreadyExists) {
           this.$swal({
-            title: 'Already Onboard!',
-            text: error.response.data[0],
+            title: this.$t('already_onboard'),
+            text: this.$t('already_onboard_msg'),
             icon: 'info',
             button: {
-              text: 'OK',
+              text: this.$t('ok'),
               className: 'btn-primary',
               closeModal: true
             }
@@ -370,11 +370,11 @@ export default {
         var signatureNotFound = error.response.data[0].includes('signature was not found')
         if (error.response.status === 400 && signatureNotFound) {
           this.$swal({
-            title: 'Verification Failed!',
+            title: this.$t('verification_failed'),
             text: error.response.data[0],
             icon: 'error',
             button: {
-              text: 'OK',
+              text: this.$t('ok'),
               className: 'btn-primary',
               closeModal: true
             }
@@ -435,10 +435,10 @@ export default {
   beforeRouteLeave (to, from, next) {
     if (this.profileUrl && this.profileChecked && !this.signitureVerified) {
       this.$swal({
-        title: 'Page Change Confirmation',
-        text: 'This form will reset if you navigate away. Are you sure you want to abandon profile verification?',
+        title: this.$t('page_change_confirmation'),
+        text: this.$t('page_change_confirmation_msg'),
         icon: 'warning',
-        buttons: ['Cancel', 'Yes']
+        buttons: [this.$t('cancel'), this.$t('yes')]
       }).then((yes) => {
         if (yes) {
           next()

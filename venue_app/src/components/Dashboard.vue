@@ -6,7 +6,7 @@
       </b-col>
       <b-col>
         <p style="text-align: right; cursor: pointer;" @click="refreshData()" v-if="!refreshing">
-          Refresh
+          {{ $t('refresh') }}
         </p>
         <img v-if="refreshing" style="float: right;" src="../assets/animated_spinner.gif" height="30">
       </b-col>
@@ -26,7 +26,7 @@
               <b-row v-if="row.item._rowVariant === 'danger'">
                 <b-col>
                   <b-alert show variant="danger">
-                    The latest check did not find our signature in your profile.
+                    {{ $t('latest_check_negative') }}
                   </b-alert>
                 </b-col>
               </b-row>
@@ -34,62 +34,62 @@
                 <b-col sm="4">
                   <b-row class="mb-2">
                     <b-col>
-                      <b>Profile details</b>
+                      <b>{{ $t('profile_details') }}</b>
                     </b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="5">Forum:</b-col>
+                    <b-col sm="5">{{ $t('forum_site') }}:</b-col>
                     <b-col>{{ row.item.forumSite }}</b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="5">User ID:</b-col>
+                    <b-col sm="5">{{ $t('user_id') }}:</b-col>
                     <b-col>{{ row.item.forumUserId }}</b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="5">Rank:</b-col>
+                    <b-col sm="5">{{ $t('rank') }}:</b-col>
                     <b-col>{{ row.item.forumUserRank }}</b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="5">Total posts:</b-col>
+                    <b-col sm="5">{{ $t('total_posts') }}:</b-col>
                     <b-col>{{ row.item.totalPosts }}</b-col>
                   </b-row>
                 </b-col>
                 <b-col>
                   <b-row class="mb-2">
                     <b-col>
-                      <b>Credits for the current uptime batch</b>
+                      <b>{{ $t('current_batch_credits') }}</b>
                     </b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="9">Batch number {{ row.item.currentUptimeBatch.batch }}:</b-col>
+                    <b-col sm="9">{{ $t('batch_number') }} {{ row.item.currentUptimeBatch.batch }}:</b-col>
                     <b-col></b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="9">Total posts with signature:</b-col>
+                    <b-col sm="9">{{ $t('total_posts_with_sig') }}:</b-col>
                     <b-col>{{ row.item.currentUptimeBatch.totalPostsWithSig }}</b-col>
                   </b-row>
                   <b-row>
-                    <b-col sm="9">Total posts uptime (in days):</b-col>
+                    <b-col sm="9">{{ $t('total_posts_uptime') }}:</b-col>
                     <b-col>{{ row.item.currentUptimeBatch.totalPostDays }}</b-col>
                   </b-row>
                 </b-col>
                 <b-col>
                   <b-row v-if="row.item.hasPreviousBatches" class="mb-2">
                     <b-col>
-                      <b>Credits from previous uptime batches</b>
+                      <b>{{ $('previous_batch_credits') }}</b>
                     </b-col>
                   </b-row>
                   <div v-for="batch in row.item.previousBatches" :key="batch.batch">
                     <b-row>
-                      <b-col sm="9">Batch number {{ batch.batch }}:</b-col>
+                      <b-col sm="9">{{ $t('batch_number') }} {{ batch.batch }}:</b-col>
                       <b-col></b-col>
                     </b-row>
                     <b-row>
-                      <b-col sm="9">Total posts with signature:</b-col>
+                      <b-col sm="9">{{ $t('total_posts_with_sig') }}:</b-col>
                       <b-col>{{ batch.totalPostsWithSig }}</b-col>
                     </b-row>
                     <b-row>
-                      <b-col sm="9" class="mb-2">Total posts uptime (in days):</b-col>
+                      <b-col sm="9" class="mb-2">{{ $t('total_posts_uptime') }}:</b-col>
                       <b-col>{{ batch.totalPostDays }}</b-col>
                     </b-row>
                   </div>
@@ -114,13 +114,13 @@ export default {
     return {
       showPage: false,
       statsFields: [
-        {key: 'forumSite', sortable: true},
-        {key: 'User_ID', sortable: true},
-        {key: 'postPoints', sortable: true},
-        {key: 'postDaysPoints', sortable: true, label: 'Post Uptime Points'},
-        {key: 'influencePoints', sortable: true},
-        {key: 'totalPoints', sortable: true},
-        {key: 'VTX_Tokens', sortable: true},
+        {key: 'forumSite', sortable: true, label: this.$t('forum_site')},
+        {key: 'User_ID', sortable: true, label: this.$t('user_id')},
+        {key: 'postPoints', sortable: true, label: this.$t('post_points')},
+        {key: 'postDaysPoints', sortable: true, label: this.$t('post_uptime_points')},
+        {key: 'influencePoints', sortable: true, label: this.$t('influence_points')},
+        {key: 'totalPoints', sortable: true, label: this.$t('total_points')},
+        {key: 'VTX_Tokens', sortable: true, label: this.$t('vtx_tokens')},
         'show_details'
       ],
       stats: {},
@@ -162,7 +162,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>

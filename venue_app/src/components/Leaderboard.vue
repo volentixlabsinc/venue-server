@@ -8,12 +8,12 @@
         <b-row style="margin-bottom: 45px;">
           <b-col>
             <b-card class="text-center">
-              <p class="card-text sm">Total Points Available: {{ sitewideStats.available_points }}</p>
+              <p class="card-text sm">{{ $t('points_available') }}: {{ sitewideStats.available_points }}</p>
             </b-card>
           </b-col>
           <b-col>
             <b-card class="text-center">
-              <p class="card-text sm">Total Tokens Available: {{ sitewideStats.available_tokens }}</p>
+              <p class="card-text sm">{{ $t('tokens_available') }}: {{ sitewideStats.available_tokens }}</p>
             </b-card>
           </b-col>
         </b-row>
@@ -21,7 +21,7 @@
           <b-col>
             <b-row>
               <b-col v-if="$store.state.apiToken">
-                <p style="text-align: center;"><strong>Your Current Tokens</strong></p>
+                <p style="text-align: center;"><strong>{{ $t('your_current_tokens') }}</strong></p>
                 <div class="iCountUp">
                   <i-count-up
                     :start="0"
@@ -32,7 +32,7 @@
                 </div>
               </b-col>
               <b-col v-if="!$store.state.apiToken" style="padding: 10px 40px;">
-                  <p style="text-align: center;">Join the signature campaign now or login!</p>
+                  <p style="text-align: center;">{{ $t('join_or_login') }}</p>
                   <p style="text-align: center;">
                     <b-btn variant="primary"
                       v-b-modal.signup-modal>
@@ -49,60 +49,34 @@
           <b-col>
             <b-row class="justify-content-md-center">
               <b-col sm="4">
-                <b-card header="Your Rank" class="text-center" v-if="$store.state.apiToken">
+                <b-card :header="$t('your_rank')" class="text-center" v-if="$store.state.apiToken">
                   <p class="card-text">{{ userStats.overall_rank }}</p>
                 </b-card>
-                <b-card header="Your Rank" class="text-center" v-if="!$store.state.apiToken">
+                <b-card :header="$t('your_rank')" class="text-center" v-if="!$store.state.apiToken">
                   <p class="card-text">NA</p>
                 </b-card>
               </b-col>
               <b-col sm="4">
-                <b-card header="Total Users" class="text-center">
+                <b-card :header="$t('total_users')" class="text-center">
                   <p class="card-text">{{ sitewideStats.total_users }}</p>
                 </b-card>
               </b-col>
               <b-col sm="4">
-                <b-card header="Total Posts" class="text-center">
+                <b-card :header="$t('total_posts')" class="text-center">
                   <p class="card-text">{{ sitewideStats.total_posts }}</p>
                 </b-card>
               </b-col>
             </b-row>
           </b-col>
         </b-row>
-        <b-row style="margin-top: 40px;" v-if="false">
-          <b-col>
-            <div>
-              <div class="graph-div" style="background: #dd4c3d; height: 30px; display: inlibe-block; width: 30%; float: right;">
-                23 users
-              </div>
-              <div class="graph-div" style="background: gray; height: 30px; display: inline-block; width: 70%;">
-                67 users
-              </div>
-              <span stle="color: gray;">Bitcointalk</span>
-              <span style="color: #dd4c3d; float: right;">Bitcoin Forum</span>
-            </div>
-          </b-col>
-          <b-col>
-            <div>
-              <div class="graph-div" style="background: #dd4c3d; height: 30px; display: inlibe-block; width: 45%; float: right;">
-                46 posts
-              </div>
-              <div class="graph-div" style="background: gray; height: 30px; display: inline-block; width: 55%;">
-                54 posts
-              </div>
-              <span stle="color: gray;">Bitcointalk</span>
-              <span style="color: #dd4c3d; float: right;">Bitcoin Forum</span>
-            </div>
-          </b-col>
-        </b-row>
         <b-row style="margin-top: 35px;">
           <b-col>
-            <p style="text-align: center;"><strong>Total Users Per Forum Site</strong></p>
-            <forums-overview :data="forumUsers" title="Total Users" :height="90"></forums-overview>
+            <p style="text-align: center;"><strong>{{ $t('total_forum_users') }}</strong></p>
+            <forums-overview :data="forumUsers" :title="$t('total_users')" :height="90"></forums-overview>
           </b-col>
           <b-col>
-            <p style="text-align: center;"><strong>Total Posts Per Forum Site</strong></p>
-            <forums-overview :data="forumPosts" title="Total Posts" :height="90"></forums-overview>
+            <p style="text-align: center;"><strong>{{ $t('total_forum_posts') }}</strong></p>
+            <forums-overview :data="forumPosts" :title="$t('total_posts')" :height="90"></forums-overview>
           </b-col>
         </b-row>
         <b-row style="margin-top: 45px;">
@@ -137,21 +111,18 @@ export default {
     return {
       showPage: false,
       leaderboardFields: [
-        {key: 'rank', sortable: true},
-        {key: 'username', sortable: true},
-        {key: 'total_posts', sortable: true},
-        {key: 'total_points', sortable: true},
-        {key: 'total_tokens', sortable: true}
+        {key: 'rank', sortable: true, label: this.$t('rank')},
+        {key: 'username', sortable: true, label: this.$t('username')},
+        {key: 'total_posts', sortable: true, label: this.$t('total_posts')},
+        {key: 'total_points', sortable: true, label: this.$t('total_points')},
+        {key: 'total_tokens', sortable: true, label: this.$t('total_tokens')}
       ],
       leaderboardData: [],
       sitewideStats: {},
       userStats: {},
       perPage: 10,
       currentPage: 1,
-      forumPosts: [
-        {forumSite: 'Bitcointalk', value: 30, color: 'red'},
-        {forumSite: 'Bitcoin Forum', value: 7, color: 'blue'}
-      ]
+      forumPosts: []
     }
   },
   created () {

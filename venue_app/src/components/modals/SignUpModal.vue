@@ -1,34 +1,46 @@
 <template>
   <!-- Sign Up Modal -->
-  <b-modal id='signup-modal' :title="$i18n.t('sign_up_form')" v-if="!$store.state.apiToken" ref="signUpModal" centered hide-footer>
+  <b-modal id='signup-modal' :title="$t('sign_up_form')" v-if="!$store.state.apiToken" ref="signUpModal" centered hide-footer>
     <b-form @submit="register($event)" @click="clearSignUpError()">
-      <b-form-group :label="$i18n.t('email')">
+      <b-form-group :label="$t('email')">
         <b-form-input 
           v-model.trim="email" 
           v-validate="{ required: true, email: true, email_exists: true }" 
-          name="email" :placeholder="$i18n.t('enter_email')">
+          :data-vv-as="$t('email')"
+          name="email" :placeholder="$t('enter_email')">
         </b-form-input>
         <span v-show="errors.has('email')" class="help is-danger">
           {{ errors.first('email') }}
         </span>
       </b-form-group>
-      <b-form-group label="Username">
+      <b-form-group :label="$t('username')">
         <b-form-input 
           v-model.trim="username" 
           v-validate="{ required: true, username_exists: true }" 
-          name="username" placeholder="Assign a username"></b-form-input>
+          name="username" :placeholder="$t('assign_username')"></b-form-input>
         <span v-show="errors.has('username')" class="help is-danger">
           {{ errors.first('username') }}
         </span>
       </b-form-group>
-      <b-form-group :label="$i18n.t('password')">
-        <b-form-input type="password" v-model.trim="password1" v-validate="{ required: true, min: 6 }" name="password1" data-vv-as="password" :placeholder="$i18n.t('enter_password')"></b-form-input>
+      <b-form-group :label="$t('password')">
+        <b-form-input type="password" v-model.trim="password1" 
+          v-validate="{ required: true, min: 6 }" 
+          name="password1" 
+          :data-vv-as="$t('password')" 
+          :placeholder="$t('enter_password')">
+        </b-form-input>
         <span v-show="errors.has('password1')" class="help is-danger">
           {{ errors.first('password1') }}
         </span>
       </b-form-group>
-      <b-form-group label="Retype Password">
-        <b-form-input type="password" v-model.trim="password2" v-validate="{ required: true, confirmed: 'password1' }" name="password2" data-vv-as="retyped password" placeholder="Retype password"></b-form-input>
+      <b-form-group :label="$t('retype_password')">
+        <b-form-input type="password" 
+          v-model.trim="password2" 
+          v-validate="{ required: true, confirmed: 'password1' }" 
+          name="password2" 
+          :data-vv-as="$t('retyped_password')" 
+          :placeholder="$t('retype_password')">
+        </b-form-input>
         <span v-show="errors.has('password2')" class="help is-danger">
           {{ errors.first('password2') }}
         </span>
@@ -38,7 +50,7 @@
           {{ $t('submit') }}
         </b-button>
         <span v-show="signUpError" class="help is-danger" style="margin-top: 15px;">
-          Sign up failed: A problem was encountered!
+          {{ $t('signup_failed') }}
         </span>
       </b-form-group>
     </b-form>
@@ -88,11 +100,11 @@ export default {
           this.signUpError = true
         } else {
           this.$swal({
-            title: 'Email Confirmation Required!',
-            text: 'Please click on the link in the confirmation email we sent.',
+            title: this.$t('email_confirmation'),
+            text: this.$t('email_confirmation_msg'),
             icon: 'info',
             button: {
-              text: 'OK',
+              text: this.$t('ok'),
               className: 'btn-primary'
             }
           }).then(() => {
@@ -108,7 +120,7 @@ export default {
   },
   created () {
     this.$validator.extend('email_exists', {
-      getMessage: field => 'This email already exists in our system',
+      getMessage: field => this.$('email_exists'),
       validate: value => {
         let payload = {'email': value}
         return axios.post('/check-email-exists/', payload).then(response => {
@@ -119,7 +131,7 @@ export default {
       }
     })
     this.$validator.extend('username_exists', {
-      getMessage: field => 'This username already exists in our system',
+      getMessage: field => this.$t('username_exists'),
       validate: value => {
         let payload = {'username': value}
         return axios.post('/check-username-exists/', payload).then(response => {

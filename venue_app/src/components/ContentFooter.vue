@@ -3,7 +3,7 @@
     <b-row id="footer">
       <b-col>
         <img src="../assets/logo.png" height="40">
-        <span style="float: right; line-height: 40px;">Frequently Asked Questions (FAQs)</span>
+        <span style="float: right; line-height: 40px;">{{ $t('faq') }}</span>
       </b-col>
     </b-row>
   </b-containter>

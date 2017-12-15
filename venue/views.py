@@ -277,6 +277,72 @@ def get_stats(request):
     response['success'] = True
     return Response(response)
 
+@api_view(['POST'])
+def get_leaderboard_data(request):
+    response = {}
+    user_profiles = UserProfile.objects.all()
+    leaderboard_data = []
+    for user_profile in user_profiles:
+        if user_profile.forum_profiles.count():
+            user_data = {}
+            user_data['rank'] = user_profile.get_ranking()
+            user_data['username'] = user_profile.user.username
+            user_data['total_posts'] = user_profile.get_total_posts_with_sig()
+            points = round(user_profile.get_total_points(), 0)
+            user_data['total_points'] = '{:,}'.format(int(points))
+            tokens = round(user_profile.get_total_tokens(), 0)
+            user_data['total_tokens'] = '{:,}'.format(int(tokens))
+            leaderboard_data.append(user_data)
+    # Order according to amount of tokens
+    if leaderboard_data:
+        leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
+        response['rankings'] = leaderboard_data
+        users = UserProfile.objects.filter(email_confirmed=True)
+        # Get site-wide stats
+        response['sitewide'] = {
+            'available_points': '10,000',
+            'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
+            'total_users': users.count(),
+            'total_posts': int(sum([x.get_total_posts_with_sig() for x in users]))
+        }
+        try:
+            if request.method == 'POST':
+                data = request.data
+                token = Token.objects.get(key=data['apiToken'])
+                user_profile = UserProfile.objects.get(user=token.user)
+                total_tokens = user_profile.get_total_tokens()
+                response['userstats'] = {
+                    'overall_rank': user_profile.get_ranking(),
+                    'total_tokens': int(round(total_tokens, 0))
+                }
+        except Token.DoesNotExist:
+            response['userstats'] = {}
+    # Generate forum stats
+    forum_stats = {
+        'posts': [],
+        'users': []}
+    sites = ForumSite.objects.all()
+    colors = ['#2a96b6', '#5a2998', '#b62da9']
+    for i, site in enumerate(sites):
+        total_posts = 0
+        fps = site.forum_profiles.filter(verified=True)
+        for fp in fps:
+            total_posts += fp.get_total_posts_with_sig()
+        total_users = fps.count()
+        forum_stats['posts'].append({
+            'forumSite': site.name,
+            'value': total_posts,
+            'color': colors[i]
+        })
+        forum_stats['users'].append({
+            'forumSite': site.name,
+            'value': total_users,
+            'color': colors[i]
+        })
+    response['forumstats'] = forum_stats
+    response['success'] = True
+    return Response(response)
+
 @api_view(['GET', 'POST'])
 def delete_account(request):
     if request.method == 'POST':
@@ -371,74 +437,6 @@ def reset_password(request):
         user.set_password(data['password'])
         user.save()
         response['success'] = True
-    return Response(response)
-
-@api_view(['POST'])
-def get_leaderboard_data(request):
-    response = {}
-    user_profiles = UserProfile.objects.all()
-    leaderboard_data = []
-    for user_profile in user_profiles:
-        if user_profile.forum_profiles.count():
-            user_data = {}
-            user_data['rank'] = user_profile.get_ranking()
-            user_data['username'] = user_profile.user.username
-            user_data['total_posts'] = user_profile.get_total_posts_with_sig()
-            points = round(user_profile.get_total_points(), 0)
-            user_data['total_points'] = '{:,}'.format(int(points))
-            tokens = round(user_profile.get_total_tokens(), 0)
-            user_data['total_tokens'] = '{:,}'.format(int(tokens))
-            leaderboard_data.append(user_data)
-    # Order according to amount of tokens
-    if leaderboard_data:
-        leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
-        response['rankings'] = leaderboard_data
-        users = UserProfile.objects.filter(email_confirmed=True)
-        # Get site-wide stats
-        response['sitewide'] = {
-            'available_points': '10,000',
-            'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
-            'total_users': users.count(),
-            'total_posts': int(sum([x.get_total_posts_with_sig() for x in users]))
-        }
-        try:
-            if request.method == 'POST':
-                #body_unicode = request.body.decode('utf-8')
-                #data = json.loads(body_unicode)
-                data = request.data
-                token = Token.objects.get(key=data['apiToken'])
-                user_profile = UserProfile.objects.get(user=token.user)
-                total_tokens = user_profile.get_total_tokens()
-                response['userstats'] = {
-                    'overall_rank': user_profile.get_ranking(),
-                    'total_tokens': int(round(total_tokens, 0))
-                }
-        except Token.DoesNotExist:
-            response['userstats'] = {}
-    # Generate forum stats
-    forum_stats = {
-        'posts': [],
-        'users': []}
-    sites = ForumSite.objects.all()
-    colors = ['#2a96b6', '#5a2998', '#b62da9']
-    for i, site in enumerate(sites):
-        total_posts = 0
-        fps = site.forum_profiles.filter(verified=True)
-        for fp in fps:
-            total_posts += fp.get_total_posts_with_sig()
-        total_users = fps.count()
-        forum_stats['posts'].append({
-            'forumSite': site.name,
-            'value': total_posts,
-            'color': colors[i]
-        })
-        forum_stats['users'].append({
-            'forumSite': site.name,
-            'value': total_users,
-            'color': colors[i]
-        })
-    response['forumstats'] = forum_stats
-    response['success'] = True
     return Response(response)
 
 @api_view(['POST'])

@@ -20,7 +20,7 @@
         <b-button 
           v-clipboard="signatureCode" 
           @success="signatureCopySuccess">
-          Copy
+          {{ $t('copy') }}
         </b-button>
       </b-col>
     </b-row>
@@ -51,10 +51,10 @@ export default {
     },
     signatureCopySuccess () {
       this.$swal({
-        title: 'Copied to clipboard!',
+        title: this.$t('copied_to_clipboard'),
         icon: 'success',
         button: {
-          text: 'OK',
+          text: this.$t('ok'),
           className: 'btn-primary',
           closeModal: true
         }
