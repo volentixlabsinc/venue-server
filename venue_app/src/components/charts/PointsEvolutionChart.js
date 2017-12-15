@@ -3,7 +3,7 @@ import { Line, mixins } from 'vue-chartjs'
 export default {
   extends: Line,
   mixins: [mixins.reactiveProp],
-  props: ['data'],
+  props: ['data', 'y1label', 'y2label'],
   mounted () {
     let dates = this.data.map(function (value, index) {
       return value.date
@@ -48,7 +48,7 @@ export default {
           scaleLabel: {
             display: true,
             fontColor: '#dd4c3d',
-            labelString: 'Number of New Posts'
+            labelString: this.y1label // 'Number of New Posts'
           }
         }, {
           id: 'B',
@@ -62,7 +62,7 @@ export default {
           scaleLabel: {
             display: true,
             fontColor: '#2e3847',
-            labelString: 'Ranking'
+            labelString: this.y2label
           }
         }]
       }

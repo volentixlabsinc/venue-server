@@ -5,6 +5,7 @@ const messages = {
     'username': 'Username',
     'assign_username': 'Assign a username',
     'rank': 'Rank',
+    'ranking': 'Ranking',
     'your_rank': 'Your Rank',
     'total_posts': 'Total Posts',
     'your_total_posts': 'Your Total Posts',
@@ -29,6 +30,7 @@ const messages = {
     'email': 'Email',
     'email_address': 'Email Address',
     'account_username': 'Account Username',
+    'forgot_password': 'Forgot password?',
     'username_or_email': 'Username or Email',
     'password': 'Password',
     'enter_username': 'Enter username',
@@ -72,7 +74,7 @@ const messages = {
     'delete': 'Delete',
     'yes': 'Yes',
     'ok': 'OK',
-    'faq': 'Frequently Asked Questions (FAQs)',
+    'faq': 'Frequently Asked Questions',
     'latest_check_negative': 'The latest check did not find our signature in your profile.',
     'change_email_form': 'Change Email Form',
     'change_username_form': 'Change Username Form',
@@ -132,26 +134,12 @@ const messages = {
     'join_or_login': 'Join the signature campaign now or login!',
     'tokens_available': 'Total Tokens Available',
     'points_available': 'Total Points Available',
-    'daily_posts_and_ranking': 'Daily Posts and Ranking'
-  },
-  'fr': {
-    'username': "Nom d'utilisateur",
-    'enter_username': "Entrez le nom d'utilisateur",
-    'password': 'Mot de passe',
-    'enter_password': 'Entrer le mot de passe',
-    'login_error': "Le nom d'utilisateur ou le mot de passe que vous avez entré était erroné!",
-    'language': 'La langue',
-    'signup': "S'inscrire",
-    'login': 'Se Connecter',
-    'logout': 'Déconnecter',
-    'venue_title': 'Suivi de la campagne de signature autonome',
-    'venue_description': "VENUE suit et affiche des classements d'utilisateurs sophistiqués et des informations de paiement précises en direct.",
-    'dashboard': 'Tableau de Bord',
-    'signatures': 'Signatures',
-    'settings': 'Paramètres',
-    'sign_up_form': "Formulaire d'inscription",
-    'login_form': 'Formulaire de connexion',
-    'submit': 'Soumettre'
+    'daily_posts_and_ranking': 'Daily Posts and Ranking',
+    'show_details': 'Show Details',
+    'show_code': 'Show Code',
+    'add_new': 'Add New',
+    'number_new_posts': 'Number of New Posts'
+
   },
   'jp': {
     'account_deleted': 'アカウントが削除されました！',
@@ -202,7 +190,8 @@ const messages = {
     'enter_password': 'パスワードを入力する',
     'enter_username': 'ユーザーネームを入力してください',
     'enter_username_or_email': 'ユーザー名または電子メールを入力',
-    'faq': 'よくある質問（FAQ）',
+    'forgot_password': 'パスワードをお忘れですか?',
+    'faq': 'よくある質問',
     'first_confirmation': '最初の確認',
     'first_confirmation_msg': 'アカウントを削除してもよろしいですか？',
     'forum_site': 'フォーラムサイト',
@@ -234,6 +223,7 @@ const messages = {
     'profile_already_exists_msg2': '他の誰かが既にそのプロフィールを主張していました。',
     'profile_details': 'プロフィールの詳細',
     'rank': 'ランク',
+    'ranking': 'ランキング',
     'refresh': 'リフレッシュ',
     'retype_password': 'パスワードを再入力してください',
     'retyped_password': '再入力されたパスワード',
@@ -286,7 +276,11 @@ const messages = {
     'your_points_overview': 'あなたの現在のポイントの概要',
     'your_rank': 'あなたのランク',
     'your_total_points': 'あなたの合計ポイント',
-    'your_total_posts': 'あなたの総投稿数'
+    'your_total_posts': 'あなたの総投稿数',
+    'show_details': '詳細を表示',
+    'show_code': 'コードを表示する',
+    'add_new': '新しく追加する',
+    'number_new_posts': '新しい投稿の数'
   }
 }
 

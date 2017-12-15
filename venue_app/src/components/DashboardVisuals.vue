@@ -58,7 +58,12 @@
       <b-row style="margin-top: 40px;">
         <b-col>
             <p style="text-align: center;"><strong>{{ $t('daily_posts_and_ranking') }}</strong></p>
-            <points-evolution-chart :data="userstats.daily_stats" :height="200"></points-evolution-chart>
+            <points-evolution-chart 
+              :data="userstats.daily_stats" 
+              :y1label="$t('number_new_posts')"
+              :y2label="$t('ranking')"
+              :height="200">
+            </points-evolution-chart>
         </b-col>
       </b-row>
     </b-col>

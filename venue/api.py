@@ -63,11 +63,15 @@ class ForumSiteViewSet(viewsets.ReadOnlyModelViewSet):
 class SignatureSerializer(serializers.ModelSerializer):
     user_ranks = serializers.StringRelatedField(many=True)
     verification_code = serializers.CharField(max_length=10, required=False)
+    forum_site_name = serializers.CharField(max_length=30, required=False)
+    forum_userid = serializers.CharField(max_length=20, required=False)
+    forum_user_name = serializers.CharField(max_length=30, required=False)
     
     class Meta:
         model = Signature
         fields = ('id', 'name', 'forum_site', 'user_ranks', 'code', 
-            'image', 'active', 'verification_code')
+            'image', 'active', 'verification_code', 'forum_site_name', 
+            'forum_userid', 'forum_user_name')
         
 def inject_verification_code(sig_code, verification_code):
     def repl(m):
@@ -94,10 +98,13 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
                 verified=True)
             my_sigs = []
             for fp in my_fps:
-                args = (fp.forum.name, fp.forum_username, fp.forum_user_id)
-                name = 'Forum site: %s / Username: %s / User ID: %s' % args
+                #args = (fp.forum.name, fp.forum_username, fp.forum_user_id)
+                #name = 'Forum site: %s / Username: %s / User ID: %s' % args
+                #sig.name = name
                 sig = fp.signature
-                sig.name = name
+                sig.forum_site_name = fp.forum.name
+                sig.forum_user_name = fp.forum_username
+                sig.forum_userid = fp.forum_user_id
                 sig.verification_code = fp.verification_code
                 my_sigs.append(sig)
             return my_sigs
