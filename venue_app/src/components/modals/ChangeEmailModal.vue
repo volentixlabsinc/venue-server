@@ -6,7 +6,12 @@
     ref="changeEmailModal" centered hide-footer>
     <b-form @submit="changeEmail($event)">
       <b-form-group :label="$i18n.t('email')">
-        <b-form-input v-model.trim="newEmail" v-validate="{ required: true }" name="email" :placeholder="$store.state.userEmail"></b-form-input>
+        <b-form-input v-model.trim="newEmail" 
+          v-validate="{ required: true }" 
+          name="email" 
+          :data-vv-as="$t('email')"
+          :placeholder="$store.state.userEmail">
+        </b-form-input>
         <span v-show="errors.has('email')" class="help is-danger">
           {{ errors.first('email') }}
         </span>

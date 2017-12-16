@@ -128,6 +128,9 @@ export default {
   created () {
     this.$Progress.start()
     let payload = { apiToken: this.$store.state.apiToken }
+    if (!this.$store.state.apiToken) {
+      delete axios.defaults.headers.common['Authorization']
+    }
     axios.post('/get-leaderboard-data/', payload).then(response => {
       if (response.data.success) {
         this.leaderboardData = response.data.rankings

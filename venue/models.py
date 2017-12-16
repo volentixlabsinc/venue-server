@@ -49,6 +49,7 @@ class Language(models.Model):
     """ Site-wide language selection options """
     name = models.CharField(max_length=30)
     code = models.CharField(max_length=5)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

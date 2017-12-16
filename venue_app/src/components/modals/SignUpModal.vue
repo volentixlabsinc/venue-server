@@ -16,6 +16,7 @@
       <b-form-group :label="$t('username')">
         <b-form-input 
           v-model.trim="username" 
+          :data-vv-as="$t('username')"
           v-validate="{ required: true, username_exists: true }" 
           name="username" :placeholder="$t('assign_username')"></b-form-input>
         <span v-show="errors.has('username')" class="help is-danger">

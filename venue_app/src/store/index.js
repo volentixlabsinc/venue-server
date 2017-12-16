@@ -11,10 +11,7 @@ export default new Vuex.Store({
     userName: null,
     userEmail: null,
     language: 'en',
-    languages: [
-      {value: 'en', text: 'English'},
-      {value: 'jp', text: 'Japanese'}
-    ],
+    languages: [],
     showLoginForm: false,
     showFooter: false
   },
@@ -36,6 +33,9 @@ export default new Vuex.Store({
     },
     updateShowFooter (state, value) {
       state.showFooter = value
+    },
+    setLanguageOptions (state, value) {
+      state.languages = value
     }
   }
 })

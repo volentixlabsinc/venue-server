@@ -12,9 +12,13 @@ admin.site.site_header = 'Volentix Venue Administration'
 admin.site.index_title = 'Apps and Data'
 admin.site.index_template = 'admin/custom_index.html'
 
-admin.site.register(Language)
 admin.site.register(ForumSite)
 admin.site.register(Signature)
+
+class LanguageAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'active']
+
+admin.site.register(Language, LanguageAdmin)
 
 class RankingAdmin(admin.ModelAdmin):
     list_display = ['username', 'rank', 'ranking_date']

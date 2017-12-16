@@ -315,7 +315,7 @@ def get_leaderboard_data(request):
                     'overall_rank': user_profile.get_ranking(),
                     'total_tokens': int(round(total_tokens, 0))
                 }
-        except Token.DoesNotExist:
+        except (KeyError, Token.DoesNotExist):
             response['userstats'] = {}
     # Generate forum stats
     forum_stats = {
@@ -473,3 +473,9 @@ def check_username_exists(request):
 @api_view(['POST'])
 def get_wallet_details(request):
     return Response({'success': True})
+
+@api_view(['GET'])
+def get_languages(request):
+    languages = Language.objects.filter(active=True)
+    languages = [{'value': x.code, 'text': x.name} for x in languages]
+    return Response(languages)

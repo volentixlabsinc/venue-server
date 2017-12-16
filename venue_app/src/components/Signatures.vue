@@ -20,10 +20,10 @@
         <b-form v-if="showAddForm">
           <h4>{{ $t('generate_signature') }}</h4>
           <b-row>
-            <b-col md="6" sm="12">
+            <b-col md="7" sm="12">
               <b-form-group 
                 id="forum-site-select-group" 
-                label="Forum site:" 
+                :label="$t('forum_site') + ':'" 
                 label-for="forum-site-select">
                 <b-form-select id="forum-site-select"
                   :options="forumSites" 
@@ -32,13 +32,13 @@
               </b-form-group>
               <b-form-group 
                 id="profile-url" 
-                label="Profile URL or Forum User ID:" label-for="profile-url-input">
+                :label="$t('url_or_userid') + ':'" label-for="profile-url-input">
                 <b-form-input 
                   id="profile-url-input" 
                   name="profileUrl" 
                   type="text" v-model.trim="profileUrl" 
-                  placeholder="Enter forum profile URL or forum user ID" 
-                  data-vv-as="profile URL" 
+                  :data-vv-as="$t('enter_url_or_userid')"
+                  :placeholder="$t('enter_url_or_userid')" 
                   :disabled="showCheckSpinner || profileChecked" 
                   :class="{'input': true, 'is-danger': errors.has('profileUrl')}" 
                   v-validate="{ required: true }"

@@ -6,13 +6,25 @@
     ref="changePasswordModal" centered hide-footer>
     <b-form @submit="changePassword($event)">
       <b-form-group :label="$i18n.t('password')">
-        <b-form-input v-model.trim="newPassword1" type="password" v-validate="{ required: true, min: 6 }" name="password1" data-vv-as="password" :placeholder="$i18n.t('enter_new_password')"></b-form-input>
+        <b-form-input v-model.trim="newPassword1" 
+          type="password" 
+          v-validate="{ required: true, min: 6 }" 
+          name="password1" 
+          :data-vv-as="$t('password')" 
+          :placeholder="$i18n.t('enter_new_password')">
+        </b-form-input>
         <span v-show="errors.has('password1')" class="help is-danger">
           {{ errors.first('password1') }}
         </span>
       </b-form-group>
       <b-form-group :label="$i18n.t('retype_password')">
-        <b-form-input v-model.trim="newPassword2" type="password" v-validate="{ required: true, confirmed: 'password1' }" name="password2" data-vv-as="retyped password" :placeholder="$i18n.t('retype_password')"></b-form-input>
+        <b-form-input v-model.trim="newPassword2" 
+          type="password" 
+          :data-vv-as="$t('retyped_password')"
+          v-validate="{ required: true, confirmed: 'password1' }" 
+          name="password2"
+          :placeholder="$i18n.t('retype_password')">
+        </b-form-input>
         <span v-show="errors.has('password2')" class="help is-danger">
           {{ errors.first('password2') }}
         </span>

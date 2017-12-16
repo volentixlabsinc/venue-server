@@ -3,13 +3,24 @@
   <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" centered>
     <b-form @submit="login($event)" @click="clearLoginError()">
       <b-form-group :label="$i18n.t('username_or_email')">
-        <b-form-input v-model.trim="username" data-vv-as="username/email" v-validate="{ required: true }" name="username" :placeholder="$i18n.t('enter_username_or_email')"></b-form-input>
+        <b-form-input v-model.trim="username"
+          :data-vv-as="$t('username') + '/' + $t('email')" 
+          v-validate="{ required: true }" 
+          name="username" 
+          :placeholder="$i18n.t('enter_username_or_email')">
+        </b-form-input>
         <span v-show="errors.has('username')" class="help is-danger">
           {{ errors.first('username') }}
         </span>
       </b-form-group>
       <b-form-group :label="$i18n.t('password')">
-        <b-form-input type="password" v-model.trim="password" v-validate="{ required: true }" name="password" :placeholder="$i18n.t('enter_password')"></b-form-input>
+        <b-form-input type="password" 
+          v-model.trim="password" 
+          v-validate="{ required: true }" 
+          :data-vv-as="$t('password')" 
+          name="password" 
+          :placeholder="$i18n.t('enter_password')">
+        </b-form-input>
         <span v-show="errors.has('password')" class="help is-danger">
           {{ errors.first('password') }}
         </span>
@@ -86,6 +97,9 @@ export default {
             // Fix the authorization header for all HTTP requests
             var authHeader = 'Token ' + this.$store.state.apiToken
             axios.defaults.headers.common['Authorization'] = authHeader
+            // Set the localization
+            this.$i18n.locale = response.data.language
+            this.$validator.localize(response.data.language)
             // Refresh the login form
             Object.assign(this.$data, this.$options.data.call(this))
             this.$validator.clean()

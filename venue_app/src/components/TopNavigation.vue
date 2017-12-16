@@ -75,11 +75,12 @@ export default {
       this.$store.commit('updateApiToken', '')
       this.$store.commit('updateUserEmail', null)
       this.$store.commit('updateUserName', null)
-      axios.defaults.headers.common['Authorization'] = ''
+      delete axios.defaults.headers.common['Authorization']
       this.$router.push('/')
     },
     setLanguage (lang) {
       this.$i18n.locale = lang
+      this.$validator.localize(lang)
     },
     setUser (data) {
       this.$store.commit('updateApiToken', data.token)
@@ -93,6 +94,11 @@ export default {
     }
   },
   created () {
+    // Get langauge options
+    axios.get('/get-languages/').then(response => {
+      this.$store.commit('setLanguageOptions', response.data)
+    })
+    // Get user details
     if (this.$store.state.apiToken) {
       axios.post('/get-user/', {
         token: this.$store.state.apiToken

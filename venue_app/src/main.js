@@ -7,6 +7,8 @@ import store from '@/store'
 import BootstrapVue from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
+import en from 'vee-validate/dist/locale/en'
+import ja from 'vee-validate/dist/locale/ja'
 import VeeValidate from 'vee-validate'
 import VueI18n from 'vue-i18n'
 import messages from '@/translations'
@@ -41,9 +43,14 @@ Vue.use(VueCookies)
 Vue.use(VueSwal)
 Vue.use(VueClipboards)
 Vue.use(VueI18n)
-Vue.use(VeeValidate)
 Vue.use(BootstrapVue)
+
 Vue.config.productionTip = false
+
+Vue.use(VeeValidate, {
+  locale: 'en',
+  dictionary: { en, ja }
+})
 
 const i18n = new VueI18n({
   locale: 'en',
