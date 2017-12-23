@@ -121,12 +121,14 @@ export default {
   },
   created () {
     this.$validator.extend('email_exists', {
-      getMessage: field => this.$('email_exists'),
+      getMessage: field => this.$t('email_exists'),
       validate: value => {
         let payload = {'email': value}
         return axios.post('/check-email-exists/', payload).then(response => {
           if (response.data.email_exists) {
             return false
+          } else {
+            return true
           }
         })
       }
@@ -138,6 +140,8 @@ export default {
         return axios.post('/check-username-exists/', payload).then(response => {
           if (response.data.username_exists) {
             return false
+          } else {
+            return true
           }
         })
       }
