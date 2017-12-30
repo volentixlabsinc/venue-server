@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.conf import settings
 from celery import shared_task, chain, group
 from postmarker.core import PostmarkClient
+from datetime import timedelta
 from constance import config
 import pandas as pd
 from .models import (UserProfile, UptimeBatch, GlobalStats, SignatureCheck, 
@@ -175,6 +176,16 @@ def database_cleanup():
     df = pd.DataFrame(list(stats.values('id', 'date_updated')))
     dfs = df.groupby([df['date_updated'].dt.date]).agg('max')
     stats.exclude(id__in=list(dfs['id'])).delete()
+    # Remove the data upload task records older than 24 hours
+    threshold_time = timezone.now() - timedelta(hours=24)
+    updates = DataUpdateTask.objects.filter(date_completed__lt=threshold_time)
+    updates.delete()
+    # Retain only the latest ranking per day per user
+    rankings = Ranking.objects.all()
+    df = pd.DataFrame(list(rankings.values('id', 'user_profile_id', 'ranking_date')))
+    agg_funcs = {'ranking_date': 'max', 'id': 'max'}
+    dfs = df.groupby(['user_profile_id', df['ranking_date'].dt.date], as_index=False).agg(agg_funcs)
+    rankings.exclude(id__in=list(dfs['id'])).delete()
     
 @shared_task
 def mark_master_task_complete(master_task_id):

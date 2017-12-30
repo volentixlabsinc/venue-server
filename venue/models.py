@@ -269,17 +269,20 @@ class UptimeBatch(models.Model):
     def get_total_posts_with_sig(self):
         value = 0
         if self.regular_checks.count() > 1:
-            earliest_check = self.regular_checks.filter(initial=True).last()
+            earliest_check = self.regular_checks.first()
             latest_check = self.regular_checks.last()
             earliest_total = earliest_check.total_posts
             latest_total = latest_check.total_posts
             value = latest_total - earliest_total
+            # If the difference is negative, set it at 0
+            if value < 0:
+                value = 0
         return value
 
     def get_total_days(self):
         value = 0
         if self.regular_checks.count() > 1 and self.get_total_posts_with_sig():
-            earliest_check = self.regular_checks.filter(initial=True).last()
+            earliest_check = self.regular_checks.filter(signature_found=True).first()
             latest_check = self.regular_checks.filter(signature_found=True).last()
             earliest_check_date = earliest_check.date_checked
             latest_check_date = latest_check.date_checked
@@ -366,10 +369,12 @@ class SignatureCheck(models.Model):
         checks_ids = latest_batch.regular_checks.all().order_by('id').values_list('id', flat=True)
         if len(checks_ids) > 1:
             previous_check_index = list(checks_ids).index(int(self.id)) - 1
-            previous_check_id = checks_ids[previous_check_index]
-            previous_check = SignatureCheck.objects.get(id=previous_check_id)
-            new_posts = int(self.total_posts) - int(previous_check.total_posts)
-            SignatureCheck.objects.filter(id=self.id).update(new_posts=new_posts)
+            if previous_check_index > -1:
+                previous_check_id = checks_ids[previous_check_index]
+                previous_check = SignatureCheck.objects.get(id=previous_check_id)
+                new_posts = int(self.total_posts) - int(previous_check.total_posts)
+                if new_posts > 0:
+                    SignatureCheck.objects.filter(id=self.id).update(new_posts=new_posts)
         # Compare this to initial value and flag this as such, if needed
         init_check = latest_batch.regular_checks.filter(initial=True).last()
         sc = SignatureCheck.objects.get(id=self.id)

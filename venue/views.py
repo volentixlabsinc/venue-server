@@ -51,7 +51,7 @@ def authenticate(request):
             'email': token.user.email,
             'user_profile_id': user_profile.id,
             'email_confirmed': user_profile.email_confirmed,
-            'language': user_profile.language.code,
+            'language': user_profile.language.code
         }
     except Exception as exc:
         response['message'] = str(exc)

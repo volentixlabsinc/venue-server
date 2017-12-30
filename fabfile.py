@@ -19,12 +19,11 @@ def sync():
     """ Syncs the code to the remote server """
     local('python manage.py collectstatic --no-input')
     exc = [
-            '*.pyc','.DS_Store', '*.pid', '*.log.*', 'media', '__pycache__',
-            '*~','.git','.gitignore','*.log', 'logs', 'celerybeat-schedule'
-            '*.rdb', '*.sqlite3', '*.dump', 'node_modules'
-        ]
-    rsync_project(BASE_DIR, delete=False, exclude=exc,
-        ssh_opts='-o stricthostkeychecking=no')
+        '*.pyc', '.DS_Store', '*.pid', '*.log.*', 'media', '__pycache__',
+        '*~', '.git', '.gitignore', '*.log', 'logs', 'celerybeat-schedule'
+        '*.rdb', '*.sqlite3', '*.dump', 'node_modules'
+    ]
+    rsync_project(BASE_DIR, delete=False, exclude=exc, ssh_opts='-o stricthostkeychecking=no')
 
 def setup_server():
     """ Installs required Ubuntu packages """
@@ -55,7 +54,7 @@ def setup_database():
     run('sudo -i -u %s '.format(DB_USER) + cmd)
     with cd(BASE_DIR + '/volentix_venue'):
         run('python manage.py migrate')
-        run('python manage.py createsuperuser') 
+        run('python manage.py createsuperuser')
 
 def run_app():
     """ Runs the programs required by the web application """
@@ -66,7 +65,7 @@ def restart(program):
     """ Restarts a given program """
     with cd(BASE_DIR + '/volentix_venue'):
         run('supervisorctl restart ' + program)
-        
+
 def stop_app(program):
     """ Stops all the programs that power the web application """
     with cd(BASE_DIR + '/volentix_venue'):
