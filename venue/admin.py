@@ -3,8 +3,27 @@ from venue.models import (
     UptimeBatch, SignatureCheck, PointsCalculation, Language,
     GlobalStats, ForumUserRank, DataUpdateTask, ScrapingError, Ranking
 )
+from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
 import decimal
+
+#---------------
+# Custom filters
+#---------------
+
+class FieldForumProfileFilter(SimpleListFilter):
+    title = 'active_forum_profile'
+    parameter_name = 'forum_profile'
+
+    def lookups(self, request, model_admin):
+        forum_profiles = set([x.forum_profile for x in model_admin.model.objects.all()])
+        return [(x.id, str(x)) for x in forum_profiles]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(forum_profile_id=self.value())
+        else:
+            return queryset.all()
 
 # Customize the titles in the headers and index template
 admin.site.site_title = 'Volentix Venue Administration'
@@ -36,7 +55,7 @@ admin.site.register(ScrapingError, ScrapingErrorAdmin)
 class UptimeBatchAdmin(admin.ModelAdmin):
     list_display = ['user', 'forum_profile', 'batch_number', 'total_posts', 'total_posts_with_sig',
          'total_days', 'post_points', 'post_days_points', 'influence_points', 'active', 'date_started', 'date_ended']
-    list_filter = ['forum_profile', 'forum_profile__user_profile']
+    list_filter = [FieldForumProfileFilter, 'forum_profile__user_profile']
     
     def user(self, obj):
         return obj.forum_profile.user_profile.user.username
@@ -88,7 +107,7 @@ admin.site.register(GlobalStats, GlobalStatsAdmin)
 class SignatureCheckAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'forum_profile', 
         'uptime_batch', 'total_posts', 'new_posts', 'signature_found', 'date_checked', 'initial']
-    list_filter = ['forum_profile', 'forum_profile__user_profile']
+    list_filter = [FieldForumProfileFilter, 'forum_profile__user_profile']
         
     def user(self, obj):
         return obj.uptime_batch.forum_profile.user_profile.user.username

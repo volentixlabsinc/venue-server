@@ -134,6 +134,11 @@ export default {
       var payload = { apiToken: this.$store.state.apiToken }
       axios.post('/get-stats/', payload).then(response => {
         this.stats = response.data.stats
+        // Issue: Stats data for the points evolution chart is not updating when
+        // merely clicking on the Refresh link. Hard refresh works though
+        // TODO -- make the above line reactive by changing it to:
+        // this.$set(this.stats, response.data.stats)
+        // Not tested yet but may work
         if (this.stats.fresh === true) {
           this.$router.push({
             path: '/signatures',

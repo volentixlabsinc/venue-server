@@ -239,6 +239,7 @@ class UptimeBatch(models.Model):
     date_started = models.DateTimeField(default=timezone.now)
     active = models.BooleanField(default=True)
     date_ended = models.DateTimeField(null=True, blank=True)
+    reason_closed = models.CharField(max_length=100, blank=True)
 
     class Meta:
         verbose_name_plural = 'Uptime batches'
@@ -343,8 +344,33 @@ class SignatureCheck(models.Model):
                 if batches.filter(active=True).count():
                     latest_batch = batches.last()
                     if self.signature_found:
-                        self.uptime_batch = latest_batch
+                        # Check if the number of posts has levelled out with or gone below
+                        # the very first signature check for this batch
+                        # TODO -- Test if this code works
+                        earliest_check = latest_batch.regular_checks.filter(signature_found=True).first()
+                        earliest_total = earliest_check.total_posts
+                        latest_check = latest_batch.regular_checks.last()
+                        latest_total = latest_check.total_posts
+                        diff = latest_total - earliest_total
+                        if latest_batch.regular_checks.count() > 1:
+                            if diff <= 0:
+                                if latest_batch.get_total_posts_with_sig():
+                                    # Close the current batch if diff is zero or less
+                                    latest_batch.active = False
+                                    latest_batch.date_ended = timezone.now()
+                                    latest_batch.reason_closed = 'Posts were deleted or removed'
+                                    latest_batch.save()
+                                    # Open a new batch for this
+                                    batch = UptimeBatch(forum_profile=self.forum_profile)
+                                    batch.save()
+                                    self.uptime_batch = batch
+                                    self.initial = True
+                                    self.new_posts = 0
+                        else:
+                            self.uptime_batch = latest_batch
                     else:
+                        latest_batch.reason_closed = 'Signature not found'
+                        # Close the current batch
                         latest_batch.active = False
                         latest_batch.date_ended = timezone.now()
                         latest_batch.save()
