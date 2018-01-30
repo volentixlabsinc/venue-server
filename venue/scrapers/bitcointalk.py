@@ -99,7 +99,7 @@ class BitcoinTalk(object):
         return (verified, vcode)
         
     def check_signature(self):
-        sig = self.soup.select('div#bodyarea tr')[25]
+        sig = self.soup.select('div#bodyarea tr')[26]
         # Find links and check their integrity
         links = sig.find_all('a')
         if links:
