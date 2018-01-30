@@ -40,9 +40,9 @@ def setup_nginx():
         sudo('rm ' + default_server)
     project_server = '/etc/nginx/sites-enabled/volentix_venue'
     if not is_link(project_server):
-        sudo('cp %s/volentix_venue/nginx/volentix.conf /etc/nginx/sites-available/volentix')
+        sudo('cp %s/volentix_venue/nginx/volentix.conf /etc/nginx/sites-available/volentix' % BASE_DIR)
         sudo('ln -s /etc/nginx/sites-available/volentix /etc/nginx/sites-enabled/')
-        sudo('cp %s/volentix_venue/nginx/flower.conf /etc/nginx/sites-available/flower')
+        sudo('cp %s/volentix_venue/nginx/flower.conf /etc/nginx/sites-available/flower' % BASE_DIR)
         sudo('ln -s /etc/nginx/sites-available/flower /etc/nginx/sites-enabled/')
     sudo('service nginx restart')
 
