@@ -48,7 +48,9 @@ def scrape_forum_profile(forum_profile_id, master_task_id):
             )
             scrape_error.save()
             data_update.scraping_errors.add(scrape_error)
-            
+        raise exc
+
+
 @shared_task
 def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)

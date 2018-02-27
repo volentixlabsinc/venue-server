@@ -54,7 +54,7 @@ class BitcoinTalk(object):
             
     def get_user_position(self):
         try:
-            row = self.soup.select('div#bodyarea tr')[6]
+            row = self.soup.select('div#bodyarea tr')[7]
             if 'Position' in row.text:
                 pos_td = row.find_all('td')[1]
                 return pos_td.text.strip()

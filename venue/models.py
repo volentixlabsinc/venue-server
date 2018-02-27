@@ -346,7 +346,6 @@ class SignatureCheck(models.Model):
                     if self.signature_found:
                         # Check if the number of posts has levelled out with or gone below
                         # the very first signature check for this batch
-                        # TODO -- Test if this code works
                         earliest_check = latest_batch.regular_checks.filter(signature_found=True).first()
                         earliest_total = earliest_check.total_posts
                         latest_check = latest_batch.regular_checks.last()
@@ -366,6 +365,10 @@ class SignatureCheck(models.Model):
                                     self.uptime_batch = batch
                                     self.initial = True
                                     self.new_posts = 0
+                                else:
+                                    self.uptime_batch = latest_batch
+                            else:
+                                self.uptime_batch = latest_batch
                         else:
                             self.uptime_batch = latest_batch
                     else:
