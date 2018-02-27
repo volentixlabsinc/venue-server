@@ -13,3 +13,4 @@ dump.rdb
 celerybeat-schedule
 node_modules/
 .vscode/
+.pytest_cache/

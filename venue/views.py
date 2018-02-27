@@ -106,6 +106,7 @@ def create_user(request):
         # Send confirmation email
         code = hashids.encode(int(user.id))
         send_email_confirmation.delay(user.email, user.username, code)
+        response['status'] = 'success'
     except Exception as exc:
         response['status'] = 'error'
         response['message'] = str(exc)
