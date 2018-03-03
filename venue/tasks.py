@@ -5,14 +5,25 @@ from django.template.loader import get_template
 from django.utils import timezone
 from django.conf import settings
 from celery import shared_task, chain, group
+from celery.signals import task_failure
 from postmarker.core import PostmarkClient
 from datetime import timedelta
 from constance import config
 import pandas as pd
+import rollbar
 from .models import (UserProfile, UptimeBatch, GlobalStats, SignatureCheck, 
                      PointsCalculation, DataUpdateTask, ScrapingError, ForumSite,
                      ForumProfile, Signature, Ranking)
 
+
+@task_failure.connect
+def handle_task_failure(**kw):
+    rollbar.report_exc_info(extra_data=kw)
+
+
+@shared_task
+def multiplier(x, y):
+    return x * y
 
 def load_scraper(name):
     name = name.strip('.py')

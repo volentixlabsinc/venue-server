@@ -17,6 +17,7 @@ import VueSwal from 'vue-swal'
 import VueCookies from 'vue-cookies'
 import VueProgressBar from 'vue-progressbar'
 import axios from 'axios'
+import Rollbar from 'vue-rollbar'
 
 const options = {
   color: '#2a96b6',
@@ -33,6 +34,14 @@ const options = {
 }
 
 Vue.use(VueProgressBar, options)
+Vue.use(Rollbar, {
+  accessToken: '5a9b5663381543638d778e472f571805',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+  payload: {
+    environment: 'debug'
+  }
+})
 
 axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN'
 axios.defaults.xsrfCookieName = 'csrftoken'

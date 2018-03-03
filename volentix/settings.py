@@ -76,6 +76,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware'
 ]
 
 ROOT_URLCONF = 'volentix.urls'
@@ -158,9 +159,9 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
 CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULE = {
-    'update-data-every-5-minutes': {
+    'update-data-every-2-minutes': {
         'task': 'venue.tasks.update_data',
-        'schedule': 300 # seconds
+        'schedule': 120 # seconds
     }
 }
 
@@ -169,3 +170,10 @@ POSTMARK_SENDER_EMAIL = 'venue@volentix.com'
 
 CORS_ORIGIN_WHITELIST = ('localhost:8080',)
 CSRF_COOKIE_NAME = "csrftoken"
+
+ROLLBAR = {
+    'access_token': 'ab9dbc1f9b494685810779e9460e480b',
+    'environment': 'development' if DEBUG else 'production',
+    'branch': 'master',
+    'root': BASE_DIR,
+}

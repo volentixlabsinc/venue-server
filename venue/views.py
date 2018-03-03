@@ -19,7 +19,7 @@ from rest_framework.decorators import api_view
 from venue.api import inject_verification_code
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
-                    send_email_change_confirmation, send_reset_password)
+                    send_email_change_confirmation, send_reset_password, multiplier)
 from .models import (UserProfile, ForumSite, ForumProfile,
                      Language, Signature, ForumUserRank)
 from .utils import RedisTemp
