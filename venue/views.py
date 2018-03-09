@@ -4,6 +4,7 @@ View functions
 """
 
 import json
+import pyotp
 from operator import itemgetter
 from datetime import timedelta
 from hashids import Hashids
@@ -11,6 +12,7 @@ from constance import config
 from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
+from venue.utils import encrypt_data, decrypt_data
 from django.contrib.auth.models import User
 from django.conf import settings
 from rest_framework.authtoken.models import Token
@@ -40,19 +42,26 @@ def authenticate(request):
             user = User.objects.get(email__iexact=data['username'])
         else:
             user = User.objects.get(username__iexact=data['username'])
-        token, created = Token.objects.get_or_create(user=user)
-        user.last_login = timezone.now()
-        user.save()
-        user_profile = user.profiles.first()
-        response = {
-            'success': True,
-            'token': token.key, 
-            'username': user.username, 
-            'email': token.user.email,
-            'user_profile_id': user_profile.id,
-            'email_confirmed': user_profile.email_confirmed,
-            'language': user_profile.language.code
-        }
+        profile = user.profiles.first()
+        proceed = False
+        if profile.enabled_2fa:
+            secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
+            totp = pyotp.TOTP(secret)
+            proceed = totp.verify(data['otpCode'])
+        if proceed:
+            token, created = Token.objects.get_or_create(user=user)
+            user.last_login = timezone.now()
+            user.save()
+            user_profile = user.profiles.first()
+            response = {
+                'success': True,
+                'token': token.key, 
+                'username': user.username, 
+                'email': token.user.email,
+                'user_profile_id': user_profile.id,
+                'email_confirmed': user_profile.email_confirmed,
+                'language': user_profile.language.code
+            }
     except Exception as exc:
         response['message'] = str(exc)
     return Response(response)
@@ -72,7 +81,8 @@ def get_user(request):
                 'username': token.user.username, 
                 'email': token.user.email,
                 'language': user_profile.language.code,
-                'email_confirmed': user_profile.email_confirmed
+                'email_confirmed': user_profile.email_confirmed,
+                'enabled_2fa': user_profile.enabled_2fa
             }
     except TypeError:
         pass
@@ -356,7 +366,9 @@ def delete_account(request):
         if code:
             user_id, = hashids.decode(code)
             User.objects.filter(id=user_id).delete()
-    return redirect('/#/?account_deleted=1')
+            return redirect('/#/?account_deleted=1')
+        else:
+            return Response({'success': False})
 
 @api_view(['GET', 'POST'])
 def change_email(request):
@@ -480,3 +492,71 @@ def get_languages(request):
     languages = Language.objects.filter(active=True)
     languages = [{'value': x.code, 'text': x.name} for x in languages]
     return Response(languages)
+
+@api_view(['POST'])
+def generate_2fa_uri(request):
+    response = {'success': False}
+    data = request.data
+    token = Token.objects.filter(key=data['apiToken'])
+    if token.exists():
+        token = token.first()
+        profile = token.user.profiles.first()
+        email = token.user.email
+        if profile.otp_secret:
+            otp_secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
+        else:
+            otp_secret = pyotp.random_base32()
+            profile.otp_secret = encrypt_data(otp_secret, settings.SECRET_KEY)
+            profile.save()
+        totp = pyotp.totp.TOTP(otp_secret)
+        uri = totp.provisioning_uri(email, issuer_name='Volentix Venue')
+        response['success'] = True
+        response['uri'] = uri
+    return Response(response)
+
+@api_view(['POST'])
+def verify_2fa_code(request):
+    response = {'success': False}
+    data = request.data
+    token = Token.objects.filter(key=data['apiToken'])
+    if token.exists():
+        token = token.first()
+        profile = token.user.profiles.first()
+        otp_secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
+        totp = pyotp.totp.TOTP(otp_secret)
+        verified = totp.verify(data['otpCode'])
+        if verified:
+            if 'enable_2fa' in data.keys() and data['enable_2fa'] == True:
+                profile.enabled_2fa = True
+                profile.save()
+        response['verified'] = verified
+        response['success'] = True
+    return Response(response)
+
+@api_view(['POST'])
+def disable_2fa(request):
+    response = {'success': False}
+    data = request.data
+    token = Token.objects.filter(key=data['apiToken'])
+    if token.exists():
+        token = token.first()
+        profile = token.user.profiles.first()
+        profile.enabled_2fa = False
+        profile.save()
+        response['success'] = True
+    return Response(response)
+
+@api_view(['POST'])
+def check_2fa_requirement(request):
+    response = {'success': False}
+    data = request.data
+    try:
+        if '@' in data['username']:
+            user = User.objects.get(email__iexact=data['username'])
+        else:
+            user = User.objects.get(username__iexact=data['username'])
+        profile = user.profiles.first()
+        response['required'] = profile.enabled_2fa
+    except User.DoesNotExist:
+        pass
+    return Response(response)

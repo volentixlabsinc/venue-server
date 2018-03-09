@@ -58,6 +58,8 @@ class UserProfile(models.Model):
     """ Custom internal user profiles """
     user = models.ForeignKey(User, related_name='profiles')
     language = models.ForeignKey(Language, null=True, blank=True, related_name='profiles')
+    otp_secret = models.TextField(blank=True)
+    enabled_2fa = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
 
     def __str__(self):

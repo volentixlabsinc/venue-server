@@ -3,7 +3,7 @@
   <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" centered>
     <b-form @submit="login($event)" @click="clearLoginError()">
       <b-form-group :label="$i18n.t('username_or_email')">
-        <b-form-input v-model.trim="username"
+        <b-form-input v-model.lazy="username"
           :data-vv-as="$t('username') + '/' + $t('email')" 
           v-validate="{ required: true }" 
           name="username" 
@@ -24,6 +24,13 @@
         <span v-show="errors.has('password')" class="help is-danger">
           {{ errors.first('password') }}
         </span>
+      </b-form-group>
+      <b-form-group 
+        v-if="showOTPCodeInput" 
+        :label="$i18n.t('two_factor_otp_code')">
+        <b-form-input v-model.trim="otpCode"
+          :placeholder="$i18n.t('otp_code')">
+        </b-form-input>
       </b-form-group>
       <b-form-group>
         <b-button type="submit" variant="primary" :disabled="disableLoginSubmit">{{ $t('submit') }}</b-button>
@@ -59,11 +66,13 @@ export default {
     return {
       username: '',
       password: '',
+      otpCode: '',
       loginError: false,
       formSubmitted: false,
       showPasswordResetForm: false,
       resetPasswordEmail: '',
-      resetPassswordMessage: ''
+      resetPassswordMessage: '',
+      showOTPCodeInput: false
     }
   },
   computed: {
@@ -83,11 +92,12 @@ export default {
       this.$store.commit('updateUserName', data.username)
       this.$store.commit('updateUserEmail', data.email)
       this.$store.commit('updateLanguage', data.language)
+      this.$store.commit('updatedTwoFactorStatus', data.enabled_2fa)
     },
     login (event) {
       event.preventDefault()
       this.formSubmitted = true
-      var payload = { username: this.username, password: this.password }
+      var payload = { username: this.username, password: this.password, otpCode: this.otpCode }
       axios.post('/authenticate/', payload).then(response => {
         if (response.data.success) {
           if (response.data.email_confirmed === true) {
@@ -152,6 +162,13 @@ export default {
     username: function () {
       this.loginError = false
       this.formSubmitted = false
+      axios.post('/login-2fa-check/', { username: this.username }).then(response => {
+        if (response.data.required) {
+          this.showOTPCodeInput = true
+        } else {
+          this.showOTPCodeInput = false
+        }
+      })
     }
   }
 }

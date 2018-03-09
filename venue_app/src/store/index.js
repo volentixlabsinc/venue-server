@@ -10,6 +10,7 @@ export default new Vuex.Store({
     apiToken: '',
     userName: null,
     userEmail: null,
+    enabledTwoFactor: false,
     language: 'en',
     languages: [],
     showLoginForm: false,
@@ -36,6 +37,9 @@ export default new Vuex.Store({
     },
     setLanguageOptions (state, value) {
       state.languages = value
+    },
+    updatedTwoFactorStatus (state, enabled) {
+      state.enabledTwoFactor = enabled
     }
   }
 })

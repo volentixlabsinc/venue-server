@@ -26,6 +26,7 @@
     "vue-countup-v2": "^0.1.2",
     "vue-i18n": "^7.3.2",
     "vue-progressbar": "^0.7.3",
+    "vue-qrcode-component": "^2.1.1",
     "vue-rollbar": "^0.2.2",
     "vue-router": "^3.0.1",
     "vue-swal": "^0.0.6",

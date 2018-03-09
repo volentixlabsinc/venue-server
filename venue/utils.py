@@ -1,5 +1,9 @@
+
+import rncryptor
+import base64
 import json
 import redis
+
 
 class RedisTemp(object):
     
@@ -29,3 +33,20 @@ class RedisTemp(object):
     def remove(self, key):
         key = self.generate_key(key)
         return self.rconn.delete(key)
+
+
+#------------------------------------
+# Encryption and decryption functions
+#------------------------------------
+
+def encrypt_data(data, password):
+    cryptor = rncryptor.RNCryptor()
+    encrypted_data = cryptor.encrypt(data, password)
+    encoded_data = base64.b64encode(encrypted_data)
+    return encoded_data.decode('utf-8')
+    
+def decrypt_data(data, password):
+    cryptor = rncryptor.RNCryptor()
+    decoded_data = base64.b64decode(data)
+    decrypted_data = cryptor.decrypt(decoded_data, password)
+    return decrypted_data

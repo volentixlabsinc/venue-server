@@ -51,6 +51,18 @@
       </b-collapse>
     </b-navbar>
     
+    <b-container>
+      <b-row style="margin-top: 30px;">
+        <b-col>
+          <div v-for="message in messages" :key="message">
+            <b-alert :variant="message.variant" show :dismissible="message.dismissible">
+              {{ message.text }}
+            </b-alert>
+          </div>
+        </b-col>
+      </b-row>
+    </b-container>
+
     <login-modal></login-modal>
     <reset-password-modal ref="resetPassword"></reset-password-modal>
     
@@ -67,7 +79,8 @@ export default {
   components: { LoginModal, ResetPasswordModal },
   data () {
     return {
-      languages: this.$store.state.languages
+      languages: this.$store.state.languages,
+      messages: []
     }
   },
   methods: {
@@ -86,6 +99,7 @@ export default {
       this.$store.commit('updateApiToken', data.token)
       this.$store.commit('updateUserName', data.username)
       this.$store.commit('updateUserEmail', data.email)
+      this.$store.commit('updatedTwoFactorStatus', data.enabled_2fa)
     }
   },
   computed: {
@@ -161,7 +175,7 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
   .topnav {
-    margin-bottom: 60px;
+    margin-bottom: 40px;
   }
   .bg-dark {
     background-color: #232c3b !important;

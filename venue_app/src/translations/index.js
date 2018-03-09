@@ -68,7 +68,6 @@ const messages = {
     'set_vtx_address': 'Set VTX Address',
     'profile_details': 'Profile Details',
     'refresh': 'Refresh',
-    'enable': 'Enable',
     'submit': 'Submit',
     'cancel': 'Cancel',
     'delete': 'Delete',
@@ -129,6 +128,9 @@ const messages = {
     'coming_soon': 'Coming Soon',
     'two_factor_auth': 'Two-Factor Authentication',
     'enable_2fa': 'Enable two-factor authentication',
+    'enable_2fa_btn': 'Enable 2FA',
+    'disable_2fa': 'Disable two-factor authentication',
+    'disable_2fa_btn': 'Disable 2FA',
     'total_forum_posts': 'Total Posts Per Forum Site',
     'total_forum_users': 'Total Users Per Forum Site',
     'join_or_login': 'Join the signature campaign now or login!',
@@ -140,7 +142,14 @@ const messages = {
     'add_new': 'Add New',
     'number_new_posts': 'Number of New Posts',
     'url_or_userid': 'Profile URL or Forum User ID',
-    'enter_url_or_userid': 'Enter profile URL or forum user ID'
+    'enter_url_or_userid': 'Enter profile URL or forum user ID',
+    'scan_with_2fa_app': 'Step 1: Scan this with your authenticator app',
+    'enter_otp_code': 'Step 2: Enter the displayed OTP code',
+    'otp_code': 'OTP Code',
+    'two_factor_enabled': 'Two-factor authentication has been enabled',
+    'two_factor_disabled': 'Two-factor authentication has been disabled',
+    'wrong_otp_code': 'You entered a wrong or expired OTP code',
+    'two_factor_otp_code': 'Two-Factor Auth One Time Password'
   },
   'ja': {
     'account_deleted': 'アカウントが削除されました！',

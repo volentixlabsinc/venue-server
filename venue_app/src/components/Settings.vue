@@ -60,10 +60,19 @@
           <b-card 
             :header="$t('two_factor_auth')"
             header-tag="header">
-            <p class="card-text">{{ $t('enable_2fa') }}</p>
-            <b-button disabled>
-              {{ $t('enable') }} &nbsp;
-              <b-badge variant="warning">{{ $t('coming_soon') }}</b-badge>
+            <p class="card-text">{{ $t('disable_2fa') }}</p>
+            <b-button 
+              v-if="enabled2FA" 
+              variant="danger"
+              v-b-modal.two-factor-modal>
+              {{ $t('disable_2fa_btn') }}
+            </b-button>
+            <b-button 
+              v-if="!enabled2FA" 
+              variant="primary"
+              @click="request2FactorUri()" 
+              v-b-modal.two-factor-modal>
+              {{ $t('enable_2fa_btn') }}
             </b-button>
           </b-card>
           <!--
@@ -82,6 +91,7 @@
     <change-username-modal></change-username-modal>
     <change-password-modal></change-password-modal>
     <delete-account-modal></delete-account-modal>
+    <two-factor-modal ref="twoFactor"></two-factor-modal>
   </div>
 </template>
 
@@ -89,6 +99,7 @@
 import ChangeEmailModal from '@/components/modals/ChangeEmailModal'
 import ChangeUsernameModal from '@/components/modals/ChangeUsernameModal'
 import ChangePasswordModal from '@/components/modals/ChangePasswordModal'
+import TwoFactorModal from '@/components/modals/TwoFactorModal'
 import axios from 'axios'
 
 export default {
@@ -96,13 +107,19 @@ export default {
   components: {
     ChangeEmailModal,
     ChangeUsernameModal,
-    ChangePasswordModal
+    ChangePasswordModal,
+    TwoFactorModal
   },
   data () {
     return {
       showPage: false,
       language: this.$store.state.language,
       languages: this.$store.state.languages
+    }
+  },
+  computed: {
+    enabled2FA () {
+      return this.$store.state.enabledTwoFactor
     }
   },
   watch: {
@@ -143,6 +160,9 @@ export default {
           })
         }
       })
+    },
+    request2FactorUri () {
+      this.$refs.twoFactor.requestUri()
     }
   },
   created () {

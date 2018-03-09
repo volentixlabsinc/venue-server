@@ -5,8 +5,8 @@
         <h2>{{ $t('dashboard') }}</h2>
       </b-col>
       <b-col>
-        <p style="text-align: right; cursor: pointer;" @click="refreshData()" v-if="!refreshing">
-          {{ $t('refresh') }}
+        <p style="text-align: right;" v-if="!refreshing">
+          <span style="cursor: pointer;" @click="refreshData()">{{ $t('refresh') }}</span>
         </p>
         <img v-if="refreshing" style="float: right;" src="../assets/animated_spinner.gif" height="30">
       </b-col>

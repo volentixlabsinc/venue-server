@@ -16,6 +16,7 @@ import VueClipboards from 'vue-clipboards'
 import VueSwal from 'vue-swal'
 import VueCookies from 'vue-cookies'
 import VueProgressBar from 'vue-progressbar'
+import VueQRCodeComponent from 'vue-qrcode-component'
 import axios from 'axios'
 import Rollbar from 'vue-rollbar'
 
@@ -53,6 +54,7 @@ Vue.use(VueSwal)
 Vue.use(VueClipboards)
 Vue.use(VueI18n)
 Vue.use(BootstrapVue)
+Vue.component('qr-code', VueQRCodeComponent)
 
 Vue.config.productionTip = false
 
