@@ -14,7 +14,8 @@ export default new Vuex.Store({
     language: 'en',
     languages: [],
     showLoginForm: false,
-    showFooter: false
+    showFooter: false,
+    notifications: []
   },
   mutations: {
     updateApiToken (state, token) {
@@ -40,6 +41,9 @@ export default new Vuex.Store({
     },
     updatedTwoFactorStatus (state, enabled) {
       state.enabledTwoFactor = enabled
+    },
+    addNotification (state, notification) {
+      state.notifications.push(notification)
     }
   }
 })

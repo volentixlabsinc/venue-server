@@ -54,9 +54,12 @@
     <b-container>
       <b-row style="margin-top: 30px;">
         <b-col>
-          <div v-for="message in messages" :key="message">
-            <b-alert :variant="message.variant" show :dismissible="message.dismissible">
-              {{ message.text }}
+          <div v-for="notif in $store.state.notifications" :key="notif">
+            <b-alert :variant="notif.variant" show :dismissible="notif.dismissible">
+              {{ notif.text }}
+              <span v-if="notif.action_link">
+                <a :href="notif.action_link">{{ notif.action_text }}</a>
+              </span>
             </b-alert>
           </div>
         </b-col>
@@ -79,8 +82,7 @@ export default {
   components: { LoginModal, ResetPasswordModal },
   data () {
     return {
-      languages: this.$store.state.languages,
-      messages: []
+      languages: this.$store.state.languages
     }
   },
   methods: {
@@ -88,6 +90,7 @@ export default {
       this.$store.commit('updateApiToken', '')
       this.$store.commit('updateUserEmail', null)
       this.$store.commit('updateUserName', null)
+      this.$store.state.notifications = []
       delete axios.defaults.headers.common['Authorization']
       this.$router.push('/')
     },

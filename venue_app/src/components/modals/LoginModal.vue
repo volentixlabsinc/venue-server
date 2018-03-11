@@ -114,6 +114,15 @@ export default {
             Object.assign(this.$data, this.$options.data.call(this))
             this.$validator.clean()
             this.$refs.loginModal.hide()
+            // Display 2FA notif
+            let notif = {
+              text: 'Secure your account with two-factor authentication.',
+              variant: 'info',
+              dismissible: true,
+              action_link: '/#/settings/?action=enable_2fa',
+              action_text: 'Enable it now.'
+            }
+            this.$store.commit('addNotification', notif)
             // Redirect to dashboard
             this.$router.push('/dashboard')
           } else {

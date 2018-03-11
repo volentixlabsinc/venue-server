@@ -7,7 +7,7 @@
     </b-row>
     <b-row>
       <b-col>
-        <b-card-group deck style="margin-top: 16px;">
+        <b-card-group ref="sample" deck style="margin-top: 16px;">
           <b-card 
             :header="$t('vtx_address')"
             header-tag="header">
@@ -178,6 +178,11 @@ export default {
         this.$store.commit('updateShowFooter', true)
       } else {
         this.$store.commit('updateShowFooter', false)
+      }
+
+      if (this.$route.query.action === 'enable_2fa') {
+        this.$store.state.notifications = []
+        this.$refs.twoFactor.$refs.twoFactorModal.show()
       }
     })
   }

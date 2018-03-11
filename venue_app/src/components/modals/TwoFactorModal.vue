@@ -7,7 +7,7 @@
       <p>Are you sure you want to disable two-factor authentication?</p>
       <b-form-group>
         <b-button type="submit" variant="primary">{{ $t('yes') }}</b-button>
-        <b-button variant="default">{{ $t('cancel') }}</b-button>
+        <b-button variant="default" @click="cancel()">{{ $t('cancel') }}</b-button>
       </b-form-group>
     </b-form>
     <b-form @submit="verifyOtpCode($event)" v-if="!enabled2FA">
@@ -134,6 +134,9 @@ export default {
           })
         }
       })
+    },
+    cancel () {
+      this.$refs.twoFactorModal.hide()
     }
   }
 }
