@@ -90,7 +90,7 @@
     <change-email-modal></change-email-modal>
     <change-username-modal></change-username-modal>
     <change-password-modal></change-password-modal>
-    <delete-account-modal></delete-account-modal>
+    <!-- <delete-account-modal></delete-account-modal> -->
     <two-factor-modal ref="twoFactor"></two-factor-modal>
   </div>
 </template>
@@ -183,6 +183,7 @@ export default {
       if (this.$route.query.action === 'enable_2fa') {
         this.$store.state.notifications = []
         this.$refs.twoFactor.$refs.twoFactorModal.show()
+        this.request2FactorUri()
       }
     })
   }

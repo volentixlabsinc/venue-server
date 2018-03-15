@@ -475,3 +475,33 @@ class DataUpdateTask(models.Model):
 
     def __str__(self):
         return str(self.id)
+
+
+VARIANT_CHOICES = (
+    ('primary', 'Primary'),
+    ('secondary', 'Secondary'),
+    ('success', 'Success'),
+    ('danger', 'Danger'),
+    ('warning', 'Warning'),
+    ('info', 'Info')
+)
+
+
+class Notification(models.Model):
+    code = models.CharField(max_length=20, blank=True)
+    text = models.CharField(max_length=100)
+    action_text = models.CharField(max_length=30, blank=True)
+    action_link = models.CharField(max_length=100, blank=True)
+    variant = models.CharField(max_length=10, choices=VARIANT_CHOICES)
+    dismissible = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
+    date_created = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        User,
+        related_name='notifications',
+        on_delete=models.PROTECT
+    )
+    dismissed_by = models.ManyToManyField(User, blank=True)
+
+    def __str__(self):
+        return self.text

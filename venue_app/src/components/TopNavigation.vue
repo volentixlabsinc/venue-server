@@ -53,9 +53,12 @@
     
     <b-container>
       <b-row style="margin-top: 30px;">
-        <b-col>
-          <div v-for="notif in $store.state.notifications" :key="notif">
-            <b-alert :variant="notif.variant" show :dismissible="notif.dismissible">
+        <b-col v-if="$store.state.apiToken">
+          <div v-for="notif in notifications" :key="notif">
+            <b-alert show
+              :variant="notif.variant" 
+              @dismissed="dismissNotification(notif.id)" 
+              :dismissible="notif.dismissible">
               {{ notif.text }}
               <span v-if="notif.action_link">
                 <a :href="notif.action_link">{{ notif.action_text }}</a>
@@ -82,7 +85,8 @@ export default {
   components: { LoginModal, ResetPasswordModal },
   data () {
     return {
-      languages: this.$store.state.languages
+      languages: this.$store.state.languages,
+      notifications: []
     }
   },
   methods: {
@@ -103,6 +107,19 @@ export default {
       this.$store.commit('updateUserName', data.username)
       this.$store.commit('updateUserEmail', data.email)
       this.$store.commit('updatedTwoFactorStatus', data.enabled_2fa)
+    },
+    fetchNotifications () {
+      let vm = this
+      axios.post('/get-notifications/', {apiToken: vm.$store.state.apiToken}).then(response => {
+        if (response.data.success) {
+          vm.notifications = response.data.notifications
+        }
+      })
+    },
+    dismissNotification (id) {
+      let vm = this
+      let payload = {apiToken: vm.$store.state.apiToken, notificationId: id}
+      axios.post('/dismiss-notification/', payload)
     }
   },
   computed: {
@@ -117,13 +134,16 @@ export default {
     })
     // Get user details
     if (this.$store.state.apiToken) {
+      let vm = this
       axios.post('/get-user/', {
-        token: this.$store.state.apiToken
+        token: vm.$store.state.apiToken
       }).then(response => {
         if (response.data.found === true) {
-          this.setUser(response.data)
+          vm.setUser(response.data)
           // Localize to selected language
-          this.$i18n.locale = this.$store.state.language
+          vm.$i18n.locale = vm.$store.state.language
+          // Fetch notifications from server
+          vm.fetchNotifications()
         }
       })
     }

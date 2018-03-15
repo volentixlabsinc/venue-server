@@ -1,15 +1,15 @@
 <template>
-  <b-containter>
+  <b-container>
     <b-row id="footer">
       <b-col>
         <img src="../assets/logo.png" height="40">
         <span style="float: right; line-height: 40px;">{{ $t('faq') }}</span>
       </b-col>
     </b-row>
-  </b-containter>
+  </b-container>
 </template>
 
-<<script>
+<script>
 export default {
   name: 'ContentFooter'
 }

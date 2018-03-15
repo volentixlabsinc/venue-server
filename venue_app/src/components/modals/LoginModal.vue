@@ -116,17 +116,10 @@ export default {
             Object.assign(this.$data, this.$options.data.call(this))
             this.$validator.clean()
             this.$refs.loginModal.hide()
-            // Display 2FA notif
-            let notif = {
-              text: this.$i18n.t('enable_2fa_notif'),
-              variant: 'info',
-              dismissible: true,
-              action_link: '/#/settings/?action=enable_2fa',
-              action_text: this.$i18n.t('enable_2fa_notif_action')
-            }
-            this.$store.commit('addNotification', notif)
             // Redirect to dashboard
             this.$router.push('/dashboard')
+            // Load notifications by triggering an event in App.vue
+            this.$parent.$parent.$emit('load-notifications')
           } else {
             this.$swal({
               title: this.$i18n.t('email_not_confirmed'),

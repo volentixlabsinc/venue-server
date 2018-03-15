@@ -21,7 +21,7 @@ from venue.api import inject_verification_code
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
                     send_email_change_confirmation, send_reset_password)
-from .models import (UserProfile, ForumSite, ForumProfile,
+from .models import (UserProfile, ForumSite, ForumProfile, Notification,
                      Language, Signature, ForumUserRank)
 from .utils import RedisTemp
 
@@ -588,5 +588,36 @@ def disable_2fa(request):
         profile = token.user.profiles.first()
         profile.enabled_2fa = False
         profile.save()
+        response['success'] = True
+    return Response(response)
+
+
+@api_view(['POST'])
+def get_notifications(request):
+    response = {'success': False}
+    data = request.data
+    token = Token.objects.filter(key=data['apiToken'])
+    if token.exists():
+        token = token.first()
+        profile = token.user.profiles.first()
+        notifs = Notification.objects.filter(active=True).exclude(
+            dismissed_by=token.user
+        )
+        if profile.enabled_2fa:
+            notifs = notifs.exclude(code='2fA_notification')
+        response['notifications'] = notifs.values()
+        response['success'] = True
+    return Response(response)
+
+
+@api_view(['POST'])
+def dismiss_notification(request):
+    response = {'success': False}
+    data = request.data
+    token = Token.objects.filter(key=data['apiToken'])
+    if token.exists():
+        token = token.first()
+        notif = Notification.objects.get(id=data['notificationId'])
+        notif.dismissed_by.add(token.user)
         response['success'] = True
     return Response(response)

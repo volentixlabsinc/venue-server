@@ -1,6 +1,6 @@
 <template>
   <div id="app" v-cloak @scroll="handleScroll($event)">
-    <top-navigation></top-navigation>
+    <top-navigation ref="topNavigation"></top-navigation>
     <vue-progress-bar></vue-progress-bar>
     <b-container id="main-container">
       <router-view></router-view>
@@ -27,6 +27,10 @@ export default {
   },
   mounted () {
     window.addEventListener('scroll', this.handleScroll)
+    this.$on('load-notifications', function () {
+      console.log('Event was triggered!')
+      this.$refs.topNavigation.fetchNotifications()
+    })
   },
   destroyed () {
     window.removeEventListener('scroll', this.handleScroll)
