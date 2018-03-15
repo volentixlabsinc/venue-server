@@ -3,7 +3,7 @@
   <b-modal id="login-modal" :title="$i18n.t('login_form')" v-if="!$store.state.apiToken" ref="loginModal" centered>
     <b-form @submit="login($event)" @click="clearLoginError()">
       <b-form-group :label="$i18n.t('username_or_email')">
-        <b-form-input v-model.lazy="username"
+        <b-form-input v-model.trim="username"
           :data-vv-as="$t('username') + '/' + $t('email')" 
           v-validate="{ required: true }" 
           name="username" 
@@ -25,8 +25,7 @@
           {{ errors.first('password') }}
         </span>
       </b-form-group>
-      <b-form-group 
-        v-if="showOTPCodeInput" 
+      <b-form-group
         :label="$i18n.t('two_factor_otp_code')">
         <b-form-input v-model.trim="otpCode"
           :placeholder="$i18n.t('otp_code')">
@@ -36,7 +35,7 @@
         <b-button type="submit" variant="primary" :disabled="disableLoginSubmit">{{ $t('submit') }}</b-button>
         <img v-show="formSubmitted" src="../../assets/animated_spinner.gif" height="50">
         <span v-show="loginError" class="help is-danger" style="margin-top: 15px;">
-          {{ $t('login_error') }}
+          {{ localizedLoginError }}
         </span>
       </b-form-group>
     </b-form>
@@ -68,11 +67,11 @@ export default {
       password: '',
       otpCode: '',
       loginError: false,
+      loginErrorCode: '',
       formSubmitted: false,
       showPasswordResetForm: false,
       resetPasswordEmail: '',
-      resetPassswordMessage: '',
-      showOTPCodeInput: false
+      resetPassswordMessage: ''
     }
   },
   computed: {
@@ -81,6 +80,9 @@ export default {
     },
     isFormPristine () {
       return Object.keys(this.fields).some(key => this.fields[key].pristine)
+    },
+    localizedLoginError () {
+      return this.$i18n.t(this.loginErrorCode)
     }
   },
   methods: {
@@ -116,19 +118,19 @@ export default {
             this.$refs.loginModal.hide()
             // Display 2FA notif
             let notif = {
-              text: 'Secure your account with two-factor authentication.',
+              text: this.$i18n.t('enable_2fa_notif'),
               variant: 'info',
               dismissible: true,
               action_link: '/#/settings/?action=enable_2fa',
-              action_text: 'Enable it now.'
+              action_text: this.$i18n.t('enable_2fa_notif_action')
             }
             this.$store.commit('addNotification', notif)
             // Redirect to dashboard
             this.$router.push('/dashboard')
           } else {
             this.$swal({
-              title: 'Email Not Confirmed!',
-              text: 'You need to confirm your email before you can login.',
+              title: this.$i18n.t('email_not_confirmed'),
+              text: this.$i18n.t('confirm_email_notif'),
               icon: 'info',
               button: {
                 text: 'OK',
@@ -142,6 +144,7 @@ export default {
         } else {
           this.loginError = true
           this.formSubmitted = false
+          this.loginErrorCode = response.data.error_code
         }
       })
     },
@@ -157,7 +160,7 @@ export default {
         axios.post('/reset-password/', payload).then(response => {
           if (response.data.success) {
             this.showPasswordResetForm = false
-            this.resetPassswordMessage = 'Please click on the reset button in the email we sent.'
+            this.resetPassswordMessage = this.$i18n.t('reset_password_notif')
           }
         })
       }
@@ -171,13 +174,6 @@ export default {
     username: function () {
       this.loginError = false
       this.formSubmitted = false
-      axios.post('/login-2fa-check/', { username: this.username }).then(response => {
-        if (response.data.required) {
-          this.showOTPCodeInput = true
-        } else {
-          this.showOTPCodeInput = false
-        }
-      })
     }
   }
 }

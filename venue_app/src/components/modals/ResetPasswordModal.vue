@@ -55,6 +55,7 @@ export default {
     resetPassword (event) {
       event.preventDefault()
       this.formSubmitted = true
+      let vm = this
       var payload = {
         code: this.code,
         password: this.newPassword1,
@@ -62,14 +63,14 @@ export default {
       }
       axios.post('/reset-password/', payload).then(response => {
         if (response.data.success) {
-          this.$refs.changePasswordModal.hide()
-          this.$swal({
+          vm.$refs.resetPasswordModal.hide()
+          vm.$swal({
             title: this.$t('updated_password'),
             text: this.$t('updated_password_msg'),
             icon: 'success'
           }).then(() => {
             Object.assign(this.$data, this.$options.data.call(this))
-            this.$validator.clean()
+            vm.$validator.clean()
           })
         }
       })

@@ -19,7 +19,7 @@ from venue.views import (
     change_email, change_username, change_password, authenticate, reset_password,
     get_leaderboard_data, get_signature_code, change_language, check_email_exists,
     check_username_exists, get_wallet_details, get_languages, generate_2fa_uri,
-    verify_2fa_code, disable_2fa, check_2fa_requirement
+    verify_2fa_code, disable_2fa
 )
 from venue.api import (
     ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
@@ -60,7 +60,6 @@ urlpatterns = [
     url(r'^authenticate/', authenticate),
     url(r'^enable-two-factor-auth', generate_2fa_uri),
     url(r'^verify-otp-code/', verify_2fa_code),
-    url(r'login-2fa-check/', check_2fa_requirement),
     url(r'disable-two-factor-auth/', disable_2fa),
     url(r'^check-email-exists/', check_email_exists),
     url(r'^check-username-exists/', check_username_exists),

@@ -3,7 +3,6 @@ Volentix VENUE
 View functions
 """
 
-import json
 import pyotp
 from operator import itemgetter
 from datetime import timedelta
@@ -21,7 +20,7 @@ from rest_framework.decorators import api_view
 from venue.api import inject_verification_code
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
-                    send_email_change_confirmation, send_reset_password, multiplier)
+                    send_email_change_confirmation, send_reset_password)
 from .models import (UserProfile, ForumSite, ForumProfile,
                      Language, Signature, ForumUserRank)
 from .utils import RedisTemp
@@ -29,42 +28,64 @@ from .utils import RedisTemp
 # Instantiate a Hashids instance to be used later
 hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
 
+
 @ensure_csrf_cookie
 def frontend_app(request):
     return render(request, 'index.html')
+
 
 @api_view(['POST'])
 def authenticate(request):
     data = request.data
     response = {'success': False}
+    error_code = 'unknown_error'
     try:
         if '@' in data['username']:
             user = User.objects.get(email__iexact=data['username'])
         else:
             user = User.objects.get(username__iexact=data['username'])
-        profile = user.profiles.first()
-        proceed = False
-        if profile.enabled_2fa:
-            secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
-            totp = pyotp.TOTP(secret)
-            proceed = totp.verify(data['otpCode'])
-        if proceed:
-            token, created = Token.objects.get_or_create(user=user)
-            user.last_login = timezone.now()
-            user.save()
-            user_profile = user.profiles.first()
-            response = {
-                'success': True,
-                'token': token.key, 
-                'username': user.username, 
-                'email': token.user.email,
-                'user_profile_id': user_profile.id,
-                'email_confirmed': user_profile.email_confirmed,
-                'language': user_profile.language.code
-            }
-    except Exception as exc:
-        response['message'] = str(exc)
+        pass_check = user.check_password(data['password'])
+        if pass_check:
+            profile = user.profiles.first()
+            proceed = False
+            if profile.enabled_2fa:
+                if data['otpCode']:
+                    secret = decrypt_data(
+                        profile.otp_secret,
+                        settings.SECRET_KEY
+                    )
+                    totp = pyotp.TOTP(secret)
+                    verified = totp.verify(data['otpCode'])
+                    if verified:
+                        proceed = True
+                    else:
+                        error_code = 'wrong_otp'
+                else:
+                    error_code = 'otp_required'
+            else:
+                proceed = True
+            if proceed:
+                token, created = Token.objects.get_or_create(user=user)
+                user.last_login = timezone.now()
+                user.save()
+                user_profile = user.profiles.first()
+                response = {
+                    'success': True,
+                    'token': token.key,
+                    'username': user.username,
+                    'email': token.user.email,
+                    'user_profile_id': user_profile.id,
+                    'email_confirmed': user_profile.email_confirmed,
+                    'language': user_profile.language.code
+                }
+        else:
+            error_code = 'wrong_credentials'
+    except User.DoesNotExist:
+        error_code = 'wrong_credentials'
+    if not response['success']:
+        response['error_code'] = error_code
     return Response(response)
+
 
 @api_view(['POST'])
 def get_user(request):
@@ -87,6 +108,7 @@ def get_user(request):
     except TypeError:
         pass
     return Response(data)
+
 
 @api_view(['POST'])
 def create_user(request):
@@ -122,6 +144,7 @@ def create_user(request):
         response['message'] = str(exc)
     return Response(response)
 
+
 @api_view(['GET'])
 def confirm_email(request):
     code = request.query_params.get('code')
@@ -130,6 +153,7 @@ def confirm_email(request):
     user_profile.email_confirmed = True
     user_profile.save()
     return redirect('/#/?email_confirmed=1')
+
 
 @api_view(['POST'])
 def check_profile(request):
@@ -140,7 +164,10 @@ def check_profile(request):
     info = get_user_position(forum.id, data['profile_url'], token.user.id)
     if info['status_code'] == 200 and info['position']:
         response['position'] = info['position']
-        forum_rank = ForumUserRank.objects.get(forum_site=forum, name__iexact=info['position'].strip())
+        forum_rank = ForumUserRank.objects.get(
+            forum_site=forum,
+            name__iexact=info['position'].strip()
+        )
         response['position_allowed'] = forum_rank.allowed
         response['forum_user_id'] = info['forum_user_id']
         response['found'] = True
@@ -153,6 +180,7 @@ def check_profile(request):
             response['forum_profile_id'] = info['forum_profile_id']
     response['status_code'] = info['status_code']
     return Response(response)
+
 
 @api_view(['POST'])
 def save_signature(request):
@@ -175,12 +203,14 @@ def save_signature(request):
         response['message'] = 'The signature could not be found in the profile page.'
     return Response(response)
 
+
 @api_view(['POST'])
 def get_site_configs(request):
     configs = {
         'disable_sign_up': config.DISABLE_SIGN_UP
     }
     return Response(configs)
+
 
 @api_view(['POST'])
 def get_stats(request):
@@ -288,6 +318,7 @@ def get_stats(request):
     response['success'] = True
     return Response(response)
 
+
 @api_view(['POST'])
 def get_leaderboard_data(request):
     response = {}
@@ -354,6 +385,7 @@ def get_leaderboard_data(request):
     response['success'] = True
     return Response(response)
 
+
 @api_view(['GET', 'POST'])
 def delete_account(request):
     if request.method == 'POST':
@@ -369,6 +401,7 @@ def delete_account(request):
             return redirect('/#/?account_deleted=1')
         else:
             return Response({'success': False})
+
 
 @api_view(['GET', 'POST'])
 def change_email(request):
@@ -395,6 +428,7 @@ def change_email(request):
             rtemp.remove(code)
         return redirect('/#/settings/?updated_email=1')
 
+
 @api_view(['POST'])
 def change_username(request):
     data = request.data
@@ -410,6 +444,7 @@ def change_username(request):
         response['email'] = token.user.email
     return Response(response)
 
+
 @api_view(['POST'])
 def change_password(request):
     data = request.data
@@ -424,6 +459,7 @@ def change_password(request):
         response['message'] = str(exc)
     return Response(response)
 
+
 @api_view(['POST'])
 def change_language(request):
     response = {'success': False}
@@ -434,6 +470,7 @@ def change_language(request):
     user_profile.save()
     response['success'] = True
     return Response(response)
+
 
 @api_view(['POST'])
 def reset_password(request):
@@ -452,6 +489,7 @@ def reset_password(request):
         response['success'] = True
     return Response(response)
 
+
 @api_view(['POST'])
 def get_signature_code(request):
     response = {'success': False}
@@ -465,6 +503,7 @@ def get_signature_code(request):
         response['success'] = True
     return Response(response)
 
+
 @api_view(['POST'])
 def check_email_exists(request):
     data = request.data
@@ -473,6 +512,7 @@ def check_email_exists(request):
     if not user_check.exists():
         response['email_exists'] = False
     return Response(response)
+
 
 @api_view(['POST'])
 def check_username_exists(request):
@@ -483,15 +523,18 @@ def check_username_exists(request):
         response['username_exists'] = False
     return Response(response)
 
+
 @api_view(['POST'])
 def get_wallet_details(request):
     return Response({'success': True})
+
 
 @api_view(['GET'])
 def get_languages(request):
     languages = Language.objects.filter(active=True)
     languages = [{'value': x.code, 'text': x.name} for x in languages]
     return Response(languages)
+
 
 @api_view(['POST'])
 def generate_2fa_uri(request):
@@ -514,6 +557,7 @@ def generate_2fa_uri(request):
         response['uri'] = uri
     return Response(response)
 
+
 @api_view(['POST'])
 def verify_2fa_code(request):
     response = {'success': False}
@@ -533,6 +577,7 @@ def verify_2fa_code(request):
         response['success'] = True
     return Response(response)
 
+
 @api_view(['POST'])
 def disable_2fa(request):
     response = {'success': False}
@@ -544,19 +589,4 @@ def disable_2fa(request):
         profile.enabled_2fa = False
         profile.save()
         response['success'] = True
-    return Response(response)
-
-@api_view(['POST'])
-def check_2fa_requirement(request):
-    response = {'success': False}
-    data = request.data
-    try:
-        if '@' in data['username']:
-            user = User.objects.get(email__iexact=data['username'])
-        else:
-            user = User.objects.get(username__iexact=data['username'])
-        profile = user.profiles.first()
-        response['required'] = profile.enabled_2fa
-    except User.DoesNotExist:
-        pass
     return Response(response)
