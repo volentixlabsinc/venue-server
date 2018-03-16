@@ -393,7 +393,7 @@ class SignatureCheck(models.Model):
                         self.initial = False
                         # Copy the total post of the last regular check that found the signature
                         self.total_posts = latest_batch.regular_checks.filter(
-                            signature_found=True).total_posts
+                            signature_found=True).last().total_posts
         super(SignatureCheck, self).save(*args, **kwargs)
         latest_batch = batches.last()
         # Compute the number of new posts in this check
