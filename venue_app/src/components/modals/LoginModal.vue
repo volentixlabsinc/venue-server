@@ -25,7 +25,7 @@
           {{ errors.first('password') }}
         </span>
       </b-form-group>
-      <b-form-group
+      <b-form-group v-if="showOtpInput" 
         :label="$i18n.t('two_factor_otp_code')">
         <b-form-input v-model.trim="otpCode"
           :placeholder="$i18n.t('otp_code')">
@@ -66,6 +66,7 @@ export default {
       username: '',
       password: '',
       otpCode: '',
+      showOtpInput: false,
       loginError: false,
       loginErrorCode: '',
       formSubmitted: false,
@@ -138,6 +139,9 @@ export default {
           this.loginError = true
           this.formSubmitted = false
           this.loginErrorCode = response.data.error_code
+          if (this.loginErrorCode === 'otp_required') {
+            this.showOtpInput = true
+          }
         }
       })
     },

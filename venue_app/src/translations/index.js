@@ -153,7 +153,7 @@ const messages = {
     'two_factor_enabled': 'Two-factor authentication has been enabled',
     'two_factor_disabled': 'Two-factor authentication has been disabled',
     'wrong_otp_code': 'You entered a wrong or expired OTP code',
-    'two_factor_otp_code': '2FA One Time Password (optional)',
+    'two_factor_otp_code': '2FA One Time Password',
     'reset_password_notif': 'Please click on the reset button in the email we sent.',
     'wrong_credentials': 'You entered wrong user credentials!',
     'otp_required': 'You enabled 2FA, the OTP code is required!',

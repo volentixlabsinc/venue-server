@@ -570,7 +570,7 @@ def verify_2fa_code(request):
         totp = pyotp.totp.TOTP(otp_secret)
         verified = totp.verify(data['otpCode'])
         if verified:
-            if 'enable_2fa' in data.keys() and data['enable_2fa'] == True:
+            if 'enable_2fa' in data.keys() and data['enable_2fa']:
                 profile.enabled_2fa = True
                 profile.save()
         response['verified'] = verified
