@@ -101,8 +101,7 @@ class UserProfile(models.Model):
         total_per_forum = []
         for site in self.forum_profiles.filter(verified=True):
             if site.uptime_batches.count():
-                for batch in site.uptime_batches.all():
-                    total_per_forum.append(batch.get_total_posts_with_sig())
+                total_per_forum.append(site.get_total_posts_with_sig())
         return sum(total_per_forum)
 
     def get_total_days(self):
@@ -201,7 +200,11 @@ class ForumProfile(models.Model):
     def get_total_posts_with_sig(self):
         value = 0
         if self.uptime_batches.count():
-            value = sum([x.get_total_posts_with_sig() for x in self.uptime_batches.all()])
+            deleted = 0
+            for batch in self.uptime_batches.all():
+                value += batch.get_total_posts_with_sig()
+                deleted += batch.num_deleted_posts
+            value -= deleted
         return value
         
     def get_total_days(self):
@@ -242,6 +245,7 @@ class UptimeBatch(models.Model):
     active = models.BooleanField(default=True)
     date_ended = models.DateTimeField(null=True, blank=True)
     reason_closed = models.CharField(max_length=100, blank=True)
+    num_deleted_posts = models.IntegerField(default=0)
 
     class Meta:
         verbose_name_plural = 'Uptime batches'
@@ -347,19 +351,18 @@ class SignatureCheck(models.Model):
                     latest_batch = batches.last()
                     if self.signature_found:
                         # Check if the number of posts has levelled out with or gone below
-                        # the very first signature check for this batch
-                        earliest_check = latest_batch.regular_checks.filter(signature_found=True).first()
-                        earliest_total = earliest_check.total_posts
+                        # the last check for this batch
                         latest_check = latest_batch.regular_checks.last()
                         latest_total = latest_check.total_posts
-                        diff = latest_total - earliest_total
+                        diff = int(self.total_posts) - int(latest_total)
                         if latest_batch.regular_checks.count() > 1:
-                            if diff <= 0:
+                            if diff < 0:
                                 if latest_batch.get_total_posts_with_sig():
                                     # Close the current batch if diff is zero or less
                                     latest_batch.active = False
                                     latest_batch.date_ended = timezone.now()
-                                    latest_batch.reason_closed = 'Posts were deleted or removed'
+                                    latest_batch.reason_closed = 'Posts were deleted'
+                                    latest_batch.num_deleted_posts = abs(diff)
                                     latest_batch.save()
                                     # Open a new batch for this
                                     batch = UptimeBatch(forum_profile=self.forum_profile)

@@ -67,7 +67,7 @@ class UptimeBatchAdmin(admin.ModelAdmin):
         'user', 'forum_profile', 'batch_number', 'total_posts',
         'total_posts_with_sig', 'total_days', 'post_points',
         'post_days_points', 'influence_points', 'active',
-        'date_started', 'date_ended'
+        'date_started', 'date_ended', 'reason_closed', 'num_deleted_posts'
     ]
     list_filter = [FieldForumProfileFilter, 'forum_profile__user_profile']
     
