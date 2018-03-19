@@ -19,6 +19,7 @@
     "bootstrap-vue": "^1.2.0",
     "chart.js": "^2.7.1",
     "npm": "^5.7.1",
+    "numeral": "^2.0.6",
     "vee-validate": "^2.0.0-rc.19",
     "vue": "^2.5.2",
     "vue-chartjs": "^3.0.2",

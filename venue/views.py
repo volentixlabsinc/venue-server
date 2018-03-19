@@ -29,6 +29,19 @@ from .utils import RedisTemp
 hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
 
 
+# Function that converts points to percentages
+def points_to_percentage(points, category=None):
+    # categories = posts / uptime / influence / total
+    total = {
+        'posts': 6000,
+        'uptime': 3800,
+        'influence': 200,
+        'total': 10000
+    }
+    percentage = (points / total[category]) * 100
+    return round(percentage, 2)
+
+
 @ensure_csrf_cookie
 def frontend_app(request):
     return render(request, 'index.html')
@@ -220,16 +233,22 @@ def get_stats(request):
     response = {'success': False}
     # Initialize empty stats container dictionary
     stats = {'fresh': False}
-    #-----------------------------------
+    # -----------------------------------
     # Generate forum profile level stats
-    #-----------------------------------
+    # -----------------------------------
     profile_stats = []
-    fps = ForumProfile.objects.filter(user_profile__user=token.user, verified=True)
+    fps = ForumProfile.objects.filter(
+        user_profile__user=token.user,
+        verified=True
+    )
     if fps.count():
-        fps_batch_initials = 0 # Used later for userlevel stats
+        fps_batch_initials = 0  # Used later for userlevel stats
         for fp in fps:
-            fields = ['postPoints', 'totalPostsWithSig', 'postDaysPoints', 'totalPostDays',
-                    'influencePoints', 'totalPosts', 'totalPoints', 'VTX_Tokens']
+            fields = [
+                'postPoints', 'totalPostsWithSig', 'postDaysPoints',
+                'totalPostDays', 'influencePoints', 'totalPosts',
+                'totalPoints', 'VTX_Tokens'
+            ]
             fp_data = {k: [] for k in fields}
             latest_batch = fp.uptime_batches.last()
             fp_data['totalPosts'].append(latest_batch.get_total_posts(actual=True))
@@ -275,9 +294,9 @@ def get_stats(request):
             earliest_check = earliest_batch.regular_checks.filter(initial=True).first()
             fps_batch_initials += earliest_check.total_posts
         stats['profile_level'] = profile_stats
-        #--------------------------
+        # --------------------------
         # Generate user-level stats
-        #--------------------------
+        # --------------------------
         userlevel_stats = {}
         # Get the date string for the last seven days
         now = timezone.now()
@@ -293,23 +312,50 @@ def get_stats(request):
             data['date'] = day
             userlevel_stats['daily_stats'].append(data)
         userlevel_stats['fps_batch_initials'] = fps_batch_initials
-        userlevel_stats['post_points'] = round(user_profile.get_post_points(), 0)
-        userlevel_stats['post_days_points'] = round(user_profile.get_post_days_points(), 0)
-        userlevel_stats['influence_points'] = round(user_profile.get_influence_points(), 0)
-        userlevel_stats['total_points'] = '{:,}'.format(round(user_profile.get_total_points(), 0))
-        userlevel_stats['total_posts'] = round(user_profile.get_total_posts_with_sig(), 0)
+        # Post points:
+        post_points = round(user_profile.get_post_points(), 0)
+        userlevel_stats['post_points'] = post_points
+        userlevel_stats['post_points_pct'] = points_to_percentage(
+            post_points,
+            category='posts'
+        )
+        # Post uptime points:
+        post_days_points = round(user_profile.get_post_days_points(), 0)
+        userlevel_stats['post_days_points'] = post_days_points
+        userlevel_stats['post_days_points_pct'] = points_to_percentage(
+            post_days_points,
+            category='uptime'
+        )
+        # Influence points:
+        influence_points = round(user_profile.get_influence_points(), 0)
+        userlevel_stats['influence_points'] = influence_points
+        userlevel_stats['influence_points_pct'] = points_to_percentage(
+            influence_points,
+            category='influence'
+        )
+        # Total points:
+        total_points = round(user_profile.get_total_points(), 0)
+        userlevel_stats['total_points'] = total_points
+        userlevel_stats['total_points_pct'] = points_to_percentage(
+            total_points,
+            category='total'
+        )
+        # Total posts, tokens, and rank:
+        total_posts = round(user_profile.get_total_posts_with_sig(), 0)
+        userlevel_stats['total_posts'] = total_posts
         userlevel_stats['total_tokens'] = round(user_profile.get_total_tokens(), 0)
         userlevel_stats['overall_rank'] = user_profile.get_ranking()
         stats['user_level'] = userlevel_stats
-        #-------------------------
+        # -------------------------
         # Generate site-wide stats
-        #-------------------------
+        # -------------------------
         sitewide_stats = {}
         users = UserProfile.objects.filter(email_confirmed=True)
         total_posts = [x.get_total_posts_with_sig() for x in users]
         sitewide_stats['total_users'] = users.count()
         sitewide_stats['total_posts'] = int(sum(total_posts))
-        sitewide_stats['available_tokens'] = '{:,}'.format(config.VTX_AVAILABLE)
+        available_tokens = '{:,}'.format(config.VTX_AVAILABLE)
+        sitewide_stats['available_tokens'] = available_tokens
         stats['sitewide'] = sitewide_stats
     else:
         stats['fresh'] = True

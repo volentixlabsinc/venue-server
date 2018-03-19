@@ -19,6 +19,7 @@ import VueProgressBar from 'vue-progressbar'
 import VueQRCodeComponent from 'vue-qrcode-component'
 import axios from 'axios'
 import Rollbar from 'vue-rollbar'
+import numeral from 'numeral'
 
 const options = {
   color: '#2a96b6',
@@ -70,6 +71,14 @@ const i18n = new VueI18n({
 
 Vue.config.devtools = false
 Vue.config.productionTip = false
+
+Vue.filter('thousands_sep', function (value) {
+  try {
+    return numeral(value).format('0,0')
+  } catch (err) {
+    return value
+  }
+})
 
 /* eslint-disable no-new */
 new Vue({

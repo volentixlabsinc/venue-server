@@ -24,34 +24,51 @@
         <b-col offset-sm="2" sm="10">
           <div>
             <div class="legend-color" style="background-color: #2a96b6;"></div> 
-            <span class="legend-text">{{ $t('post_points') }} - {{ userstats.post_points }} {{ $t('out_of')}} 6000</span>
+            <span class="legend-text" v-b-tooltip.hover :title="$t('posts_pct_info')">
+              {{ $t('post_points') }} - {{ userstats.post_points | thousands_sep }} {{ $t('points') }} 
+              ({{ userstats.post_points_pct }} %)
+            </span>
           </div>
           <div>
             <div class="legend-color" style="background-color: #5a2998;"></div> 
-            <span class="legend-text">{{ $t('post_uptime_points') }} - {{ userstats.post_days_points }} {{ $t('out_of')}} 3800</span>
+            <span class="legend-text" v-b-tooltip.hover :title="$t('uptime_pct_info')">
+              {{ $t('post_uptime_points') }} - {{ userstats.post_days_points | thousands_sep }} {{ $t('points') }} 
+              ({{ userstats.post_days_points_pct }} %)
+            </span>
           </div>
           <div>
             <div class="legend-color" style="background-color: #b62da9;"></div> 
-            <span class="legend-text">{{ $t('influence_points') }} - {{ userstats.influence_points }} {{ $t('out_of')}} 200</span>
+            <span class="legend-text" v-b-tooltip.hover :title="$t('influence_pct_info')">
+              {{ $t('influence_points') }} - {{ userstats.influence_points }} {{ $t('points') }}
+              ({{ userstats.influence_points_pct }} %)
+            </span>
           </div>
         </b-col>
       </b-row>
     </b-col>
     <b-col>
+      <p style="text-align: center;"><strong>{{ $t('overall_stats') }}</strong></p>
       <b-row class="justify-content-md-center">
-        <b-col sm="4">
-          <b-card :header="$t('your_rank')" class="text-center">
+        <b-col sm="3">
+          <b-card :header="$t('rank')" class="text-center">
             <p class="card-text">#{{ userstats.overall_rank }}</p>
           </b-card>
         </b-col>
-        <b-col sm="4">
+        <b-col sm="3">
           <b-card :header="$t('your_total_posts')" class="text-center">
             <p class="card-text">{{ userstats.total_posts }}</p>
           </b-card>
         </b-col>
-        <b-col sm="4">
+        <b-col sm="3">
           <b-card :header="$t('your_total_points')" class="text-center">
-            <p class="card-text">{{ userstats.total_points }}</p>
+            <p class="card-text" v-b-tooltip.hover :title="$t('total_pct_info')">
+              {{ userstats.total_points | thousands_sep }}
+            </p>
+          </b-card>
+        </b-col>
+        <b-col sm="3">
+          <b-card :header="$t('your_overall_contribution')" class="text-center">
+            <p class="card-text">{{ userstats.total_points_pct }} %</p>
           </b-card>
         </b-col>
       </b-row>
