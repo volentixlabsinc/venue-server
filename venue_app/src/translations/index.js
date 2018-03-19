@@ -164,7 +164,9 @@ const messages = {
     'total_pct_info': 'Out of a fixed total of 10,000 points sitewide',
     'posts_pct_info': 'Out of a fixed total of 6,000 points sitewide',
     'uptime_pct_info': 'Out of a fixed total of 3,800 points sitewide',
-    'influence_pct_info': 'Out of a fixed total of 200 points sitewide'
+    'influence_pct_info': 'Out of a fixed total of 200 points sitewide',
+    'batch_reason_closed': 'Reason for closure',
+    'deleted_posts': 'Deleted posts'
   },
   'ja': {
     'account_deleted': 'アカウントが削除されました！',

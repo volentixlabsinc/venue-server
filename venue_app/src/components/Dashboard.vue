@@ -92,6 +92,14 @@
                       <b-col sm="9" class="mb-2">{{ $t('total_posts_uptime') }}:</b-col>
                       <b-col>{{ batch.totalPostDays }}</b-col>
                     </b-row>
+                    <b-row>
+                      <b-col sm="9" class="mb-2">{{ $t('batch_reason_closed') }}:</b-col>
+                      <b-col>{{ batch.reasonClosed }}</b-col>
+                    </b-row>
+                    <b-row v-if="batch.reasonClosed == 'Posts were deleted'">
+                      <b-col sm="9" class="mb-2">{{ $t('deleted_posts') }}:</b-col>
+                      <b-col>{{ batch.deletedPosts }}</b-col>
+                    </b-row>
                   </div>
                 </b-col>
               </b-row>

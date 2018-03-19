@@ -282,7 +282,9 @@ def get_stats(request):
                 data = {
                     'batch': batch_no,
                     'totalPostsWithSig': item.get_total_posts_with_sig(),
-                    'totalPostDays': item.get_total_days()
+                    'totalPostDays': item.get_total_days(),
+                    'reasonClosed': item.reason_closed,
+                    'deletedPosts': item.num_deleted_posts
                 }
                 if batch_no == current_branch_no:
                     sum_up_data['currentUptimeBatch'] = data
