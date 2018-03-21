@@ -1,12 +1,18 @@
+import time
 import requests
+from hashids import Hashids
 from bs4 import BeautifulSoup
 from django.conf import settings
-from hashids import Hashids
+from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-class ScraperError(Exception): pass
+
+class ScraperError(Exception):
+    pass
+
 
 class BitcoinTalk(object):
-    
+
     def __init__(self):
         self.base_url = 'https://bitcointalk.org'
         self.headers = {
@@ -17,6 +23,7 @@ class BitcoinTalk(object):
             'Referer': self.base_url
         }
         self.status_code = None
+        self.soup = None
         
     def list_forum_positions(self):
         positions = [
@@ -41,17 +48,27 @@ class BitcoinTalk(object):
             profile_url = user_id
         else:
             profile_url = self.base_url + '/index.php?action=profile;u=' + str(user_id)
-        self.response = requests.get(profile_url, headers=self.headers)
-        self.status_code = self.response.status_code
-        self.soup = BeautifulSoup(self.response.content, 'html.parser')
-        
+        response = requests.get(profile_url, headers=self.headers)
+        self.status_code = response.status_code
+        self.soup = BeautifulSoup(response.content, 'html.parser')
+        if len(self.soup.select('div.cf-im-under-attack')) > 0:
+            driver = webdriver.Remote(
+                'http://127.0.0.1:4444/wd/hub',
+                DesiredCapabilities.CHROME
+            )
+            driver.get(profile_url)
+            # Sleep to wait for the page to load
+            time.sleep(6)
+            self.soup = BeautifulSoup(driver.page_source, 'html.parser')
+            if self.get_username():
+                self.status_code = 200
+            driver.close()
+            driver.quit()
+
     def get_total_posts(self):
         row = self.soup.select('div#bodyarea tr')[4]
-        #if 'Posts' in row.text:
         return int(row.text.split()[-1])
-        #else:
-        #    raise ScraperError('Cannot get total posts')
-            
+
     def get_user_position(self):
         try:
             row = self.soup.select('div#bodyarea tr')[7]
@@ -115,7 +132,8 @@ class BitcoinTalk(object):
         if links_verified and code_verified:
             sig_found = True
         return sig_found
-        
+
+
 def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode=False):
     scraper = BitcoinTalk()
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
@@ -130,12 +148,14 @@ def verify_and_scrape(forum_profile_id, forum_user_id, expected_links, test_mode
             posts = scraper.get_total_posts()
         data = (scraper.status_code, verified, posts, username)
     return data
-    
+
+
 def get_user_position(forum_user_id):
     scraper = BitcoinTalk()
     scraper.get_profile(forum_user_id)
     position = scraper.get_user_position()
     return (scraper.response.status_code, position)
-    
+
+
 def extract_user_id(profile_url):
     return profile_url.split('profile;u=')[-1].strip()
