@@ -255,15 +255,16 @@ def get_stats(request):
             # Sum up the credits and points from all batches for this forum profiles
             for batch in fp.uptime_batches.all():
                 latest_check = batch.regular_checks.last()
-                latest_calc = latest_check.points_calculations.last()
-                if latest_calc:
-                    fp_data['postPoints'].append(int(latest_calc.post_points))
-                    fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
-                    fp_data['postDaysPoints'].append(int(latest_calc.post_days_points))
-                    fp_data['totalPostDays'].append(batch.get_total_days())
-                    fp_data['influencePoints'].append(int(latest_calc.influence_points))
-                    fp_data['totalPoints'].append(round(latest_calc.total_points, 0))
-                    fp_data['VTX_Tokens'].append(round(latest_calc.get_total_tokens(), 0))
+                if latest_check:
+                    latest_calc = latest_check.points_calculations.last()
+                    if latest_calc:
+                        fp_data['postPoints'].append(int(latest_calc.post_points))
+                        fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
+                        fp_data['postDaysPoints'].append(int(latest_calc.post_days_points))
+                        fp_data['totalPostDays'].append(batch.get_total_days())
+                        fp_data['influencePoints'].append(int(latest_calc.influence_points))
+                        fp_data['totalPoints'].append(round(latest_calc.total_points, 0))
+                        fp_data['VTX_Tokens'].append(round(latest_calc.get_total_tokens(), 0))
             sum_up_data = {k:  '{:,}'.format(sum(v)) for k, v in fp_data.items()}
             sum_up_data['User_ID'] = fp.forum_user_id
             sum_up_data['forumSite'] = fp.forum.name
@@ -294,7 +295,8 @@ def get_stats(request):
             # Get the initial count of posts from initial batches
             earliest_batch = fp.uptime_batches.first()
             earliest_check = earliest_batch.regular_checks.filter(initial=True).first()
-            fps_batch_initials += earliest_check.total_posts
+            if earliest_check:
+                fps_batch_initials += earliest_check.total_posts
         stats['profile_level'] = profile_stats
         # --------------------------
         # Generate user-level stats
