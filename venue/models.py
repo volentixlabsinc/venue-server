@@ -207,8 +207,10 @@ class ForumProfile(models.Model):
                 value += batch.get_total_posts_with_sig()
                 deleted += batch.num_deleted_posts
             value -= deleted
+            if value < 0:
+                value = 0
         return value
-        
+
     def get_total_days(self):
         value = 0
         if self.uptime_batches.count():
@@ -315,15 +317,16 @@ class UptimeBatch(models.Model):
         except (decimal.InvalidOperation, AttributeError):
             pass
         return round(pts, 4)
-        
+
     def get_influence_points(self):
         pts = 0
-        try:
-            latest_gs = GlobalStats.objects.last()
-            pts = decimal.Decimal(self.get_total_posts() * 200)
-            pts /= latest_gs.total_posts
-        except (decimal.InvalidOperation, AttributeError):
-            pass
+        if self.get_total_posts():
+            try:
+                latest_gs = GlobalStats.objects.last()
+                pts = decimal.Decimal(self.get_total_posts() * 200)
+                pts /= latest_gs.total_posts
+            except (decimal.InvalidOperation, AttributeError):
+                pass
         return round(pts, 4)
 
     def get_total_points(self, date=None):
@@ -366,6 +369,8 @@ class SignatureCheck(models.Model):
                             if latest_batch.regular_checks.count():
                                 # Check if the number of posts has levelled out with or gone below
                                 # the last check for this batch
+                                earliest_batch = batches.first()
+                                earliest_check = earliest_batch.regular_checks.first()
                                 latest_check = latest_batch.regular_checks.last()
                                 latest_total = latest_check.total_posts
                                 diff = int(self.total_posts) - int(latest_total)
@@ -392,7 +397,10 @@ class SignatureCheck(models.Model):
                                             latest_batch.active = False
                                             latest_batch.date_ended = timezone.now()
                                             latest_batch.reason_closed = 'post_deletion'
-                                            latest_batch.num_deleted_posts = abs(diff)
+                                            # You can't delete more than the diff of posts between
+                                            # the earliest check and latest check
+                                            if self.total_posts >= earliest_check.total_posts:
+                                                latest_batch.num_deleted_posts = abs(diff)
                                             latest_batch.save()
                                         else:
                                             self.uptime_batch = latest_batch

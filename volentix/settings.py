@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import rollbar
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -177,3 +178,16 @@ ROLLBAR = {
     'branch': 'master',
     'root': BASE_DIR,
 }
+
+
+rollbar.init(
+    'ab9dbc1f9b494685810779e9460e480b',
+    environment='development' if DEBUG else 'production'
+)
+
+def celery_base_data_hook(request, data):
+    del request
+    data['framework'] = 'celery'
+
+
+rollbar.BASE_DATA_HOOK = celery_base_data_hook

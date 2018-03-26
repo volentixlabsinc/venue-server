@@ -11,9 +11,9 @@ from datetime import timedelta
 from constance import config
 import pandas as pd
 import rollbar
-from .models import (UserProfile, UptimeBatch, GlobalStats, SignatureCheck, 
-                     PointsCalculation, DataUpdateTask, ScrapingError, ForumSite,
-                     ForumProfile, Signature, Ranking)
+from .models import (UserProfile, UptimeBatch, GlobalStats, SignatureCheck,
+                     PointsCalculation, DataUpdateTask, ScrapingError,
+                     ForumSite, ForumProfile, Signature, Ranking)
 
 
 @task_failure.connect
@@ -25,11 +25,13 @@ def handle_task_failure(**kw):
 def multiplier(x, y):
     return x * y
 
+
 def load_scraper(name):
     name = name.strip('.py')
     scraper = __import__('venue.scrapers.' + name, fromlist=[name])
     return scraper
-    
+
+
 @shared_task
 def scrape_forum_profile(forum_profile_id, master_task_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
