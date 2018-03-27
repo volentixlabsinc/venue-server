@@ -356,8 +356,9 @@ def get_stats(request):
         # -------------------------
         sitewide_stats = {}
         users = UserProfile.objects.filter(email_confirmed=True)
+        users_with_fp = [x.id for x in users if x.with_forum_profile]
         total_posts = [x.get_total_posts_with_sig() for x in users]
-        sitewide_stats['total_users'] = users.count()
+        sitewide_stats['total_users'] = len(users_with_fp)
         sitewide_stats['total_posts'] = int(sum(total_posts))
         available_tokens = '{:,}'.format(config.VTX_AVAILABLE)
         sitewide_stats['available_tokens'] = available_tokens
@@ -391,11 +392,12 @@ def get_leaderboard_data(request):
         leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
         response['rankings'] = leaderboard_data
         users = UserProfile.objects.filter(email_confirmed=True)
+        users_with_fp = [x.id for x in users if x.with_forum_profile]
         # Get site-wide stats
         response['sitewide'] = {
             'available_points': '10,000',
             'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
-            'total_users': users.count(),
+            'total_users': len(users_with_fp),
             'total_posts': int(sum([x.get_total_posts_with_sig() for x in users]))
         }
         try:

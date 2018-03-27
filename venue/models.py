@@ -62,6 +62,13 @@ class UserProfile(models.Model):
     enabled_2fa = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
 
+    @property
+    def with_forum_profile(self):
+        if self.forum_profiles.count() > 0:
+            return True
+        else:
+            return False
+
     def __str__(self):
         return self.user.username
 

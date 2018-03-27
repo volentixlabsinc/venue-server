@@ -152,11 +152,12 @@ def calculate_rankings():
     users_points = []
     # Generate the rankings
     for user in users:
-        user_data = {
-            'user_profile_id': user.id,
-            'points': user.get_total_points()
-        }
-        users_points.append(user_data)
+        if user.with_forum_profile:
+            user_data = {
+                'user_profile_id': user.id,
+                'points': user.get_total_points()
+            }
+            users_points.append(user_data)
     users_points.sort(key=itemgetter('points'), reverse=True)
     # Save the rankings
     for rank, user in enumerate(users_points, 1):

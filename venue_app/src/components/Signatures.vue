@@ -126,7 +126,7 @@
         </b-card-group>
       </b-col>
     </b-row>
-    <b-row v-if="profileChecked && showAddForm">
+    <b-row v-show="profileChecked && showAddForm">
       <b-col id="signatures-list">
         <p>{{ $t('select_signature') }}:</p>
         <b-row v-for="signature in signatureOptions" :key="signature.id">
@@ -254,12 +254,12 @@ export default {
                     if (response.data.active) {
                       this.flashAlreadyExistsNotice(self, this.$t('profile_already_exists_msg1'))
                     } else {
-                      this.profileChecked = true
                       this.getSignatures(
                         this.forumSite,
                         this.forumUserPosition,
                         response.data.forum_profile_id
                       )
+                      this.profileChecked = true
                     }
                   }
                 } else {

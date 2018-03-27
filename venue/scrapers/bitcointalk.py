@@ -158,4 +158,6 @@ def get_user_position(forum_user_id):
 
 
 def extract_user_id(profile_url):
-    return profile_url.split('profile;u=')[-1].strip()
+    user_id = profile_url.split('profile;u=')[-1]
+    user_id = user_id.split(';')[0].strip()
+    return user_id
