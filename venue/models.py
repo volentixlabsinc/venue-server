@@ -97,16 +97,17 @@ class UserProfile(models.Model):
             value = sum(total_per_forum)
         return value
 
-    def get_total_posts_with_sig(self):
+    def get_total_posts_with_sig(self, latest_only=False):
         total_per_forum = []
         for site in self.forum_profiles.filter(verified=True):
             if site.uptime_batches.count():
-                total_per_forum.append(site.get_total_posts_with_sig())
+                posts_with_sig = site.get_total_posts_with_sig(latest_only=latest_only)
+                total_per_forum.append(posts_with_sig)
         return sum(total_per_forum)
 
     def get_total_days(self):
         value = 0
-        if self.get_total_posts_with_sig():
+        if self.get_total_posts_with_sig(latest_only=False):
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
                 if site.uptime_batches.count():
@@ -199,16 +200,11 @@ class ForumProfile(models.Model):
             value = latest_batch.get_total_posts(actual=actual)
         return value
         
-    def get_total_posts_with_sig(self):
+    def get_total_posts_with_sig(self, latest_only=False):
         value = 0
         if self.uptime_batches.count():
-            deleted = 0
-            for batch in self.uptime_batches.all():
-                value += batch.get_total_posts_with_sig()
-                deleted += batch.num_deleted_posts
-            value -= deleted
-            if value < 0:
-                value = 0
+            latest_batch = self.uptime_batches.last()
+            value = latest_batch.get_total_posts_with_sig(latest_only=latest_only)
         return value
 
     def get_total_days(self):
@@ -277,17 +273,22 @@ class UptimeBatch(models.Model):
                         value = latest_check.total_posts
         return value
 
-    def get_total_posts_with_sig(self):
+    def get_total_posts_with_sig(self, latest_only=False):
         value = 0
         latest_batch = self.forum_profile.uptime_batches.last()
-        if self.id == latest_batch.id:
-            if self.regular_checks.count() > 0:
-                value = sum([x.new_posts for x in self.regular_checks.all()])
+        if latest_batch:
+            if latest_only:
+                if self.id == latest_batch.id:
+                    if self.regular_checks.count() > 0:
+                        value = sum([x.new_posts for x in self.regular_checks.all()])
+            else:
+                for check in self.regular_checks.all():
+                    value += check.new_posts
         return value
 
     def get_total_days(self):
         value = 0
-        if self.get_total_posts_with_sig():
+        if self.get_total_posts_with_sig(latest_only=False):
             if self.regular_checks.count() > 1:
                 earliest_check = self.regular_checks.filter(signature_found=True).first()
                 latest_check = self.regular_checks.filter(signature_found=True).last()
@@ -320,12 +321,17 @@ class UptimeBatch(models.Model):
 
     def get_influence_points(self):
         pts = 0
+        errors = (
+            decimal.InvalidOperation,
+            decimal.DivisionByZero,
+            AttributeError
+        )
         if self.get_total_posts():
             try:
                 latest_gs = GlobalStats.objects.last()
                 pts = decimal.Decimal(self.get_total_posts() * 200)
                 pts /= latest_gs.total_posts
-            except (decimal.InvalidOperation, AttributeError):
+            except errors:
                 pass
         return round(pts, 4)
 
@@ -385,10 +391,11 @@ class SignatureCheck(models.Model):
                                             # deleted posts have always had sig
                                             # So, we report as new posts the posts with sig
                                             # in previous batch minus the deleted posts
-                                            last_psts_wsig = latest_batch.get_total_posts_with_sig()
+                                            reg_checks = latest_batch.regular_checks.all()
+                                            last_psts_wsig = [x.new_posts for x in reg_checks]
                                             self.new_posts = 0
                                             if last_psts_wsig:
-                                                adj_new_posts = last_psts_wsig - abs(diff)
+                                                adj_new_posts = sum(last_psts_wsig) - abs(diff)
                                                 if adj_new_posts > 0:
                                                     self.new_posts = adj_new_posts
                                             self.uptime_batch = batch
@@ -426,18 +433,18 @@ class SignatureCheck(models.Model):
                         latest_batch.active = False
                         latest_batch.date_ended = timezone.now()
                         latest_batch.save()
+                        self.uptime_batch = latest_batch
                 else:
+                    latest_batch = batches.last()
                     if self.signature_found:
-                        last_batch = batches.last()
                         batch = UptimeBatch(forum_profile=self.forum_profile)
                         batch.save()
                         new_batch_created = True
                         self.uptime_batch = batch
                         self.initial = True
-                        if last_batch:
-                            self.new_posts += last_batch.get_total_posts_with_sig()
+                        if latest_batch:
+                            self.new_posts += latest_batch.get_total_posts_with_sig()
                     else:
-                        latest_batch = batches.last()
                         self.uptime_batch = latest_batch
                         self.new_posts = 0
                         self.initial = False
@@ -457,12 +464,13 @@ class SignatureCheck(models.Model):
                     new_posts = int(self.total_posts) - int(previous_check.total_posts)
                     if new_posts > 0:
                         SignatureCheck.objects.filter(id=self.id).update(new_posts=new_posts)
-        # Compare this to initial value and flag this as such, if needed
-        init_check = latest_batch.regular_checks.filter(initial=True).last()
-        if init_check:
-            sc = SignatureCheck.objects.get(id=self.id)
-            if sc.total_posts <= init_check.total_posts:
-                SignatureCheck.objects.filter(id=self.id).update(initial=True)
+        if latest_batch:
+            # Compare this to initial value and flag this as such, if needed
+            init_check = latest_batch.regular_checks.filter(initial=True).last()
+            if init_check:
+                sc = SignatureCheck.objects.get(id=self.id)
+                if sc.total_posts <= init_check.total_posts:
+                    SignatureCheck.objects.filter(id=self.id).update(initial=True)
 
 class PointsCalculation(models.Model):
     """ Results of calculations of points for the given signature check in an uptime batch. """

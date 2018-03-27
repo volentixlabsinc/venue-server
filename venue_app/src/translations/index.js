@@ -26,7 +26,7 @@ const messages = {
     'total_posts_uptime': 'Total posts uptime (in days)',
     'total_posts_with_sig': 'Total posts with signature',
     'batch_number': 'Batch number',
-    'previous_batch_credits': 'Credits from previous uptime batches',
+    'previous_batch_credits': 'Uptime credits from previous batches',
     'current_batch_credits': 'Credits for the current uptime batch',
     'user_id': 'User ID',
     'forum_site': 'Forum Site',

@@ -130,7 +130,7 @@ admin.site.register(GlobalStats, GlobalStatsAdmin)
 class SignatureCheckAdmin(admin.ModelAdmin):
     list_display = [
         'id', 'user', 'forum_profile', 'uptime_batch', 'total_posts',
-        'new_posts', 'signature_found', 'date_checked', 'initial'
+        'new_posts', 'signature_found', 'date_checked'
     ]
     list_filter = [FieldForumProfileFilter, 'forum_profile__user_profile']
 
