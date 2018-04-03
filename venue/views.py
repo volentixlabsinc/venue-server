@@ -551,7 +551,10 @@ def get_signature_code(request):
     if token.exists():
         vcode = data['verificationCode']
         forum_profile = ForumProfile.objects.get(verification_code=vcode)
-        sig_code = forum_profile.signature.code
+        if config.TEST_MODE:
+            sig_code = forum_profile.signature.test_signature
+        else:
+            sig_code = forum_profile.signature.code
         response['signature_code'] = inject_verification_code(sig_code, vcode)
         response['success'] = True
     return Response(response)

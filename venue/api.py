@@ -81,6 +81,8 @@ def inject_verification_code(sig_code, verification_code):
         return re.sub(pattern, repl, sig_code)
     elif 'link' in sig_code:
         return sig_code + '?vcode=' + verification_code
+    else:
+        return sig_code
 
 class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
