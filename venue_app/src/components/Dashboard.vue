@@ -49,7 +49,7 @@
                     <b-col sm="5">{{ $t('rank') }}:</b-col>
                     <b-col>{{ row.item.forumUserRank }}</b-col>
                   </b-row>
-                  <b-row>
+                  <b-row v-if="row.item.totalPosts > 0">
                     <b-col sm="5">{{ $t('total_posts') }}:</b-col>
                     <b-col>{{ row.item.totalPosts }}</b-col>
                   </b-row>

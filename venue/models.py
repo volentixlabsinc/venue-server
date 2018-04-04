@@ -98,7 +98,7 @@ class UserProfile(models.Model):
         value = 0
         checks = SignatureCheck.objects.filter(
             forum_profile__user_profile_id=self.id,
-            date_checked__date=date, new_posts__gt=0)
+            date_checked__date=date, new_posts__gt=0).exclude(initial=True)
         if checks.exists():
             value = sum([x.new_posts for x in checks])
         return value
