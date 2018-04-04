@@ -513,7 +513,9 @@ class SignatureCheck(models.Model):
                         SignatureCheck.objects.filter(
                             id=self.id).update(new_posts=new_posts)
         if latest_batch:
-            # Compare this to initial value and flag this as such, if needed
+            # Compare this to initial value and flag this as initial
+            # if total posts is equal or below the real initial
+            # check for this batch
             init_check = latest_batch.regular_checks.filter(
                 initial=True).last()
             if init_check:
@@ -521,7 +523,6 @@ class SignatureCheck(models.Model):
                 if sc.total_posts <= init_check.total_posts:
                     SignatureCheck.objects.filter(
                         id=self.id).update(initial=True)
-
 
 class PointsCalculation(models.Model):
     """ Results of calculations of points for the given signature check in an uptime batch. """
