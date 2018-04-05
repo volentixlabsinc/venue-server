@@ -128,7 +128,7 @@ class BitcoinTalk(object):
                         pass
                 if set(links) == set(expected_links):
                     verified = True
-            return (verified, vcode)
+        return (verified, vcode)
         
     def check_signature(self):
         sig = self.soup.select('div#bodyarea tr')[26]

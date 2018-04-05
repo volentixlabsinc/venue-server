@@ -7,6 +7,7 @@ from rest_framework.fields import CurrentUserDefault
 from django.db import IntegrityError
 from rest_framework import generics
 from django.utils import timezone
+from constance import config
 import re
 
 #------------------
@@ -119,7 +120,11 @@ class SignatureViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = queryset.filter(forum_site_id=forum_site_id, user_ranks__name=forum_user_rank)
                 # Modify the links in the code so it contains the verification code
                 for sig in queryset:
-                    sig.code = inject_verification_code(sig.code, forum_profile.verification_code)
+                    if config.TEST_MODE:
+                        sig_code = sig.test_signature
+                    else:
+                        sig_code = sig.code
+                    sig.code = inject_verification_code(sig_code, forum_profile.verification_code)
             return queryset
     
 #-------------------
