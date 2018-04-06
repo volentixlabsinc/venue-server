@@ -138,8 +138,9 @@ class UserProfile(models.Model):
         value = 0
         for site in self.forum_profiles.filter(verified=True):
             if site.uptime_batches.count():
-                for batch in site.uptime_batches.all():
-                    value += batch.get_post_points()
+                latest_batch = site.uptime_batches.last()
+                # for batch in site.uptime_batches.all():
+                value += latest_batch.get_post_points()
         return value
 
     def get_post_days_points(self):
@@ -154,8 +155,9 @@ class UserProfile(models.Model):
         value = 0
         for site in self.forum_profiles.filter(verified=True):
             if site.uptime_batches.count():
-                for batch in site.uptime_batches.all():
-                    value += batch.get_influence_points()
+                latest_batch = site.uptime_batches.last()
+                # for batch in site.uptime_batches.all():
+                value += latest_batch.get_influence_points()
         return value
 
     def get_total_points(self, date=None):
@@ -370,16 +372,18 @@ class UptimeBatch(models.Model):
         return round(pts, 4)
 
     def get_total_points(self, date=None):
+        latest_fb_batch = self.forum_profile.uptime_batches.last()
         points = 0
-        if self.points_calculations.count():
-            if date:
-                date_check = self.points_calculations.filter(
-                    date_calculated__date=date)
-                if date_check.exists():
-                    return date_check.last().total_points
-            else:
-                latest_calc = self.points_calculations.last()
-                return latest_calc.total_points
+        if self.id == latest_fb_batch.id:
+            if self.points_calculations.count():
+                if date:
+                    date_check = self.points_calculations.filter(
+                        date_calculated__date=date)
+                    if date_check.exists():
+                        return date_check.last().total_points
+                else:
+                    latest_calc = self.points_calculations.last()
+                    return latest_calc.total_points
         return points
 
 
