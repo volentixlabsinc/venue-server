@@ -257,16 +257,25 @@ def get_stats(request):
                 for batch in fp.uptime_batches.all():
                     latest_check = batch.regular_checks.last()
                     if latest_check:
-                        latest_calc = latest_check.points_calculations.last()
-                        if latest_calc:
-                            fp_data['postPoints'].append(latest_calc.post_points)
-                            fp_data['totalPostsWithSig'].append(batch.get_total_posts_with_sig())
-                            fp_data['postDaysPoints'].append(latest_calc.post_days_points)
-                            fp_data['totalPostDays'].append(batch.get_total_days())
-                            fp_data['influencePoints'].append(latest_calc.influence_points)
-                            fp_data['totalPoints'].append(latest_calc.total_points)
-                            fp_data['VTX_Tokens'].append(latest_calc.get_total_tokens())
-                sum_up_data = {k:  '{:,}'.format(int(round(sum(v), 0))) for k, v in fp_data.items()}
+                        # latest_calc = latest_check.points_calculations.last()
+                        # if latest_calc:
+                        post_points = batch.get_post_points()
+                        fp_data['postPoints'].append(float(post_points))
+                        psts_with_sig = batch.get_total_posts_with_sig()
+                        fp_data['totalPostsWithSig'].append(psts_with_sig)
+                        fp_data['totalPostDays'].append(batch.get_total_days())
+                        uptime_points = batch.get_post_days_points()
+                        fp_data['postDaysPoints'].append(float(uptime_points))
+                        influence_points = batch.get_influence_points()
+                        influence_points = float(influence_points)
+                        fp_data['influencePoints'].append(influence_points)
+                        total_points = batch.get_total_points()
+                        fp_data['totalPoints'].append(float(total_points))
+                        total_tokens = (total_points / 10000)
+                        total_tokens *= config.VTX_AVAILABLE
+                        fp_data['VTX_Tokens'].append(float(total_tokens))
+                sum_up_data = {k:  '{:,}'.format(int(round(sum(v), 0)))
+                               for k, v in fp_data.items()}
                 sum_up_data['User_ID'] = fp.forum_user_id
                 sum_up_data['forumSite'] = fp.forum.name
                 sum_up_data['forumUserId'] = fp.forum_user_id
