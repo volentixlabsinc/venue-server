@@ -114,7 +114,7 @@ class UserProfile(models.Model):
             value = sum(total_per_forum)
         return value
 
-    def get_total_posts_with_sig(self, latest_only=False):
+    def get_total_posts_with_sig(self, latest_only=True):
         total_per_forum = []
         for site in self.forum_profiles.filter(verified=True):
             if site.uptime_batches.count():
@@ -125,7 +125,7 @@ class UserProfile(models.Model):
 
     def get_total_days(self):
         value = 0
-        if self.get_total_posts_with_sig(latest_only=False):
+        if self.get_total_posts_with_sig(latest_only=True):
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
                 if site.uptime_batches.count():
@@ -166,8 +166,8 @@ class UserProfile(models.Model):
             total_per_forum = []
             for site in self.forum_profiles.filter(verified=True):
                 for batch in site.uptime_batches.all():
-                    uptime_points = batch.get_total_points(date=date)
-                    total_per_forum.append(uptime_points)
+                    total_points = batch.get_total_points(date=date)
+                    total_per_forum.append(total_points)
             value = sum(total_per_forum)
         return value
 
@@ -226,7 +226,7 @@ class ForumProfile(models.Model):
             value = latest_batch.get_total_posts(actual=actual)
         return value
 
-    def get_total_posts_with_sig(self, latest_only=False):
+    def get_total_posts_with_sig(self, latest_only=True):
         value = 0
         if self.uptime_batches.count():
             latest_batch = self.uptime_batches.last()
@@ -372,6 +372,7 @@ class UptimeBatch(models.Model):
         return round(pts, 4)
 
     def get_total_points(self, date=None):
+        """
         latest_fb_batch = self.forum_profile.uptime_batches.last()
         points = 0
         if self.id == latest_fb_batch.id:
@@ -384,7 +385,12 @@ class UptimeBatch(models.Model):
                 else:
                     latest_calc = self.points_calculations.last()
                     return latest_calc.total_points
-        return points
+        """
+        post_points = self.get_post_points()
+        uptime_points = self.get_post_days_points()
+        influence_points = self.get_influence_points()
+        total_points = post_points + uptime_points + influence_points
+        return total_points
 
 
 class SignatureCheck(models.Model):
