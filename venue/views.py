@@ -328,28 +328,28 @@ def get_stats(request):
         userlevel_stats['fps_batch_initials'] = fps_batch_initials
         # Post points:
         post_points = round(user_profile.get_post_points(), 0)
-        userlevel_stats['post_points'] = post_points
+        userlevel_stats['post_points'] = int(post_points)
         userlevel_stats['post_points_pct'] = points_to_percentage(
             post_points,
             category='posts'
         )
         # Post uptime points:
         post_days_points = round(user_profile.get_post_days_points(), 0)
-        userlevel_stats['post_days_points'] = post_days_points
+        userlevel_stats['post_days_points'] = int(post_days_points)
         userlevel_stats['post_days_points_pct'] = points_to_percentage(
             post_days_points,
             category='uptime'
         )
         # Influence points:
         influence_points = round(user_profile.get_influence_points(), 0)
-        userlevel_stats['influence_points'] = influence_points
+        userlevel_stats['influence_points'] = int(influence_points)
         userlevel_stats['influence_points_pct'] = points_to_percentage(
             influence_points,
             category='influence'
         )
         # Total points:
         total_points = round(user_profile.get_total_points(), 0)
-        userlevel_stats['total_points'] = total_points
+        userlevel_stats['total_points'] = int(total_points)
         userlevel_stats['total_points_pct'] = points_to_percentage(
             total_points,
             category='total'
@@ -395,11 +395,11 @@ def get_leaderboard_data(request):
             user_data['total_points'] = '{:,}'.format(int(points))
             tokens = round(user_profile.get_total_tokens(), 0)
             user_data['total_tokens'] = '{:,}'.format(int(tokens))
-            points = user_profile.get_post_points()
+            points = round(user_profile.get_post_points(), 0)
             user_data['post_points'] = '{:,}'.format(int(points))
-            points = user_profile.get_post_days_points()
+            points = round(user_profile.get_post_days_points(), 0)
             user_data['uptime_points'] = '{:,}'.format(int(points))
-            points = user_profile.get_influence_points()
+            points = round(user_profile.get_influence_points(), 0)
             user_data['influence_points'] = '{:,}'.format(int(points))
             leaderboard_data.append(user_data)
     # Order according to amount of tokens
