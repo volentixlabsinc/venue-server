@@ -86,6 +86,38 @@
                   :current-page="currentPage" 
                   :items="leaderboardData" 
                   :fields="leaderboardFields">
+                  <template slot="show_details" scope="row">
+                    <b-form-checkbox v-model="row.item._showDetails"></b-form-checkbox>
+                  </template>
+                  <template slot="row-details" scope="row">
+                    <b-card style="padding-left: 20px;">
+                      <b-row>
+                        <b-col sm="4">
+                          <b-row class="mb-2">
+                            <b-col>
+                              <b>{{ $t('points_breakdown') }}</b>
+                            </b-col>
+                          </b-row>
+                          <b-row>
+                            <b-col sm="7">{{ $t('post_points') }}:</b-col>
+                            <b-col align="right">{{ row.item.post_points }} points</b-col>
+                          </b-row>
+                          <b-row>
+                            <b-col sm="7">{{ $t('post_uptime_points') }}:</b-col>
+                            <b-col align="right">{{ row.item.uptime_points }} points</b-col>
+                          </b-row>
+                          <b-row style="border-bottom: 1px solid black;">
+                            <b-col sm="7">{{ $t('influence_points') }}:</b-col>
+                            <b-col align="right">{{ row.item.influence_points }} points</b-col>
+                          </b-row>
+                          <b-row>
+                            <b-col sm="7"><strong>{{ $t('total_points') }}</strong>:</b-col>
+                            <b-col align="right">{{ row.item.total_points }} points</b-col>
+                          </b-row>
+                        </b-col>
+                      </b-row>
+                    </b-card>
+                  </template>
                 </b-table>
                 <b-pagination 
                   v-if="leaderboardData.length > perPage"  
@@ -115,7 +147,8 @@ export default {
         {key: 'username', sortable: true, label: this.$t('username')},
         {key: 'total_posts', sortable: true, label: this.$t('total_posts')},
         {key: 'total_points', sortable: true, label: this.$t('total_points')},
-        {key: 'total_tokens', sortable: true, label: this.$t('total_tokens')}
+        {key: 'total_tokens', sortable: true, label: this.$t('total_tokens')},
+        {key: 'show_details', label: this.$t('show_details')}
       ],
       leaderboardData: [],
       sitewideStats: {},

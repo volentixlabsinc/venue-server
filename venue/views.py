@@ -386,6 +386,12 @@ def get_leaderboard_data(request):
             user_data['total_points'] = '{:,}'.format(int(points))
             tokens = round(user_profile.get_total_tokens(), 0)
             user_data['total_tokens'] = '{:,}'.format(int(tokens))
+            points = user_profile.get_post_points()
+            user_data['post_points'] = '{:,}'.format(int(points))
+            points = user_profile.get_post_days_points()
+            user_data['uptime_points'] = '{:,}'.format(int(points))
+            points = user_profile.get_influence_points()
+            user_data['influence_points'] = '{:,}'.format(int(points))
             leaderboard_data.append(user_data)
     # Order according to amount of tokens
     if leaderboard_data:
