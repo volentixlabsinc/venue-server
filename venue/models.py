@@ -304,7 +304,7 @@ class UptimeBatch(models.Model):
                         value = latest_check.total_posts
         return value
 
-    def get_total_posts_with_sig(self, latest_only=False):
+    def get_total_posts_with_sig(self, latest_only=True):
         value = 0
         latest_batch = self.forum_profile.uptime_batches.last()
         if latest_batch:
