@@ -132,6 +132,7 @@
         <b-row v-for="signature in signatureOptions" :key="signature.id">
           <b-col>
             <h5>{{ signature.name }}</h5>
+            <small>Usage count: {{ signature.usage_count }}</small>
             <div class="sig-select-div">
               <input type="radio" 
                 class="sig-select" 
@@ -187,6 +188,7 @@ export default {
       }
       axios.get('/api/signatures/', {params: params}).then(response => {
         this.signatureOptions = response.data
+        console.log(this.signatureOptions)
       })
     },
     signatureCopySuccess () {

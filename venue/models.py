@@ -323,7 +323,7 @@ class UptimeBatch(models.Model):
         if self.get_total_posts_with_sig(latest_only=False):
             if self.regular_checks.count() > 1:
                 earliest_check = self.regular_checks.filter(
-                    signature_found=True).first()
+                    signature_found=True, new_posts__gt=0).first()
                 latest_check = self.regular_checks.filter(
                     signature_found=True).last()
                 earliest_check_date = earliest_check.date_checked
