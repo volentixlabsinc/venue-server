@@ -2,9 +2,13 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from hashids import Hashids
 import requests
+import time
+from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
 
 class BitcoinForum(object):
-    
+
     def __init__(self, username, password, test=False, test_signature=None):
         self.login_url = 'https://forum.bitcoin.com/ucp.php?mode=login'
         self.headers = {
@@ -21,6 +25,9 @@ class BitcoinForum(object):
         self.login(username, password)
         self.user_detals = {}
         self.soup = None
+        self.forum_profile_id = None
+        self.forum_user_id = None
+        self.expected_links = None
 
     def get_user_details(self):
         details = {}
@@ -31,7 +38,7 @@ class BitcoinForum(object):
             if dt_values[i]:
                 details[key] = dt_values[i].text.strip()
         self.user_details = details
-        
+
     def list_forum_positions(self):
         positions = [
             'Nickel Bitcoiner',
@@ -45,21 +52,21 @@ class BitcoinForum(object):
             'Founder'
         ]
         return positions
-        
+
     def set_params(self, forum_profile_id, forum_user_id, expected_links):
         self.forum_profile_id = forum_profile_id
         self.forum_user_id = forum_user_id
         self.expected_links = expected_links
-        
+
     def send_get(self, url):
         headers = self.headers
         if self.cookies:
             return requests.get(url, headers=headers, cookies=self.cookies)
         return requests.get(url, headers=headers)
-        
+
     def send_post(self, url, payload):
         return requests.post(url, payload, headers=self.headers)
-    
+
     def login(self, username, password):
         resp = self.send_get(self.login_url)
         self.status_code = resp.status_code
@@ -73,20 +80,33 @@ class BitcoinForum(object):
         resp = self.send_post(self.login_url, payload)
         self.cookies = resp.history[0].cookies
         return resp
-        
+
     def get_profile(self, user_id):
         if str(user_id).startswith('http'):
             url = user_id
         else:
             url = 'https://forum.bitcoin.com/hungnx-u%s/' % user_id
-        self.response = self.send_get(url)
-        self.soup = BeautifulSoup(self.response.content, 'html.parser')
+        response = self.send_get(url)
+        self.soup = BeautifulSoup(response.content, 'html.parser')
         self.get_user_details()
-        
+        if len(self.soup.select('div.cf-im-under-attack')) > 0:
+            driver = webdriver.Remote(
+                'http://127.0.0.1:4444/wd/hub',
+                DesiredCapabilities.CHROME
+            )
+            driver.get(url)
+            # Sleep to wait for the page to load
+            time.sleep(6)
+            self.soup = BeautifulSoup(driver.page_source, 'html.parser')
+            if self.get_username():
+                self.status_code = 200
+            driver.close()
+            driver.quit()
+
     def get_total_posts(self):
         elem = self.soup.select('div.bg2 div.column2 dl.details dd')
         return elem[2].text.split()[0]
-        
+
     def get_user_position(self):
         position = 'No rank'
         elem = self.soup.select('div.bg1 dl.left-box dd')
@@ -102,7 +122,7 @@ class BitcoinForum(object):
 
     def get_username(self):
         return self.user_details['Username']
-        
+
     def verify_code(self, code, forum_profile_id, forum_user_id):
         verified = False
         if self.test:
@@ -114,7 +134,7 @@ class BitcoinForum(object):
             if numbers == (forum_profile_id, int(forum_user_id)):
                 verified = True
         return verified
-        
+
     def verify_links(self,
                      scraped_links,
                      expected_links,
@@ -164,11 +184,13 @@ class BitcoinForum(object):
             if links_verified and code_verified:
                 sig_found = True
         return sig_found
-        
-default_credentials = {
+
+
+DEFAULT_CREDENTIALS = {
     'username': 'joemarct',
     'password': 'a8L2f4a6%ojZ'
 }
+
 
 def verify_and_scrape(forum_profile_id,
                       forum_user_id,
@@ -177,7 +199,7 @@ def verify_and_scrape(forum_profile_id,
                       test_signature=None,
                       credentials=None):
     if not credentials:
-        credentials = default_credentials
+        credentials = DEFAULT_CREDENTIALS
     scraper = BitcoinForum(
         credentials['username'],
         credentials['password'],
@@ -187,23 +209,22 @@ def verify_and_scrape(forum_profile_id,
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
     scraper.get_profile(forum_user_id)
     username = scraper.get_username()
-    # if test_mode:
-    #     data = (scraper.status_code, True, scraper.get_total_posts(), username)
-    # else:
     verified = scraper.check_signature()
     posts = 0
     if verified:
         posts = scraper.get_total_posts()
     data = (scraper.status_code, verified, posts, username)
     return data
-    
+
+
 def get_user_position(forum_user_id, credentials=None):
     if not credentials:
-        credentials = default_credentials
+        credentials = DEFAULT_CREDENTIALS
     scraper = BitcoinForum(credentials['username'], credentials['password'])
     scraper.get_profile(forum_user_id)
     position = scraper.get_user_position()
     return (scraper.response.status_code, position)
-    
+
+
 def extract_user_id(profile_url):
     return profile_url.strip('/').split('/')[-1].split('-u')[-1]
