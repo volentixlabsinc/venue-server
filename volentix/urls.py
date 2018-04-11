@@ -25,23 +25,30 @@ from venue.views import (
 from venue.api import (
     ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
 )
+from rest_framework.documentation import include_docs_urls
 from django.views.static import serve
 from django.conf.urls import url, include
 from django.conf import settings
 from django.contrib import admin
 from rest_framework import routers
 
+
 # API Routes
 router = routers.SimpleRouter()
 router.register(r'user-profiles', UserProfileViewSet)
 router.register(r'forum-sites', ForumSiteViewSet)
-router.register(r'signatures', SignatureViewSet)
 router.register(r'forum-profiles', ForumProfileViewSet)
+router.register(r'signatures', SignatureViewSet)
 
 urlpatterns = [
     url(r'^$', frontend_app),
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(router.urls)),
+    url(r'^api-docs/', include_docs_urls(
+        title='Volentix Venue API',
+        public=False,
+        permission_classes=[]
+    )),
     url(r'^get-user/', get_user),
     url(r'^confirm-email', confirm_email),
     url(r'^check-profile/', check_profile),
@@ -69,9 +76,9 @@ urlpatterns = [
     url(r'^get-wallet-details/', get_wallet_details)
 ]
 
-urlpatterns += [
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-]
+#urlpatterns += [
+#    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+#]
 
 if settings.DEBUG:
     urlpatterns += [ 

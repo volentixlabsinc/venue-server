@@ -16,14 +16,18 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, schema
 from venue.api import inject_verification_code
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
                     send_email_change_confirmation, send_reset_password)
 from .models import (UserProfile, ForumSite, ForumProfile, Notification,
                      Language, Signature, ForumUserRank)
+from rest_framework.schemas import AutoSchema
 from .utils import RedisTemp
+import coreschema
+import coreapi
+
 
 # Instantiate a Hashids instance to be used later
 hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -47,7 +51,47 @@ def frontend_app(request):
     return render(request, 'index.html')
 
 
+# ------------------
+# Schema definitions
+# ------------------
+
+
+authenticate_schema = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            "username",
+            required=True,
+            location="form",
+            schema=coreschema.String(description="Username")
+        ),
+        coreapi.Field(
+            "password",
+            required=True,
+            location="form",
+            schema=coreschema.String(description="Password")
+        )
+    ]
+)
+
+token_required_schema = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            "api_token",
+            required=True,
+            location="form",
+            schema=coreschema.String(description="API Token")
+        )
+    ]
+)
+
+
+# -------------
+# API endpoints
+# -------------
+
+
 @api_view(['POST'])
+@schema(authenticate_schema)
 def authenticate(request):
     data = request.data
     response = {'success': False}
@@ -79,6 +123,7 @@ def authenticate(request):
                 proceed = True
             if proceed:
                 token, created = Token.objects.get_or_create(user=user)
+                del created
                 user.last_login = timezone.now()
                 user.save()
                 user_profile = user.profiles.first()
@@ -101,6 +146,7 @@ def authenticate(request):
 
 
 @api_view(['POST'])
+@schema(token_required_schema)
 def get_user(request):
     data = {'found': False}
     try:
