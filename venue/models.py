@@ -472,8 +472,13 @@ class SignatureCheck(models.Model):
                                 self.uptime_batch = latest_batch
                                 self.initial = True
                         else:
-                            # Report the posts with sig from latest batch as new posts
-                            self.new_posts = latest_batch.get_total_posts_with_sig()
+                            # Detect if post deletion happened
+                            total_diff = self.total_posts 
+                            total_diff -= latest_batch.get_total_posts()
+                            # Compute the new posts
+                            new_posts = latest_batch.get_total_posts_with_sig() 
+                            new_posts += total_diff
+                            self.new_posts = new_posts
                             # Create a new batch
                             batch = UptimeBatch(
                                 forum_profile=self.forum_profile)
