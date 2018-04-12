@@ -14,9 +14,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from venue.utils import encrypt_data, decrypt_data
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.http import Http404
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, schema
+from rest_framework.views import APIView
 from venue.api import inject_verification_code
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
@@ -59,16 +61,16 @@ def frontend_app(request):
 authenticate_schema = AutoSchema(
     manual_fields=[
         coreapi.Field(
-            "username",
+            'username',
             required=True,
-            location="form",
-            schema=coreschema.String(description="Username")
+            location='form',
+            schema=coreschema.String(description='Username')
         ),
         coreapi.Field(
-            "password",
+            'password',
             required=True,
-            location="form",
-            schema=coreschema.String(description="Password")
+            location='form',
+            schema=coreschema.String(description='Password')
         )
     ]
 )
@@ -76,10 +78,10 @@ authenticate_schema = AutoSchema(
 token_required_schema = AutoSchema(
     manual_fields=[
         coreapi.Field(
-            "api_token",
+            'apiToken',
             required=True,
-            location="form",
-            schema=coreschema.String(description="API Token")
+            location='form',
+            schema=coreschema.String(description='API Token')
         )
     ]
 )
@@ -145,13 +147,13 @@ def authenticate(request):
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 @schema(token_required_schema)
 def get_user(request):
     data = {'found': False}
     try:
         data = request.data
-        token = Token.objects.filter(key=data['token'])
+        token = Token.objects.filter(key=data['apiToken'])
         if token.exists():
             token = token.first()
             user_profile = token.user.profiles.first()
@@ -263,7 +265,7 @@ def save_signature(request):
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def get_site_configs(request):
     configs = {
         'disable_sign_up': config.DISABLE_SIGN_UP
@@ -271,8 +273,12 @@ def get_site_configs(request):
     return Response(configs)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
+@schema(token_required_schema)
 def get_stats(request):
+    """
+    Retrieves the stats of the user
+    """
     data = request.data
     # Authenticate using the token
     token = Token.objects.get(key=data['apiToken'])
@@ -426,7 +432,7 @@ def get_stats(request):
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def get_leaderboard_data(request):
     response = {}
     user_profiles = UserProfile.objects.all()
@@ -604,7 +610,7 @@ def reset_password(request):
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def get_signature_code(request):
     response = {'success': False}
     data = request.data
@@ -641,7 +647,7 @@ def check_username_exists(request):
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def get_wallet_details(request):
     return Response({'success': True})
 
@@ -709,7 +715,7 @@ def disable_2fa(request):
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def get_notifications(request):
     response = {'success': False}
     data = request.data
@@ -738,3 +744,25 @@ def dismiss_notification(request):
         notif.dismissed_by.add(token.user)
         response['success'] = True
     return Response(response)
+
+
+class UserStats(APIView):
+    """
+    Retrieve user stats
+    """
+
+    def get(self, request, pk):
+        """ Get request """
+        return Response({'success': True})
+
+    def post(self, request, pk):
+        """ Post request """
+        return Response({'success': True})
+
+    def put(self, request, pk):
+        """ Put request """
+        return Response({'success': True})
+
+    def patch(self, request, pk):
+        """ Patch request """
+        return Response({'success': True})

@@ -22,6 +22,7 @@ from venue.views import (
     get_wallet_details, get_languages, generate_2fa_uri,
     verify_2fa_code, disable_2fa, get_notifications, dismiss_notification
 )
+from venue.views import UserStats
 from venue.api import (
     ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
 )
@@ -43,42 +44,46 @@ router.register(r'signatures', SignatureViewSet)
 urlpatterns = [
     url(r'^$', frontend_app),
     url(r'^admin/', admin.site.urls),
-    url(r'^api/', include(router.urls)),
-    url(r'^api-docs/', include_docs_urls(
+    # url(r'^models/', include(router.urls)),
+
+    url(r'^docs/', include_docs_urls(
         title='Volentix Venue API',
-        public=False,
         permission_classes=[]
     )),
-    url(r'^get-user/', get_user),
-    url(r'^confirm-email', confirm_email),
-    url(r'^check-profile/', check_profile),
-    url(r'^save-signature/', save_signature),
-    url(r'^get-signature-code/', get_signature_code),
-    url(r'^create-user/', create_user),
-    url(r'^get-site-configs/', get_site_configs),
-    url(r'^get-stats/', get_stats),
-    url(r'^get-languages/', get_languages),
-    url(r'^get-notifications/', get_notifications),
-    url(r'^dismiss-notification/', dismiss_notification),
-    url(r'^get-leaderboard-data/', get_leaderboard_data),
-    url(r'^change-email/', change_email),
-    url(r'^change-language/', change_language),
-    url(r'^change-username/', change_username),
-    url(r'^delete-account/', delete_account),
-    url(r'^reset-password/', reset_password),
-    url(r'^change-password/', change_password),
+
     url(r'^authenticate/', authenticate),
-    url(r'^enable-two-factor-auth', generate_2fa_uri),
-    url(r'^verify-otp-code/', verify_2fa_code),
-    url(r'disable-two-factor-auth/', disable_2fa),
-    url(r'^check-email-exists/', check_email_exists),
-    url(r'^check-username-exists/', check_username_exists),
-    url(r'^get-wallet-details/', get_wallet_details)
+
+    url(r'^create/signature/', save_signature),
+    url(r'^create/user/', create_user),
+    
+    url(r'^check/profile/', check_profile),
+    url(r'^check/email-exists/', check_email_exists),
+    url(r'^check/username-exists/', check_username_exists),
+
+    url(r'^retrieve/user/', get_user),
+    url(r'^retrieve/signature-code/', get_signature_code),
+    url(r'^retrieve/site-configs/', get_site_configs),
+    url(r'^retrieve/stats/', get_stats),
+    url(r'^retrieve/languages/', get_languages),
+    url(r'^retrieve/leaderboard-data/', get_leaderboard_data),
+    url(r'^retrieve/notifications/', get_notifications),
+
+    url(r'^manage/confirm-email', confirm_email),
+    url(r'^manage/change-email/', change_email),
+    url(r'^manage/change-language/', change_language),
+    url(r'^manage/reset-password/', reset_password),
+    url(r'^manage/change-password/', change_password),
+    url(r'^manage/enable-two-factor-auth', generate_2fa_uri),
+    url(r'^manage/change-username/', change_username),
+    url(r'^manage/delete-account/', delete_account),
+    url(r'^manage/verify-otp-code/', verify_2fa_code),
+    url(r'^manage/disable-two-factor-auth/', disable_2fa),
+    url(r'^manage/dismiss-notification/', dismiss_notification)
 ]
 
-#urlpatterns += [
+# urlpatterns += [
 #    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-#]
+# ]
 
 if settings.DEBUG:
     urlpatterns += [ 
