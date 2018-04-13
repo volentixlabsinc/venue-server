@@ -3,6 +3,7 @@ Volentix VENUE
 View functions
 """
 
+import re
 import pyotp
 from operator import itemgetter
 from datetime import timedelta
@@ -19,7 +20,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, schema
 from rest_framework.views import APIView
+from rest_framework import serializers
+from rest_framework.permissions import IsAuthenticated
 from venue.api import inject_verification_code
+from rest_framework.decorators import permission_classes
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
                     send_email_change_confirmation, send_reset_password)
@@ -53,12 +57,16 @@ def frontend_app(request):
     return render(request, 'index.html')
 
 
-# ------------------
-# Schema definitions
-# ------------------
+# ==============
+# API Endpoints:
+# ==============
 
 
-authenticate_schema = AutoSchema(
+# ---------------------
+# Authenticate endpoint
+# ---------------------
+
+AUTHENTICATE_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'username',
@@ -75,25 +83,9 @@ authenticate_schema = AutoSchema(
     ]
 )
 
-token_required_schema = AutoSchema(
-    manual_fields=[
-        coreapi.Field(
-            'apiToken',
-            required=True,
-            location='form',
-            schema=coreschema.String(description='API Token')
-        )
-    ]
-)
-
-
-# -------------
-# API endpoints
-# -------------
-
 
 @api_view(['POST'])
-@schema(authenticate_schema)
+@schema(AUTHENTICATE_SCHEMA)
 def authenticate(request):
     data = request.data
     response = {'success': False}
@@ -147,31 +139,65 @@ def authenticate(request):
     return Response(response)
 
 
+# -------------------------
+# Get user details endpoint
+# -------------------------
+
+
 @api_view(['GET'])
-@schema(token_required_schema)
+@permission_classes((IsAuthenticated,))
 def get_user(request):
     data = {'found': False}
-    try:
-        data = request.data
-        token = Token.objects.filter(key=data['apiToken'])
-        if token.exists():
-            token = token.first()
-            user_profile = token.user.profiles.first()
-            data = {
-                'found': True,
-                'token': token.key, 
-                'username': token.user.username, 
-                'email': token.user.email,
-                'language': user_profile.language.code,
-                'email_confirmed': user_profile.email_confirmed,
-                'enabled_2fa': user_profile.enabled_2fa
-            }
-    except TypeError:
-        pass
+    user_profile = request.user.profiles.first()
+    if user_profile:
+        data = {
+            'found': True,
+            'username': request.user.username,
+            'email': request.user.email,
+            'language': user_profile.language.code,
+            'email_confirmed': user_profile.email_confirmed,
+            'enabled_2fa': user_profile.enabled_2fa
+        }
     return Response(data)
 
 
+# --------------------
+# Create user endpoint
+# --------------------
+
+
+CREATE_USER_SCHEMA = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'email',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Email')
+        ),
+        coreapi.Field(
+            'username',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Username')
+        ),
+        coreapi.Field(
+            'password',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Password')
+        ),
+        coreapi.Field(
+            'language',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='Language Code')
+        )
+    ]
+)
+
+
 @api_view(['POST'])
+@schema(CREATE_USER_SCHEMA)
 def create_user(request):
     data = request.data
     data['email'] = data['email'].lower()
@@ -216,13 +242,14 @@ def confirm_email(request):
     return redirect('/#/?email_confirmed=1')
 
 
-@api_view(['POST'])
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
 def check_profile(request):
-    data = request.data
+    data = request.query_params
+    user = request.user
     forum = ForumSite.objects.get(id=data['forum'])
     response = {'found': False, 'forum_id': data['forum']}
-    token = Token.objects.get(key=data['apiToken'])
-    info = get_user_position(forum.id, data['profile_url'], token.user.id)
+    info = get_user_position(forum.id, data['profile_url'], user.id)
     if info['status_code'] == 200 and info['position']:
         response['position'] = info['position']
         forum_rank = ForumUserRank.objects.get(
@@ -244,6 +271,23 @@ def check_profile(request):
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'forum_profile_id',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Forum profile ID')
+        ),
+        coreapi.Field(
+            'signature_id',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Signature ID')
+        )
+    ]
+))
 def save_signature(request):
     data = request.data
     forum_profile = ForumProfile.objects.get(id=data['forum_profile_id'])
@@ -251,7 +295,11 @@ def save_signature(request):
     forum_profile.signature = signature
     forum_profile.save()
     response = {'success': True}
-    verified = verify_profile_signature(forum_profile.forum.id, forum_profile.id, signature.id)
+    verified = verify_profile_signature(
+        forum_profile.forum.id,
+        forum_profile.id,
+        signature.id
+    )
     if verified:
         forum_profile.verified = True
         forum_profile.date_verified = timezone.now()
@@ -274,14 +322,11 @@ def get_site_configs(request):
 
 
 @api_view(['GET'])
-@schema(token_required_schema)
+@permission_classes((IsAuthenticated,))
 def get_stats(request):
     """
     Retrieves the stats of the user
     """
-    data = request.data
-    # Authenticate using the token
-    token = Token.objects.get(key=data['apiToken'])
     response = {'success': False}
     # Initialize empty stats container dictionary
     stats = {'fresh': False}
@@ -290,7 +335,7 @@ def get_stats(request):
     # -----------------------------------
     profile_stats = []
     fps = ForumProfile.objects.filter(
-        user_profile__user=token.user,
+        user_profile__user=request.user,
         verified=True
     )
     if fps.count():
@@ -304,7 +349,9 @@ def get_stats(request):
             fp_data = {k: [] for k in fields}
             latest_batch = fp.uptime_batches.last()
             if latest_batch:
-                fp_data['totalPosts'].append(latest_batch.get_total_posts(actual=True))
+                fp_data['totalPosts'].append(
+                    latest_batch.get_total_posts(actual=True)
+                )
                 # Sum up the credits and points from all batches for this forum profiles
                 for batch in fp.uptime_batches.all():
                     latest_check = batch.regular_checks.last()
@@ -344,7 +391,9 @@ def get_stats(request):
                     batch_no = item.get_batch_number()
                     data = {
                         'batch': batch_no,
-                        'totalPostsWithSig': item.get_total_posts_with_sig(latest_only=False),
+                        'totalPostsWithSig': item.get_total_posts_with_sig(
+                            latest_only=False
+                        ),
                         'totalPostDays': item.get_total_days(),
                         'reasonClosed': item.reason_closed,
                         'deletedPosts': item.num_deleted_posts
@@ -368,7 +417,7 @@ def get_stats(request):
         now = timezone.now()
         days = [now - timedelta(days=x) for x in range(7)]
         days = [str(x.date()) for x in days]
-        user_profile = UserProfile.objects.get(user=token.user)
+        user_profile = UserProfile.objects.get(user=request.user)
         userlevel_stats['daily_stats'] = []
         # Iterate over the reversed list
         for day in days[::-1]:
@@ -467,18 +516,16 @@ def get_leaderboard_data(request):
             'total_users': len(users_with_fp),
             'total_posts': int(sum([x.get_total_posts_with_sig() for x in users]))
         }
-        try:
-            if request.method == 'POST':
-                data = request.data
-                token = Token.objects.get(key=data['apiToken'])
-                user_profile = UserProfile.objects.get(user=token.user)
-                total_tokens = user_profile.get_total_tokens()
-                response['userstats'] = {
-                    'overall_rank': user_profile.get_ranking(),
-                    'total_tokens': int(round(total_tokens, 0))
-                }
-        except (KeyError, Token.DoesNotExist):
+        if request.user.is_anonymous():
             response['userstats'] = {}
+        else:
+            user_profile = UserProfile.objects.get(user=request.user)
+            total_tokens = user_profile.get_total_tokens()
+            response['userstats'] = {
+                'overall_rank': user_profile.get_ranking(),
+                'total_tokens': int(round(total_tokens, 0))
+            }
+
     # Generate forum stats
     forum_stats = {
         'posts': [],
@@ -507,12 +554,16 @@ def get_leaderboard_data(request):
 
 
 @api_view(['GET', 'POST'])
+@permission_classes((IsAuthenticated,))
 def delete_account(request):
     if request.method == 'POST':
-        data = request.data
-        token = Token.objects.get(key=data['apiToken'])
-        code = hashids.encode(int(token.user.id))
-        send_deletion_confirmation.delay(token.user.email, token.user.username, code)
+        user = request.user
+        code = hashids.encode(int(user.id))
+        send_deletion_confirmation.delay(
+            user.email,
+            user.username,
+            code
+        )
     elif request.method == 'GET':
         code = request.query_params.get('code')
         if code:
@@ -524,19 +575,34 @@ def delete_account(request):
 
 
 @api_view(['GET', 'POST'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'email',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='New email')
+        )
+    ]
+))
 def change_email(request):
     rtemp = RedisTemp('new_email')
     if request.method == 'POST':
         data = request.data
-        token = Token.objects.get(key=data['apiToken'])
+        user = request.user
         response = {'success': False}
         email_check = User.objects.filter(email=data['email'])
         if email_check.exists():
             response['message'] = 'Email already exists'
         else:
-            code = hashids.encode(int(token.user.id))
+            code = hashids.encode(int(user.id))
             rtemp.store(code, data['email'])
-            send_email_change_confirmation.delay(data['email'], token.user.username, code)
+            send_email_change_confirmation.delay(
+                data['email'],
+                user.username,
+                code
+            )
             response['success'] = True
         return Response(response)
     elif request.method == 'GET':
@@ -550,49 +616,101 @@ def change_email(request):
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'username',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Username')
+        )
+    ]
+))
 def change_username(request):
     data = request.data
-    token = Token.objects.get(key=data['apiToken'])
+    user = request.user
     response = {'success': False}
     username_check = User.objects.filter(username=data['username'])
     if username_check.exists():
         response['message'] = 'Username already exists'
     else:
-        User.objects.filter(id=token.user_id).update(username=data['username'])
+        User.objects.filter(id=user.id).update(username=data['username'])
         response['success'] = True
-        response['username'] = token.user.username
-        response['email'] = token.user.email
+        response['username'] = user.username
+        response['email'] = user.email
     return Response(response)
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'password',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Password')
+        )
+    ]
+))
 def change_password(request):
     data = request.data
-    token = Token.objects.get(key=data['apiToken'])
-    response = {'success': False}
-    try:
-        user = User.objects.get(id=token.user_id)
-        user.set_password(data['password'])
-        user.save()
-        response['success'] = True
-    except Exception as exc:
-        response['message'] = str(exc)
+    response = {}
+    user = User.objects.get(id=request.user.id)
+    user.set_password(data['password'])
+    user.save()
+    response['success'] = True
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['PUT'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'language',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Language')
+        )
+    ]
+))
 def change_language(request):
     response = {'success': False}
     data = request.data
-    token = Token.objects.get(key=data['apiToken'])
-    user_profile = token.user.profiles.first()
+    user = request.user
+    user_profile = user.profiles.first()
     user_profile.language = Language.objects.get(code=data['language'])
     user_profile.save()
     response['success'] = True
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['PUT'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'action',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Action')
+        ),
+        coreapi.Field(
+            'email',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='Email')
+        ),
+        coreapi.Field(
+            'code',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='Code')
+        )
+    ]
+))
 def reset_password(request):
     response = {'success': False}
     data = request.data
@@ -611,23 +729,42 @@ def reset_password(request):
 
 
 @api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'verificationCode',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Verification code')
+        )
+    ]
+))
 def get_signature_code(request):
-    response = {'success': False}
+    response = {}
     data = request.data
-    token = Token.objects.filter(key=data['apiToken'])
-    if token.exists():
-        vcode = data['verificationCode']
-        forum_profile = ForumProfile.objects.get(verification_code=vcode)
-        if config.TEST_MODE:
-            sig_code = forum_profile.signature.test_signature
-        else:
-            sig_code = forum_profile.signature.code
-        response['signature_code'] = inject_verification_code(sig_code, vcode)
-        response['success'] = True
+    vcode = data['verificationCode']
+    forum_profile = ForumProfile.objects.get(verification_code=vcode)
+    if config.TEST_MODE:
+        sig_code = forum_profile.signature.test_signature
+    else:
+        sig_code = forum_profile.signature.code
+    response['signature_code'] = inject_verification_code(sig_code, vcode)
+    response['success'] = True
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'email',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Email')
+        )
+    ]
+))
 def check_email_exists(request):
     data = request.data
     response = {'success': True, 'email_exists': True}
@@ -637,7 +774,17 @@ def check_email_exists(request):
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'username',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Username')
+        )
+    ]
+))
 def check_username_exists(request):
     data = request.data
     response = {'success': True, 'username_exists': True}
@@ -648,11 +795,6 @@ def check_username_exists(request):
 
 
 @api_view(['GET'])
-def get_wallet_details(request):
-    return Response({'success': True})
-
-
-@api_view(['GET'])
 def get_languages(request):
     languages = Language.objects.filter(active=True)
     languages = [{'value': x.code, 'text': x.name} for x in languages]
@@ -660,109 +802,277 @@ def get_languages(request):
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated,))
 def generate_2fa_uri(request):
-    response = {'success': False}
-    data = request.data
-    token = Token.objects.filter(key=data['apiToken'])
-    if token.exists():
-        token = token.first()
-        profile = token.user.profiles.first()
-        email = token.user.email
-        if profile.otp_secret:
-            otp_secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
-        else:
-            otp_secret = pyotp.random_base32()
-            profile.otp_secret = encrypt_data(otp_secret, settings.SECRET_KEY)
-            profile.save()
-        totp = pyotp.totp.TOTP(otp_secret)
-        uri = totp.provisioning_uri(email, issuer_name='Volentix Venue')
-        response['success'] = True
-        response['uri'] = uri
-    return Response(response)
-
-
-@api_view(['POST'])
-def verify_2fa_code(request):
-    response = {'success': False}
-    data = request.data
-    token = Token.objects.filter(key=data['apiToken'])
-    if token.exists():
-        token = token.first()
-        profile = token.user.profiles.first()
+    response = {}
+    user = request.user
+    profile = user.profiles.first()
+    email = user.email
+    if profile.otp_secret:
         otp_secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
-        totp = pyotp.totp.TOTP(otp_secret)
-        verified = totp.verify(data['otpCode'])
-        if verified:
-            if 'enable_2fa' in data.keys() and data['enable_2fa']:
-                profile.enabled_2fa = True
-                profile.save()
-        response['verified'] = verified
-        response['success'] = True
+    else:
+        otp_secret = pyotp.random_base32()
+        profile.otp_secret = encrypt_data(otp_secret, settings.SECRET_KEY)
+        profile.save()
+    totp = pyotp.totp.TOTP(otp_secret)
+    uri = totp.provisioning_uri(email, issuer_name='Volentix Venue')
+    response['success'] = True
+    response['uri'] = uri
     return Response(response)
 
 
 @api_view(['POST'])
-def disable_2fa(request):
-    response = {'success': False}
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'otpCode',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='OTP code')
+        ),
+        coreapi.Field(
+            'enable_2fa',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='OTP code')
+        )
+    ]
+))
+def verify_2fa_code(request):
+    response = {}
     data = request.data
-    token = Token.objects.filter(key=data['apiToken'])
-    if token.exists():
-        token = token.first()
-        profile = token.user.profiles.first()
-        profile.enabled_2fa = False
-        profile.save()
-        response['success'] = True
+    profile = request.user.profiles.first()
+    otp_secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
+    totp = pyotp.totp.TOTP(otp_secret)
+    verified = totp.verify(data['otpCode'])
+    if verified:
+        if 'enable_2fa' in data.keys() and data['enable_2fa']:
+            profile.enabled_2fa = True
+            profile.save()
+    response['verified'] = verified
+    response['success'] = True
+    return Response(response)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def disable_2fa(request):
+    response = {}
+    profile = request.user.profiles.first()
+    profile.enabled_2fa = False
+    profile.save()
+    response['success'] = True
     return Response(response)
 
 
 @api_view(['GET'])
+@permission_classes((IsAuthenticated,))
 def get_notifications(request):
-    response = {'success': False}
-    data = request.data
-    token = Token.objects.filter(key=data['apiToken'])
-    if token.exists():
-        token = token.first()
-        profile = token.user.profiles.first()
-        notifs = Notification.objects.filter(active=True).exclude(
-            dismissed_by=token.user
-        )
-        if profile.enabled_2fa:
-            notifs = notifs.exclude(code='2fA_notification')
-        response['notifications'] = notifs.values()
-        response['success'] = True
+    response = {}
+    profile = request.user.profiles.first()
+    notifs = Notification.objects.filter(active=True).exclude(
+        dismissed_by=request.token.user
+    )
+    if profile.enabled_2fa:
+        notifs = notifs.exclude(code='2fA_notification')
+    response['notifications'] = notifs.values()
+    response['success'] = True
     return Response(response)
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'notificationId',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Notification ID')
+        )
+    ]
+))
 def dismiss_notification(request):
-    response = {'success': False}
+    response = {}
     data = request.data
-    token = Token.objects.filter(key=data['apiToken'])
-    if token.exists():
-        token = token.first()
-        notif = Notification.objects.get(id=data['notificationId'])
-        notif.dismissed_by.add(token.user)
-        response['success'] = True
+    notif = Notification.objects.get(id=data['notificationId'])
+    notif.dismissed_by.add(request.user)
+    response['success'] = True
     return Response(response)
 
 
-class UserStats(APIView):
+class ForumSiteSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(max_length=50)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_forum_sites(request):
+    response = {'status': False}
+    sites = ForumSite.objects.all()
+    if sites.count():
+        serializer = ForumSiteSerializer(sites, many=True)
+        response['forum_sites'] = serializer.data
+    return Response(response)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'profile_url',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Profile URL')
+        ),
+        coreapi.Field(
+            'forum_id',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='Forum ID')
+        )
+    ]
+))
+def creat_forum_profile(request):
+    data = request.data
+    user_profile = UserProfile.objects.get(user=request.user)
+    return Response({'success': True})
     """
-    Retrieve user stats
+    # TODO - finish this!
+    forum = ForumSite.objects.get(id=forum_id)
+    info = get_user_position(forum_id, profile_url, self.request.user.id)
+    profile_check = ForumProfile.objects.filter(
+        forum_user_id=info['forum_user_id'],
+        forum=forum
+    )
+    if profile_check.exists():
+        fps = profile_check.filter(active=True, verified=True)
+        fp = fps.last()
+        if fp and fp.signature:
+            error_message = 'Your profile already contains our signature.'
+            raise serializers.ValidationError(error_message)
+    else:
+        rank, created = ForumUserRank.objects.get_or_create(
+            name=info['position'],
+            forum_site=forum
+        )
+        del created
+        serializer.save(
+            user_profile=user_profile,
+            forum_user_id=info['forum_user_id'],
+            forum=forum,
+            forum_rank=rank,
+            active=True
+        )
     """
 
-    def get(self, request, pk):
-        """ Get request """
-        return Response({'success': True})
 
-    def post(self, request, pk):
-        """ Post request """
-        return Response({'success': True})
+class ForumProfileSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    forum_user_id = serializers.IntegerField()
 
-    def put(self, request, pk):
-        """ Put request """
-        return Response({'success': True})
 
-    def patch(self, request, pk):
-        """ Patch request """
-        return Response({'success': True})
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'forum_id',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Forum site ID')
+        ),
+        coreapi.Field(
+            'forum_user_id',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Forum user ID')
+        )
+    ]
+))
+def get_forum_profiles(request):
+    data = request.query_params
+    response = {'success': False}
+    forum_profiles = ForumProfile.objects.filter(
+        forum_id=data.get('forum_id'),
+        forum_user_id=data.get('forum_user_id')
+    )
+    if forum_profiles.count():
+        response['success'] = True
+        serializer = ForumProfileSerializer(forum_profiles, many=True)
+        response['forum_profiles'] = serializer.data
+    return Response(response)
+
+
+def inject_verification_code(sig_code, verification_code):
+
+    def repl(m):
+        return '%s?vcode=%s' % (m.group(), verification_code)
+
+    if 'http' in sig_code:
+        pattern = r'http[s]?://([a-z./-?=&])+'
+        return re.sub(pattern, repl, sig_code)
+    elif 'link' in sig_code:
+        return sig_code + '?vcode=' + verification_code
+    else:
+        return sig_code
+
+
+class SignatureSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(max_length=100)
+    image = serializers.CharField(max_length=200)
+    code = serializers.CharField(max_length=200)
+    usage_count = serializers.IntegerField()
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@schema(AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'forum_site_id',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Forum site ID')
+        ),
+        coreapi.Field(
+            'forum_user_rank',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Forum user rank')
+        ),
+        coreapi.Field(
+            'forum_profile_id',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Forum profile ID')
+        )
+    ]
+))
+def get_signatures(request):
+    data = request.query_params
+    response = {'success': False}
+    signatures = Signature.objects.filter(
+        forum_site_id=data.get('forum_site_id'),
+        user_ranks__name=data.get('forum_user_rank')
+    )
+    if signatures.count():
+        forum_profile = ForumProfile.objects.get(id=data.get('forum_profile_id'))
+        for sig in signatures:
+            if config.TEST_MODE:
+                sig_code = sig.test_signature
+            else:
+                sig_code = sig.code
+            sig.code = inject_verification_code(
+                sig_code,
+                forum_profile.verification_code
+            )
+            sig.usage_count = sig.users.count()
+        response['success'] = True
+        serializer = SignatureSerializer(signatures, many=True)
+        response['signatures'] = serializer.data
+    return Response(response)

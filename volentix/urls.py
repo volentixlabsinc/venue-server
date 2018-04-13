@@ -19,10 +19,10 @@ from venue.views import (
     delete_account, change_email, change_username, change_password,
     authenticate, reset_password, get_leaderboard_data, get_signature_code,
     change_language, check_email_exists, check_username_exists,
-    get_wallet_details, get_languages, generate_2fa_uri,
-    verify_2fa_code, disable_2fa, get_notifications, dismiss_notification
+    get_languages, generate_2fa_uri, verify_2fa_code, disable_2fa,
+    get_notifications, dismiss_notification, creat_forum_profile,
+    get_forum_sites, get_forum_profiles, get_signatures
 )
-from venue.views import UserStats
 from venue.api import (
     ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
 )
@@ -41,6 +41,7 @@ router.register(r'forum-sites', ForumSiteViewSet)
 router.register(r'forum-profiles', ForumProfileViewSet)
 router.register(r'signatures', SignatureViewSet)
 
+
 urlpatterns = [
     url(r'^$', frontend_app),
     url(r'^admin/', admin.site.urls),
@@ -55,7 +56,8 @@ urlpatterns = [
 
     url(r'^create/signature/', save_signature),
     url(r'^create/user/', create_user),
-    
+    url(r'^create/forum-profile/', creat_forum_profile),
+
     url(r'^check/profile/', check_profile),
     url(r'^check/email-exists/', check_email_exists),
     url(r'^check/username-exists/', check_username_exists),
@@ -67,6 +69,9 @@ urlpatterns = [
     url(r'^retrieve/languages/', get_languages),
     url(r'^retrieve/leaderboard-data/', get_leaderboard_data),
     url(r'^retrieve/notifications/', get_notifications),
+    url(r'^retrieve/forum-sites/', get_forum_sites),
+    url(r'^retrieve/forum-profiles/', get_forum_profiles),
+    url(r'^retrieve/signatures/', get_signatures),
 
     url(r'^manage/confirm-email', confirm_email),
     url(r'^manage/change-email/', change_email),
@@ -81,12 +86,13 @@ urlpatterns = [
     url(r'^manage/dismiss-notification/', dismiss_notification)
 ]
 
-# urlpatterns += [
-#    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-# ]
 
 if settings.DEBUG:
-    urlpatterns += [ 
-        url(r'^media/(?P<path>.*)$', serve, { 'document_root': settings.MEDIA_ROOT, }),
-        url(r'^static/(?P<path>.*)$', serve, { 'document_root': settings.STATIC_ROOT })
+    urlpatterns += [
+        url(r'^media/(?P<path>.*)$', serve, {
+            'document_root': settings.MEDIA_ROOT
+        }),
+        url(r'^static/(?P<path>.*)$', serve, {
+            'document_root': settings.STATIC_ROOT
+        })
     ]
