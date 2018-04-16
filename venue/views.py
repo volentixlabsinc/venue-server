@@ -3,36 +3,35 @@ Volentix VENUE
 View functions
 """
 
-import re
-import pyotp
 from operator import itemgetter
 from datetime import timedelta
+import re
+import pyotp
+import coreschema
+import coreapi
 from hashids import Hashids
 from constance import config
 from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
-from venue.utils import encrypt_data, decrypt_data
 from django.contrib.auth.models import User
 from django.conf import settings
-from django.http import Http404
+from venue.utils import encrypt_data, decrypt_data
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, schema
-from rest_framework.views import APIView
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
-from venue.api import inject_verification_code
 from rest_framework.decorators import permission_classes
+from rest_framework.schemas import AutoSchema
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
                     send_email_change_confirmation, send_reset_password)
 from .models import (UserProfile, ForumSite, ForumProfile, Notification,
                      Language, Signature, ForumUserRank)
-from rest_framework.schemas import AutoSchema
+
 from .utils import RedisTemp
-import coreschema
-import coreapi
 
 
 # Instantiate a Hashids instance to be used later
@@ -41,7 +40,9 @@ hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
 
 # Function that converts points to percentages
 def points_to_percentage(points, category=None):
+    """ Converts points to percentages 
     # categories = posts / uptime / influence / total
+    """
     total = {
         'posts': 6000,
         'uptime': 3800,
@@ -87,6 +88,7 @@ AUTHENTICATE_SCHEMA = AutoSchema(
 @api_view(['POST'])
 @schema(AUTHENTICATE_SCHEMA)
 def authenticate(request):
+    """ Authenticates a user """
     data = request.data
     response = {'success': False}
     error_code = 'unknown_error'
@@ -147,6 +149,7 @@ def authenticate(request):
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_user(request):
+    """ Retrieves user details """
     data = {'found': False}
     user_profile = request.user.profiles.first()
     if user_profile:
@@ -199,6 +202,7 @@ CREATE_USER_SCHEMA = AutoSchema(
 @api_view(['POST'])
 @schema(CREATE_USER_SCHEMA)
 def create_user(request):
+    """ Creates new user """
     data = request.data
     data['email'] = data['email'].lower()
     user_check = User.objects.filter(email=data['email'])
@@ -232,8 +236,14 @@ def create_user(request):
     return Response(response)
 
 
+# ----------------------
+# Confirm email endpoint
+# ----------------------
+
+
 @api_view(['GET'])
 def confirm_email(request):
+    """ Confirms email address """
     code = request.query_params.get('code')
     user_id, = hashids.decode(code)
     user_profile = UserProfile.objects.get(user_id=user_id)
@@ -242,9 +252,15 @@ def confirm_email(request):
     return redirect('/#/?email_confirmed=1')
 
 
+# ----------------------
+# Check profile endpoint
+# ----------------------
+
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def check_profile(request):
+    """ Checks forum profile existence """
     data = request.query_params
     user = request.user
     forum = ForumSite.objects.get(id=data['forum'])
@@ -270,9 +286,12 @@ def check_profile(request):
     return Response(response)
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# -----------------------
+# Save signature endpoint
+# -----------------------
+
+
+SAVE_SIGNATURE_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'forum_profile_id',
@@ -287,8 +306,14 @@ def check_profile(request):
             schema=coreschema.String(description='Signature ID')
         )
     ]
-))
+)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(SAVE_SIGNATURE_SCHEMA)
 def save_signature(request):
+    """ Saves signature """
     data = request.data
     forum_profile = ForumProfile.objects.get(id=data['forum_profile_id'])
     signature = Signature.objects.get(id=data['signature_id'])
@@ -313,20 +338,29 @@ def save_signature(request):
     return Response(response)
 
 
+# -------------------------
+# Get site configs endpoint
+# -------------------------
+
+
 @api_view(['GET'])
 def get_site_configs(request):
+    """ Retrieves some global site configs """
     configs = {
         'disable_sign_up': config.DISABLE_SIGN_UP
     }
     return Response(configs)
 
 
+# ------------------
+# Get stats endpoint
+# ------------------
+
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_stats(request):
-    """
-    Retrieves the stats of the user
-    """
+    """ Retrieves the stats of the user """
     response = {'success': False}
     # Initialize empty stats container dictionary
     stats = {'fresh': False}
@@ -481,8 +515,14 @@ def get_stats(request):
     return Response(response)
 
 
+# -----------------------------
+# Get leaderboard data endpoint
+# -----------------------------
+
+
 @api_view(['GET'])
 def get_leaderboard_data(request):
+    """ Retrieves leaderboard stats data """
     response = {}
     user_profiles = UserProfile.objects.all()
     leaderboard_data = []
@@ -553,9 +593,15 @@ def get_leaderboard_data(request):
     return Response(response)
 
 
+# -----------------------
+# Delete account endpoint
+# -----------------------
+
+
 @api_view(['GET', 'POST'])
 @permission_classes((IsAuthenticated,))
 def delete_account(request):
+    """ Deletes account """
     if request.method == 'POST':
         user = request.user
         code = hashids.encode(int(user.id))
@@ -574,9 +620,13 @@ def delete_account(request):
             return Response({'success': False})
 
 
-@api_view(['GET', 'POST'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# ---------------------
+# Change email endpoint
+# ---------------------
+
+
+
+CHANGE_EMAIL_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'email',
@@ -585,8 +635,14 @@ def delete_account(request):
             schema=coreschema.String(description='New email')
         )
     ]
-))
+)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes((IsAuthenticated,))
+@schema(CHANGE_EMAIL_SCHEMA)
 def change_email(request):
+    """ Changes user's email """
     rtemp = RedisTemp('new_email')
     if request.method == 'POST':
         data = request.data
@@ -615,9 +671,12 @@ def change_email(request):
         return redirect('/#/settings/?updated_email=1')
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# ------------------------
+# Change username endpoint
+# ------------------------
+
+
+CHANGE_USERNAME_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'username',
@@ -626,8 +685,14 @@ def change_email(request):
             schema=coreschema.String(description='Username')
         )
     ]
-))
+)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(CHANGE_USERNAME_SCHEMA)
 def change_username(request):
+    """ Changes user's username """
     data = request.data
     user = request.user
     response = {'success': False}
@@ -642,9 +707,12 @@ def change_username(request):
     return Response(response)
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# ------------------------
+# Change password endpoint
+# ------------------------
+
+
+CHANGE_PASSWORD_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'password',
@@ -653,8 +721,14 @@ def change_username(request):
             schema=coreschema.String(description='Password')
         )
     ]
-))
+)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(CHANGE_PASSWORD_SCHEMA)
 def change_password(request):
+    """ Changes user's password """
     data = request.data
     response = {}
     user = User.objects.get(id=request.user.id)
@@ -664,9 +738,12 @@ def change_password(request):
     return Response(response)
 
 
-@api_view(['PUT'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# ------------------------
+# Change language endpoint
+# ------------------------
+
+
+CHANGE_LANGUAGE_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'language',
@@ -675,8 +752,14 @@ def change_password(request):
             schema=coreschema.String(description='Language')
         )
     ]
-))
+)
+
+
+@api_view(['PUT'])
+@permission_classes((IsAuthenticated,))
+@schema(CHANGE_LANGUAGE_SCHEMA)
 def change_language(request):
+    """ Changes language preference """
     response = {'success': False}
     data = request.data
     user = request.user
@@ -687,9 +770,12 @@ def change_language(request):
     return Response(response)
 
 
-@api_view(['PUT'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# -----------------------
+# Reset password endpoint
+# -----------------------
+
+
+RESET_PASSWORD_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'action',
@@ -710,8 +796,14 @@ def change_language(request):
             schema=coreschema.String(description='Code')
         )
     ]
-))
+)
+
+
+@api_view(['PUT'])
+@permission_classes((IsAuthenticated,))
+@schema(RESET_PASSWORD_SCHEMA)
 def reset_password(request):
+    """ Resets user's password """
     response = {'success': False}
     data = request.data
     if data['action'] == 'trigger':
@@ -728,9 +820,12 @@ def reset_password(request):
     return Response(response)
 
 
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# ---------------------------
+# Get signature code endpoint
+# ---------------------------
+
+
+GET_SIGCODE_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'verificationCode',
@@ -739,8 +834,14 @@ def reset_password(request):
             schema=coreschema.String(description='Verification code')
         )
     ]
-))
+)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@schema(GET_SIGCODE_SCHEMA)
 def get_signature_code(request):
+    """ Retrieves signature code """
     response = {}
     data = request.data
     vcode = data['verificationCode']
@@ -754,8 +855,12 @@ def get_signature_code(request):
     return Response(response)
 
 
-@api_view(['GET'])
-@schema(AutoSchema(
+# --------------------
+# Check email endpoint
+# --------------------
+
+
+CHECK_EMAIL_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'email',
@@ -764,8 +869,13 @@ def get_signature_code(request):
             schema=coreschema.String(description='Email')
         )
     ]
-))
+)
+
+
+@api_view(['GET'])
+@schema(CHECK_EMAIL_SCHEMA)
 def check_email_exists(request):
+    """ Checks if email exists """
     data = request.data
     response = {'success': True, 'email_exists': True}
     user_check = User.objects.filter(email=data['email'].lower())
@@ -774,8 +884,12 @@ def check_email_exists(request):
     return Response(response)
 
 
-@api_view(['GET'])
-@schema(AutoSchema(
+# -----------------------
+# Check username endpoint
+# -----------------------
+
+
+CHECK_USERNAME_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'username',
@@ -784,8 +898,13 @@ def check_email_exists(request):
             schema=coreschema.String(description='Username')
         )
     ]
-))
+)
+
+
+@api_view(['GET'])
+@schema(CHECK_USERNAME_SCHEMA)
 def check_username_exists(request):
+    """ Checks if username exists """
     data = request.data
     response = {'success': True, 'username_exists': True}
     user_check = User.objects.filter(username=data['username'].lower())
@@ -794,16 +913,28 @@ def check_username_exists(request):
     return Response(response)
 
 
+# ----------------------
+# Get langauges endpoint
+# ----------------------
+
+
 @api_view(['GET'])
 def get_languages(request):
+    """ Retrieves available languages """
     languages = Language.objects.filter(active=True)
     languages = [{'value': x.code, 'text': x.name} for x in languages]
     return Response(languages)
 
 
+# -------------------------
+# Generate 2FA URI endpoint
+# -------------------------
+
+
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def generate_2fa_uri(request):
+    """ Generates two-factor authentication URI """
     response = {}
     user = request.user
     profile = user.profiles.first()
@@ -821,9 +952,12 @@ def generate_2fa_uri(request):
     return Response(response)
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# ------------------------
+# Verify 2FA code endpoint
+# ------------------------
+
+
+VERIFY_2FA_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'otpCode',
@@ -838,8 +972,14 @@ def generate_2fa_uri(request):
             schema=coreschema.String(description='OTP code')
         )
     ]
-))
+)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(VERIFY_2FA_SCHEMA)
 def verify_2fa_code(request):
+    """ Verifies two-factor auth OTP code """
     response = {}
     data = request.data
     profile = request.user.profiles.first()
@@ -855,9 +995,15 @@ def verify_2fa_code(request):
     return Response(response)
 
 
+# --------------------
+# Disable 2FA endpoint
+# --------------------
+
+
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def disable_2fa(request):
+    """ Disables two-factor authentication """
     response = {}
     profile = request.user.profiles.first()
     profile.enabled_2fa = False
@@ -866,9 +1012,15 @@ def disable_2fa(request):
     return Response(response)
 
 
+# --------------------------
+# Get notifications endpoint
+# --------------------------
+
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_notifications(request):
+    """ Retrieves notifications """
     response = {}
     profile = request.user.profiles.first()
     notifs = Notification.objects.filter(active=True).exclude(
@@ -881,9 +1033,12 @@ def get_notifications(request):
     return Response(response)
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# -----------------------------
+# Dismiss notification endpoint
+# -----------------------------
+
+
+DISMISS_NOTIFICATION_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'notificationId',
@@ -892,14 +1047,25 @@ def get_notifications(request):
             schema=coreschema.String(description='Notification ID')
         )
     ]
-))
+)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(DISMISS_NOTIFICATION_SCHEMA)
 def dismiss_notification(request):
+    """ Dismisses a notification """
     response = {}
     data = request.data
     notif = Notification.objects.get(id=data['notificationId'])
     notif.dismissed_by.add(request.user)
     response['success'] = True
     return Response(response)
+
+
+# ------------------------
+# Get forum sites endpoint
+# ------------------------
 
 
 class ForumSiteSerializer(serializers.Serializer):
@@ -910,6 +1076,7 @@ class ForumSiteSerializer(serializers.Serializer):
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_forum_sites(request):
+    """ Retrieves list of forum sites """
     response = {'status': False}
     sites = ForumSite.objects.all()
     if sites.count():
@@ -918,9 +1085,12 @@ def get_forum_sites(request):
     return Response(response)
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+# -----------------------------
+# Create forum profile endpoint
+# -----------------------------
+
+
+CREATE_FORUM_PROFILE_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'profile_url',
@@ -935,15 +1105,27 @@ def get_forum_sites(request):
             schema=coreschema.String(description='Forum ID')
         )
     ]
-))
+)
+
+
+class SignatureAlreadyExists(APIException):
+    status_code = 503
+    default_detail = 'Your profile already contains our signature.'
+    default_code = 'signature_already_exists'
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(CREATE_FORUM_PROFILE_SCHEMA)
 def creat_forum_profile(request):
+    """ Creates a forum profile """
     data = request.data
-    user_profile = UserProfile.objects.get(user=request.user)
-    return Response({'success': True})
-    """
-    # TODO - finish this!
-    forum = ForumSite.objects.get(id=forum_id)
-    info = get_user_position(forum_id, profile_url, self.request.user.id)
+    forum = ForumSite.objects.get(id=data['forum_id'])
+    info = get_user_position(
+        data['forum_id'],
+        data['profile_url'],
+        request.user.id
+    )
     profile_check = ForumProfile.objects.filter(
         forum_user_id=info['forum_user_id'],
         forum=forum
@@ -952,22 +1134,27 @@ def creat_forum_profile(request):
         fps = profile_check.filter(active=True, verified=True)
         fp = fps.last()
         if fp and fp.signature:
-            error_message = 'Your profile already contains our signature.'
-            raise serializers.ValidationError(error_message)
+            raise SignatureAlreadyExists()
     else:
         rank, created = ForumUserRank.objects.get_or_create(
             name=info['position'],
             forum_site=forum
         )
         del created
-        serializer.save(
+        user_profile = UserProfile.objects.get(user=request.user)
+        fp_object = ForumProfile(
             user_profile=user_profile,
             forum_user_id=info['forum_user_id'],
             forum=forum,
             forum_rank=rank,
             active=True
         )
-    """
+        fp_object.save()
+
+
+# ---------------------------
+# Get forum profiles endpoint
+# ---------------------------
 
 
 class ForumProfileSerializer(serializers.Serializer):
@@ -975,9 +1162,7 @@ class ForumProfileSerializer(serializers.Serializer):
     forum_user_id = serializers.IntegerField()
 
 
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+GET_FORUM_PROFILES_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'forum_id',
@@ -992,8 +1177,14 @@ class ForumProfileSerializer(serializers.Serializer):
             schema=coreschema.String(description='Forum user ID')
         )
     ]
-))
+)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@schema(GET_FORUM_PROFILES_SCHEMA)
 def get_forum_profiles(request):
+    """ Retrieves forum profiles """
     data = request.query_params
     response = {'success': False}
     forum_profiles = ForumProfile.objects.filter(
@@ -1007,11 +1198,15 @@ def get_forum_profiles(request):
     return Response(response)
 
 
-def inject_verification_code(sig_code, verification_code):
+# -----------------------
+# Get signatures endpoint
+# -----------------------
 
+
+def inject_verification_code(sig_code, verification_code):
+    """ Helper function for injecting verification code to signature """
     def repl(m):
         return '%s?vcode=%s' % (m.group(), verification_code)
-
     if 'http' in sig_code:
         pattern = r'http[s]?://([a-z./-?=&])+'
         return re.sub(pattern, repl, sig_code)
@@ -1029,9 +1224,7 @@ class SignatureSerializer(serializers.Serializer):
     usage_count = serializers.IntegerField()
 
 
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-@schema(AutoSchema(
+GET_SIGNATURES_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'forum_site_id',
@@ -1052,8 +1245,14 @@ class SignatureSerializer(serializers.Serializer):
             schema=coreschema.String(description='Forum profile ID')
         )
     ]
-))
+)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@schema(GET_SIGNATURES_SCHEMA)
 def get_signatures(request):
+    """ Retrives list of signatures """
     data = request.query_params
     response = {'success': False}
     signatures = Signature.objects.filter(
