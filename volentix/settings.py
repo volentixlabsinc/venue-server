@@ -110,7 +110,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'volentix',
         'USER': 'volentix',
-        'PASSWORD': 'BxKkpaihl67B'
+        'PASSWORD': 'BxKkpaihl67B',
+        'HOST': 'postgres'
     }
 }
 
@@ -157,8 +158,8 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'venue_app', 'dist', 'static')]
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+CELERY_BROKER_URL = 'redis://:4e7a84d5@redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://:4e7a84d5@redis:6379/1'
 CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULE = {
     'update-data-every-2-minutes': {
@@ -192,3 +193,8 @@ def celery_base_data_hook(request, data):
 
 
 rollbar.BASE_DATA_HOOK = celery_base_data_hook
+
+# Create the logs folder if it does not exist yet
+log_folder = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(log_folder):
+    os.mkdir(log_folder)

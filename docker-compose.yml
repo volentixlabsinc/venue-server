@@ -1,0 +1,29 @@
+version: '3'
+services:
+    web:
+        build: .
+        restart: 'always'
+        expose:
+            - '8000'
+            - '5555'
+        ports:
+            - '8000:8000'
+            - '5555:5555'
+        volumes:
+            - '.:/code'
+        entrypoint: "/entrypoint.sh"
+        command: gunicorn volentix.wsgi --reload --bind 0.0.0.0:8000
+    redis:
+        image: 'bitnami/redis:latest'
+        expose:
+            - '6379'
+        environment:
+            REDIS_PASSWORD: '4e7a84d5'
+    postgres:
+        image: 'postgres'
+        expose:
+            - '5432'
+        environment:
+            POSTGRES_DB: 'volentix'
+            POSTGRES_USER: 'volentix'
+            POSTGRES_PASSWORD : 'BxKkpaihl67B'
