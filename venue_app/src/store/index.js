@@ -7,7 +7,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   plugins: [createPersistedState({key: 'volentix_venue'})],
   state: {
-    apiToken: '',
+    apiToken: null,
     userName: null,
     userEmail: null,
     enabledTwoFactor: false,

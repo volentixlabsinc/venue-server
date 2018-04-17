@@ -96,7 +96,7 @@ export default {
         username: this.username,
         password: this.password1
       }
-      axios.post('/create-user/', payload).then(response => {
+      axios.post('/create/user/', payload).then(response => {
         if (response.data.status === 'error') {
           this.signUpError = true
         } else {
@@ -123,8 +123,8 @@ export default {
     this.$validator.extend('email_exists', {
       getMessage: field => this.$t('email_exists'),
       validate: value => {
-        let payload = {'email': value}
-        return axios.post('/check-email-exists/', payload).then(response => {
+        let params = {'email': value}
+        return axios.get('/check/email-exists/', {params: params}).then(response => {
           if (response.data.email_exists) {
             return false
           } else {
@@ -136,8 +136,8 @@ export default {
     this.$validator.extend('username_exists', {
       getMessage: field => this.$t('username_exists'),
       validate: value => {
-        let payload = {'username': value}
-        return axios.post('/check-username-exists/', payload).then(response => {
+        let params = {'username': value}
+        return axios.get('/check/username-exists/', {params: params}).then(response => {
           if (response.data.username_exists) {
             return false
           } else {

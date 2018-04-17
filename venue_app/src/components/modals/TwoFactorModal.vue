@@ -77,7 +77,7 @@ export default {
     requestUri () {
       let vm = this
       let payload = { apiToken: this.$store.state.apiToken }
-      axios.post('/enable-two-factor-auth/', payload).then(response => {
+      axios.post('/manage/enable-two-factor-auth/', payload).then(response => {
         vm.provisioningUri = response.data.uri
       })
     },
@@ -115,7 +115,7 @@ export default {
       let vm = this
       event.preventDefault()
       let payload = { apiToken: vm.$store.state.apiToken }
-      axios.post('/disable-two-factor-auth/', payload).then(response => {
+      axios.post('/manage/disable-two-factor-auth/', payload).then(response => {
         if (response.data.success) {
           // Update the global store variable
           vm.$store.commit('updatedTwoFactorStatus', false)

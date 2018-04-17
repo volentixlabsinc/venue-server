@@ -11,8 +11,10 @@ services:
             - '5555:5555'
         volumes:
             - '.:/code'
+        stdin_open: true
+        tty: true
         entrypoint: "/entrypoint.sh"
-        command: gunicorn volentix.wsgi --reload --bind 0.0.0.0:8000
+        command: gunicorn volentix.wsgi --reload --bind 0.0.0.0:8000 --enable-stdio-inheritance
     redis:
         image: 'bitnami/redis:latest'
         expose:

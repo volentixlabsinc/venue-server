@@ -20,7 +20,7 @@ from venue.views import (
     authenticate, reset_password, get_leaderboard_data, get_signature_code,
     change_language, check_email_exists, check_username_exists,
     get_languages, generate_2fa_uri, verify_2fa_code, disable_2fa,
-    get_notifications, dismiss_notification, creat_forum_profile,
+    get_notifications, dismiss_notification, create_forum_profile,
     get_forum_sites, get_forum_profiles, get_signatures
 )
 from venue.api import (
@@ -56,7 +56,7 @@ urlpatterns = [
 
     url(r'^create/signature/', save_signature),
     url(r'^create/user/', create_user),
-    url(r'^create/forum-profile/', creat_forum_profile),
+    url(r'^create/forum-profile/', create_forum_profile),
 
     url(r'^check/profile/', check_profile),
     url(r'^check/email-exists/', check_email_exists),

@@ -39,11 +39,10 @@ export default {
   },
   methods: {
     getSignatureCode (verificationCode) {
-      let payload = {
-        verificationCode: verificationCode,
-        apiToken: this.$store.state.apiToken
+      let params = {
+        verificationCode: verificationCode
       }
-      axios.post('/get-signature-code/', payload).then(response => {
+      axios.get('/retrieve/signature-code/', {params: params}).then(response => {
         if (response.data.success) {
           this.signatureCode = response.data.signature_code
         }

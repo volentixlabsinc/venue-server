@@ -110,7 +110,8 @@ export default {
     },
     fetchNotifications () {
       let vm = this
-      axios.post('/get-notifications/', {apiToken: vm.$store.state.apiToken}).then(response => {
+      let params = {apiToken: vm.$store.state.apiToken}
+      axios.get('/retrieve/notifications/', {params: params}).then(response => {
         if (response.data.success) {
           vm.notifications = response.data.notifications
         }
@@ -128,14 +129,17 @@ export default {
     }
   },
   created () {
+    if (!this.$store.state.apiToken) {
+      delete axios.defaults.headers.common['Authorization']
+    }
     // Get langauge options
-    axios.get('/get-languages/').then(response => {
+    axios.get('/retrieve/languages/').then(response => {
       this.$store.commit('setLanguageOptions', response.data)
     })
     // Get user details
     if (this.$store.state.apiToken) {
       let vm = this
-      axios.post('/get-user/', {
+      axios.get('/retrieve/user/', {
         token: vm.$store.state.apiToken
       }).then(response => {
         if (response.data.found === true) {

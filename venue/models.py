@@ -35,6 +35,13 @@ def image_file_name(instance, filename):
     return os.path.join('uploads', filename)
 
 
+DEFAULT_SIGNATURE_IMAGE = os.path.join(
+    'static',
+    'img',
+    'signature_img.png'
+)
+
+
 class Signature(models.Model):
     """ Signature types per forum site """
     name = models.CharField(max_length=30)
@@ -44,7 +51,10 @@ class Signature(models.Model):
     code = models.TextField()
     expected_links = models.TextField(blank=True)
     test_signature = models.TextField(blank=True)
-    image = models.ImageField(upload_to=image_file_name, blank=True)
+    image = models.ImageField(
+        upload_to=image_file_name,
+        default=DEFAULT_SIGNATURE_IMAGE
+    )
     active = models.BooleanField(default=True)
     date_added = models.DateTimeField(default=timezone.now)
 

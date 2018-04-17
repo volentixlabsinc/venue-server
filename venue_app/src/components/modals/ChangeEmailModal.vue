@@ -43,7 +43,7 @@ export default {
         email: this.newEmail,
         apiToken: this.$store.state.apiToken
       }
-      axios.post('/change-email/', payload).then(response => {
+      axios.post('/manage/change-email/', payload).then(response => {
       })
     }
   },

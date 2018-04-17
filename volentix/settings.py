@@ -50,7 +50,7 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ),
     # Use Django's standard `django.contrib.auth` permissions,
@@ -64,9 +64,16 @@ REST_FRAMEWORK = {
 }
 
 CONSTANCE_CONFIG = {
-    'DISABLE_SIGN_UP': (True, 'Disable user sign up'),
+    'DISABLE_SIGN_UP': (False, 'Disable user sign up'),
     'VTX_AVAILABLE': (120000, 'Total VTX tokens available'),
     'TEST_MODE': (False, 'Test mode for scraping and points calculations. Signatures are always marked as found under test mode.')
+}
+
+CONSTANCE_REDIS_CONNECTION = {
+    'password': '4e7a84d5',
+    'host': 'redis',
+    'port': 6379,
+    'db': 0,
 }
 
 MIDDLEWARE = [
@@ -171,7 +178,8 @@ CELERY_BEAT_SCHEDULE = {
 POSTMARK_TOKEN = '53ac5b12-1edc-43bc-9581-561c143f7352'
 POSTMARK_SENDER_EMAIL = 'venue@volentix.com'
 
-CORS_ORIGIN_WHITELIST = ('localhost:8080',)
+# CORS_ORIGIN_WHITELIST = ('localhost:8080', 'localhost:8000')
+CORS_ORIGIN_ALLOW_ALL = True
 CSRF_COOKIE_NAME = "csrftoken"
 
 ROLLBAR = {

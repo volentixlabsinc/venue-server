@@ -38,10 +38,10 @@ export default {
     }
   },
   created () {
-    if (this.$store.state.apiToken.length > 0) {
+    if (this.$store.state.apiToken) {
       this.$router.push('/dashboard')
     } else {
-      axios.post('/get-site-configs/').then(response => {
+      axios.get('/retrieve/site-configs/').then(response => {
         this.disableSignUp = response.data.disable_sign_up
       })
     }

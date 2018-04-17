@@ -257,15 +257,34 @@ def confirm_email(request):
 # ----------------------
 
 
+CHECK_PROFILE_SCHEMA = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'forum_profile_id',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Forum profile ID')
+        ),
+        coreapi.Field(
+            'signature_id',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Signature ID')
+        )
+    ]
+)
+
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
+@schema(CHECK_PROFILE_SCHEMA)
 def check_profile(request):
     """ Checks forum profile existence """
     data = request.query_params
     user = request.user
-    forum = ForumSite.objects.get(id=data['forum'])
-    response = {'found': False, 'forum_id': data['forum']}
-    info = get_user_position(forum.id, data['profile_url'], user.id)
+    forum = ForumSite.objects.get(id=data.get('forum'))
+    response = {'found': False, 'forum_id': data.get('forum')}
+    info = get_user_position(forum.id, data.get('profile_url'), user.id)
     if info['status_code'] == 200 and info['position']:
         response['position'] = info['position']
         forum_rank = ForumUserRank.objects.get(
@@ -625,7 +644,6 @@ def delete_account(request):
 # ---------------------
 
 
-
 CHANGE_EMAIL_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
@@ -842,16 +860,17 @@ GET_SIGCODE_SCHEMA = AutoSchema(
 @schema(GET_SIGCODE_SCHEMA)
 def get_signature_code(request):
     """ Retrieves signature code """
-    response = {}
-    data = request.data
-    vcode = data['verificationCode']
-    forum_profile = ForumProfile.objects.get(verification_code=vcode)
-    if config.TEST_MODE:
-        sig_code = forum_profile.signature.test_signature
-    else:
-        sig_code = forum_profile.signature.code
-    response['signature_code'] = inject_verification_code(sig_code, vcode)
-    response['success'] = True
+    response = {'success': False}
+    data = request.query_params
+    if data.get('verificationCode'):
+        vcode = data.get('verificationCode')
+        forum_profile = ForumProfile.objects.get(verification_code=vcode)
+        if config.TEST_MODE:
+            sig_code = forum_profile.signature.test_signature
+        else:
+            sig_code = forum_profile.signature.code
+        response['signature_code'] = inject_verification_code(sig_code, vcode)
+        response['success'] = True
     return Response(response)
 
 
@@ -876,11 +895,12 @@ CHECK_EMAIL_SCHEMA = AutoSchema(
 @schema(CHECK_EMAIL_SCHEMA)
 def check_email_exists(request):
     """ Checks if email exists """
-    data = request.data
-    response = {'success': True, 'email_exists': True}
-    user_check = User.objects.filter(email=data['email'].lower())
-    if not user_check.exists():
-        response['email_exists'] = False
+    data = request.query_params
+    response = {'success': True, 'email_exists': None}
+    if data.get('email'):
+        user_check = User.objects.filter(email=data.get('email').lower())
+        if user_check.exists():
+            response['email_exists'] = True
     return Response(response)
 
 
@@ -905,11 +925,12 @@ CHECK_USERNAME_SCHEMA = AutoSchema(
 @schema(CHECK_USERNAME_SCHEMA)
 def check_username_exists(request):
     """ Checks if username exists """
-    data = request.data
-    response = {'success': True, 'username_exists': True}
-    user_check = User.objects.filter(username=data['username'].lower())
-    if not user_check.exists():
-        response['username_exists'] = False
+    data = request.query_params
+    response = {'success': True, 'username_exists': None}
+    if data.get('username'):
+        user_check = User.objects.filter(username=data.get('username').lower())
+        if user_check.exists():
+            response['username_exists'] = True
     return Response(response)
 
 
@@ -1024,7 +1045,7 @@ def get_notifications(request):
     response = {}
     profile = request.user.profiles.first()
     notifs = Notification.objects.filter(active=True).exclude(
-        dismissed_by=request.token.user
+        dismissed_by=request.user
     )
     if profile.enabled_2fa:
         notifs = notifs.exclude(code='2fA_notification')
@@ -1117,9 +1138,10 @@ class SignatureAlreadyExists(APIException):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 @schema(CREATE_FORUM_PROFILE_SCHEMA)
-def creat_forum_profile(request):
+def create_forum_profile(request):
     """ Creates a forum profile """
     data = request.data
+    response = {'success': False}
     forum = ForumSite.objects.get(id=data['forum_id'])
     info = get_user_position(
         data['forum_id'],
@@ -1150,6 +1172,9 @@ def creat_forum_profile(request):
             active=True
         )
         fp_object.save()
+        response['id'] = fp_object.id
+        response['success'] = True
+    return Response(response)
 
 
 # ---------------------------
@@ -1221,6 +1246,7 @@ class SignatureSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
     image = serializers.CharField(max_length=200)
     code = serializers.CharField(max_length=200)
+    verification_code = serializers.CharField(max_length=200)
     usage_count = serializers.IntegerField()
 
 
@@ -1228,21 +1254,27 @@ GET_SIGNATURES_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'forum_site_id',
-            required=True,
+            required=False,
             location='form',
             schema=coreschema.String(description='Forum site ID')
         ),
         coreapi.Field(
             'forum_user_rank',
-            required=True,
+            required=False,
             location='form',
             schema=coreschema.String(description='Forum user rank')
         ),
         coreapi.Field(
             'forum_profile_id',
-            required=True,
+            required=False,
             location='form',
             schema=coreschema.String(description='Forum profile ID')
+        ),
+        coreapi.Field(
+            'own_sigs',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='Get own signatures')
         )
     ]
 )
@@ -1255,23 +1287,42 @@ def get_signatures(request):
     """ Retrives list of signatures """
     data = request.query_params
     response = {'success': False}
-    signatures = Signature.objects.filter(
-        forum_site_id=data.get('forum_site_id'),
-        user_ranks__name=data.get('forum_user_rank')
-    )
+    if data.get('own_sigs') == '1':
+        forum_profiles = ForumProfile.objects.filter(
+            user_profile__user=request.user,
+            verified=True
+        )
+        signatures = Signature.objects.filter(
+            id__in=forum_profiles.values_list('signature_id', flat=True)
+        )
+        fp_map = {x.signature.id: x.id for x in forum_profiles}
+    else:
+        signatures = Signature.objects.filter(
+            forum_site_id=data.get('forum_site_id'),
+            user_ranks__name=data.get('forum_user_rank')
+        )
     if signatures.count():
-        forum_profile = ForumProfile.objects.get(id=data.get('forum_profile_id'))
         for sig in signatures:
             if config.TEST_MODE:
                 sig_code = sig.test_signature
             else:
                 sig_code = sig.code
+            if data.get('forum_profile_id'):
+                forum_profile = ForumProfile.objects.get(
+                    id=data.get('forum_profile_id')
+                )
+            else:
+                forum_profile = ForumProfile.objects.get(
+                    id=fp_map[sig.id]
+                )
+            verification_code = forum_profile.verification_code
             sig.code = inject_verification_code(
                 sig_code,
-                forum_profile.verification_code
+                verification_code
             )
             sig.usage_count = sig.users.count()
+            sig.verification_code = verification_code
         response['success'] = True
-        serializer = SignatureSerializer(signatures, many=True)
-        response['signatures'] = serializer.data
+    serializer = SignatureSerializer(signatures, many=True)
+    response['signatures'] = serializer.data
     return Response(response)

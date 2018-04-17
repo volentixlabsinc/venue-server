@@ -130,7 +130,7 @@ export default {
         apiToken: this.$store.state.apiToken,
         language: this.language
       }
-      axios.post('/change-language/', payload).then((response) => {
+      axios.put('/manage/change-language/', payload).then((response) => {
         if (response.data.success) {
           this.$i18n.locale = newLanguage
           this.$Progress.finish()
@@ -167,10 +167,8 @@ export default {
   },
   created () {
     this.$Progress.start()
-    axios.post('/get-wallet-details/').then(response => {
-      this.showPage = true
-      this.$Progress.finish()
-    })
+    this.showPage = true
+    this.$Progress.finish()
   },
   updated () {
     this.$nextTick(function () {

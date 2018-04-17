@@ -58,7 +58,7 @@ export default {
         apiToken: this.$store.state.apiToken,
         password: this.newPassword1
       }
-      axios.post('/change-password/', payload).then(response => {
+      axios.post('/manage/change-password/', payload).then(response => {
         if (response.data.success) {
           vm.$refs.changePasswordModal.hide()
           vm.$swal({

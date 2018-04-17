@@ -145,8 +145,8 @@ export default {
     refreshData () {
       this.$Progress.start()
       this.refreshing = true
-      var payload = { apiToken: this.$store.state.apiToken }
-      axios.post('/get-stats/', payload).then(response => {
+      // var payload = { apiToken: this.$store.state.apiToken }
+      axios.get('/retrieve/stats/').then(response => {
         this.stats = response.data.stats
         // Issue: Stats data for the points evolution chart is not updating when
         // merely clicking on the Refresh link. Hard refresh works though

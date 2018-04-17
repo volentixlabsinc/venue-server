@@ -186,9 +186,8 @@ export default {
         'forum_user_rank': forumUserRank,
         'forum_profile_id': forumProfileId
       }
-      axios.get('/api/signatures/', {params: params}).then(response => {
-        this.signatureOptions = response.data
-        console.log(this.signatureOptions)
+      axios.get('/retrieve/signatures/', {params: params}).then(response => {
+        this.signatureOptions = response.data.signatures
       })
     },
     signatureCopySuccess () {
@@ -237,12 +236,11 @@ export default {
     },
     checkProfile () {
       this.showCheckSpinner = true
-      var payload = {
-        apiToken: this.$store.state.apiToken,
+      var params = {
         forum: this.forumSite,
         profile_url: this.profileUrl
       }
-      axios.post('/check-profile/', payload).then(response => {
+      axios.get('/check/profile/', {params: params}).then(response => {
         var self = this // To refer to `this` that's bound to vue instance
         if (response.data.status_code === 200) {
           if (response.data.found === true) {
@@ -273,11 +271,12 @@ export default {
                   forum_id: response.data.forum_id,
                   forum_user_id: response.data.forum_user_id
                 }
-                axios.get('/api/forum-profiles/', {params: params}).then(response => {
-                  if (response.data.length > 0) {
-                    this.profileChecked = true
-                    this.forumProfileId = response.data[0].id
-                    this.getSignatures(this.forumSite, this.forumUserPosition, response.data[0].id)
+                let vm = self
+                axios.get('/retrieve/forum-profiles/', {params: params}).then(response => {
+                  if (response.data.success) {
+                    vm.profileChecked = true
+                    vm.forumProfileId = response.data.forum_profiles[0].id
+                    vm.getSignatures(vm.forumSite, vm.forumUserPosition, vm.forumProfileId)
                   }
                 })
               }
@@ -289,9 +288,11 @@ export default {
                   profile_url: this.profileUrl,
                   forum_id: this.forumSite
                 }
-                axios.post('/api/forum-profiles/', payload).then(response => {
-                  this.forumProfileId = response.data.id
-                  this.getSignatures(this.forumSite, this.forumUserPosition, response.data.id)
+                axios.post('/create/forum-profile/', payload).then(response => {
+                  if (response.data.success) {
+                    this.forumProfileId = response.data.id
+                    this.getSignatures(this.forumSite, this.forumUserPosition, response.data.id)
+                  }
                 })
               } else {
                 this.$swal({
@@ -330,7 +331,7 @@ export default {
         signature_id: this.selectedSignature,
         forum_profile_id: this.forumProfileId
       }
-      axios.post('/save-signature/', payload).then(response => {
+      axios.post('/create/signature/', payload).then(response => {
         this.showVerifySpinner = false
         if (response.status === 200) {
           if (response.data.success === true) {
@@ -425,17 +426,19 @@ export default {
     this.initial = this.$route.query.initial
     this.showAddForm = this.$route.query.initial
     // Get forum sites
-    axios.get('/api/forum-sites/').then(response => {
-      for (var elem of response.data) {
-        this.forumSites.push({value: elem.id, text: elem.name})
+    let vm = this
+    axios.get('/retrieve/forum-sites/').then(response => {
+      for (var elem of response.data.forum_sites) {
+        vm.forumSites.push({value: elem.id, text: elem.name})
       }
-      this.showPage = true
-      this.$Progress.finish()
+      vm.showPage = true
+      vm.$Progress.finish()
     })
     // Get my signatures
     var params = { 'own_sigs': 1 }
-    axios.get('/api/signatures/', {params: params}).then(response => {
-      this.mySignatures = response.data
+    axios.get('/retrieve/signatures/', {params: params}).then(response => {
+      console.log(response)
+      this.mySignatures = response.data.signatures
       this.showPage = true
       this.$Progress.finish()
     })

@@ -40,7 +40,7 @@ export default {
         username: this.newUsername,
         apiToken: this.$store.state.apiToken
       }
-      axios.post('/change-username/', payload).then(response => {
+      axios.post('/manage/change-username/', payload).then(response => {
         if (response.data.success) {
           var data = response.data
           this.$store.commit('updateUserName', data.username)
