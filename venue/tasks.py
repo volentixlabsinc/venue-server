@@ -277,6 +277,7 @@ def send_email_confirmation(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Email Confirmation',
+        ReplyTo='noreply@volentixlabs.com',
         HtmlBody=html)
     return mail
 
@@ -289,6 +290,7 @@ def send_deletion_confirmation(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Account Deletion Confirmation',
+        ReplyTo='noreply@volentixlabs.com',
         HtmlBody=html)
     return mail
 
@@ -301,6 +303,7 @@ def send_email_change_confirmation(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Email Change Confirmation',
+        ReplyTo='noreply@volentixlabs.com',
         HtmlBody=html)
     return mail
 
@@ -313,5 +316,6 @@ def send_reset_password(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Account Password Reset',
+        ReplyTo='noreply@volentixlabs.com',
         HtmlBody=html)
     return mail
