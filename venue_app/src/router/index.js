@@ -48,8 +48,12 @@ router.beforeEach((to, from, next) => {
   store.commit('updateShowFooter', false)
   if (to.path !== '/') {
     // Fix the authorization header for all HTTP requests
-    var authHeader = 'Token ' + store.state.apiToken
-    axios.defaults.headers.common['Authorization'] = authHeader
+    if (store.state.apiToken) {
+      var authHeader = 'Token ' + store.state.apiToken
+      axios.defaults.headers.common['Authorization'] = authHeader
+    } else {
+      delete axios.defaults.headers.common['Authorization']
+    }
   }
   if (to.matched.some(record => record.meta.requiresAuth)) {
     // this route requires auth, check if logged in

@@ -129,7 +129,10 @@ export default {
     }
   },
   created () {
-    if (!this.$store.state.apiToken) {
+    if (this.$store.state.apiToken) {
+      var authHeader = 'Token ' + this.$store.state.apiToken
+      axios.defaults.headers.common['Authorization'] = authHeader
+    } else {
       delete axios.defaults.headers.common['Authorization']
     }
     // Get langauge options
