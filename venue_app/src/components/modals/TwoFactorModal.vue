@@ -14,9 +14,18 @@
       <b-row>
         <b-col>
           <p>{{ $t('scan_with_2fa_app') }}</p>
-          <div>
-            <qr-code :text="provisioningUri" :size="220"></qr-code>
+          <div style="margin-bottom: 20px;">
+            <qr-code :text="details.uri" :size="220"></qr-code>
           </div>
+          <p>Or enter these details manually:</p>
+          <p>
+            <span><strong>Service:</strong></span>
+            {{ details.service }}<br>
+            <span><strong>Account:</strong></span>
+            {{ details.account }}<br>
+            <span><strong>Key:</strong></span>
+            {{ details.key }}
+          </p>
         </b-col>
       </b-row>
       <b-row style="margin-top: 10px;">
@@ -51,7 +60,7 @@ export default {
   name: 'TwoFactorModal',
   data () {
     return {
-      provisioningUri: '',
+      details: null,
       otpCode: '',
       formSubmitted: false,
       wrongOtpCode: false
@@ -76,9 +85,8 @@ export default {
   methods: {
     requestUri () {
       let vm = this
-      let payload = { apiToken: this.$store.state.apiToken }
-      axios.post('/manage/enable-two-factor-auth/', payload).then(response => {
-        vm.provisioningUri = response.data.uri
+      axios.post('/manage/enable-two-factor-auth/').then(response => {
+        vm.details = response.data
       })
     },
     verifyOtpCode (event) {
@@ -86,7 +94,6 @@ export default {
       event.preventDefault()
       this.formSubmitted = true
       let payload = {
-        apiToken: vm.$store.state.apiToken,
         otpCode: vm.otpCode,
         enable_2fa: true
       }
@@ -114,8 +121,7 @@ export default {
     disable2FA (event) {
       let vm = this
       event.preventDefault()
-      let payload = { apiToken: vm.$store.state.apiToken }
-      axios.post('/manage/disable-two-factor-auth/', payload).then(response => {
+      axios.post('/manage/disable-two-factor-auth/').then(response => {
         if (response.data.success) {
           // Update the global store variable
           vm.$store.commit('updatedTwoFactorStatus', false)

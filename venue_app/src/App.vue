@@ -28,7 +28,6 @@ export default {
   mounted () {
     window.addEventListener('scroll', this.handleScroll)
     this.$on('load-notifications', function () {
-      console.log('Event was triggered!')
       this.$refs.topNavigation.fetchNotifications()
     })
   },

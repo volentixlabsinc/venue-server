@@ -127,7 +127,6 @@ export default {
       this.$Progress.start()
       this.$store.commit('updateLanguage', newLanguage)
       let payload = {
-        apiToken: this.$store.state.apiToken,
         language: this.language
       }
       axios.put('/manage/change-language/', payload).then((response) => {
@@ -154,8 +153,7 @@ export default {
             buttons: [this.$t('cancel'), this.$t('ok')]
           }).then((value) => {
             if (value) {
-              var payload = { apiToken: this.$store.state.apiToken }
-              axios.post('/delete-account/', payload)
+              axios.post('/delete-account/')
             }
           })
         }
@@ -170,18 +168,19 @@ export default {
     this.showPage = true
     this.$Progress.finish()
   },
+  mounted () {
+    if (this.$route.query.action === 'enable_2fa') {
+      this.$store.state.notifications = []
+      this.$refs.twoFactor.$refs.twoFactorModal.show()
+      this.request2FactorUri()
+    }
+  },
   updated () {
     this.$nextTick(function () {
       if (document.body.offsetHeight <= window.innerHeight) {
         this.$store.commit('updateShowFooter', true)
       } else {
         this.$store.commit('updateShowFooter', false)
-      }
-
-      if (this.$route.query.action === 'enable_2fa') {
-        this.$store.state.notifications = []
-        this.$refs.twoFactor.$refs.twoFactorModal.show()
-        this.request2FactorUri()
       }
     })
   }

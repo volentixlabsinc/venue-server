@@ -37,8 +37,7 @@ export default {
       event.preventDefault()
       this.formSubmitted = true
       var payload = {
-        username: this.newUsername,
-        apiToken: this.$store.state.apiToken
+        username: this.newUsername
       }
       axios.post('/manage/change-username/', payload).then(response => {
         if (response.data.success) {

@@ -40,8 +40,7 @@ export default {
       event.preventDefault()
       this.formSubmitted = true
       var payload = {
-        email: this.newEmail,
-        apiToken: this.$store.state.apiToken
+        email: this.newEmail
       }
       axios.post('/manage/change-email/', payload).then(response => {
       })

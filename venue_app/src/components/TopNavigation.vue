@@ -118,9 +118,8 @@ export default {
       })
     },
     dismissNotification (id) {
-      let vm = this
-      let payload = {apiToken: vm.$store.state.apiToken, notificationId: id}
-      axios.post('/dismiss-notification/', payload)
+      let payload = {notificationId: id}
+      axios.post('/manage/dismiss-notification/', payload)
     }
   },
   computed: {

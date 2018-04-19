@@ -969,6 +969,9 @@ def generate_2fa_uri(request):
     totp = pyotp.totp.TOTP(otp_secret)
     uri = totp.provisioning_uri(email, issuer_name='Volentix Venue')
     response['success'] = True
+    response['service'] = 'Volentix Venue'
+    response['account'] = email
+    response['key'] = otp_secret
     response['uri'] = uri
     return Response(response)
 
@@ -1028,6 +1031,7 @@ def disable_2fa(request):
     response = {}
     profile = request.user.profiles.first()
     profile.enabled_2fa = False
+    profile.otp_secret = ''
     profile.save()
     response['success'] = True
     return Response(response)

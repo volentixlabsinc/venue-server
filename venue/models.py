@@ -336,13 +336,14 @@ class UptimeBatch(models.Model):
             if self.regular_checks.count() > 1:
                 earliest_check = self.regular_checks.filter(
                     signature_found=True, new_posts__gt=0).first()
-                latest_check = self.regular_checks.filter(
-                    signature_found=True).last()
-                earliest_check_date = earliest_check.date_checked
-                latest_check_date = latest_check.date_checked
-                tdiff = latest_check_date - earliest_check_date
-                days = tdiff.total_seconds() / 86400  # converts total seconds to days
-                value = round(days, 4)
+                if earliest_check:
+                    latest_check = self.regular_checks.filter(
+                        signature_found=True).last()
+                    earliest_check_date = earliest_check.date_checked
+                    latest_check_date = latest_check.date_checked
+                    tdiff = latest_check_date - earliest_check_date
+                    days = tdiff.total_seconds() / 86400  # converts total seconds to days
+                    value = round(days, 4)
         return value
 
     def get_post_points(self):
@@ -351,7 +352,7 @@ class UptimeBatch(models.Model):
             latest_gs = GlobalStats.objects.last()
             pts = decimal.Decimal(self.get_total_posts_with_sig() * 6000)
             pts /= latest_gs.total_posts_with_sig
-        except (decimal.InvalidOperation, AttributeError):
+        except (decimal.InvalidOperation, decimal.DivisionByZero, AttributeError):
             pass
         return round(pts, 4)
 
@@ -361,7 +362,7 @@ class UptimeBatch(models.Model):
             latest_gs = GlobalStats.objects.last()
             pts = decimal.Decimal(self.get_total_days() * 3800)
             pts /= latest_gs.total_days
-        except (decimal.InvalidOperation, AttributeError):
+        except (decimal.InvalidOperation, decimal.DivisionByZero, AttributeError):
             pass
         return round(pts, 4)
 

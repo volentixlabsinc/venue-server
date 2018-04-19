@@ -55,7 +55,6 @@ export default {
       this.formSubmitted = true
       let vm = this
       var payload = {
-        apiToken: this.$store.state.apiToken,
         password: this.newPassword1
       }
       axios.post('/manage/change-password/', payload).then(response => {
