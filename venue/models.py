@@ -332,7 +332,7 @@ class UptimeBatch(models.Model):
 
     def get_total_days(self):
         value = 0
-        if self.get_total_posts_with_sig(latest_only=False):
+        if self.get_total_posts_with_sig(latest_only=True):
             if self.regular_checks.count() > 1:
                 earliest_check = self.regular_checks.filter(
                     signature_found=True, new_posts__gt=0).first()

@@ -70,7 +70,6 @@
             <b-button 
               v-if="!enabled2FA" 
               variant="primary"
-              @click="request2FactorUri()" 
               v-b-modal.two-factor-modal>
               {{ $t('enable_2fa_btn') }}
             </b-button>
@@ -158,9 +157,6 @@ export default {
           })
         }
       })
-    },
-    request2FactorUri () {
-      this.$refs.twoFactor.requestUri()
     }
   },
   created () {

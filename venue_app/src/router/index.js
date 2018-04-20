@@ -46,15 +46,15 @@ const router = new Router({
 router.beforeEach((to, from, next) => {
   // Always hide the footer before switching to a new route
   store.commit('updateShowFooter', false)
-  if (to.path !== '/') {
-    // Fix the authorization header for all HTTP requests
-    if (store.state.apiToken) {
-      var authHeader = 'Token ' + store.state.apiToken
-      axios.defaults.headers.common['Authorization'] = authHeader
-    } else {
-      delete axios.defaults.headers.common['Authorization']
-    }
+  // if (to.path !== '/') {
+  // Fix the authorization header for all HTTP requests
+  if (store.state.apiToken) {
+    var authHeader = 'Token ' + store.state.apiToken
+    axios.defaults.headers.common['Authorization'] = authHeader
+  } else {
+    delete axios.defaults.headers.common['Authorization']
   }
+  // }
   if (to.matched.some(record => record.meta.requiresAuth)) {
     // this route requires auth, check if logged in
     // if not, redirect to login page.

@@ -144,6 +144,9 @@ export default {
     cancel () {
       this.$refs.twoFactorModal.hide()
     }
+  },
+  created () {
+    this.requestUri()
   }
 }
 </script>
