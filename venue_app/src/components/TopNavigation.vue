@@ -110,8 +110,7 @@ export default {
     },
     fetchNotifications () {
       let vm = this
-      let params = {apiToken: vm.$store.state.apiToken}
-      axios.get('/retrieve/notifications/', {params: params}).then(response => {
+      axios.get('/retrieve/notifications/').then(response => {
         if (response.data.success) {
           vm.notifications = response.data.notifications
         }
@@ -132,21 +131,6 @@ export default {
     axios.get('/retrieve/languages/').then(response => {
       this.$store.commit('setLanguageOptions', response.data)
     })
-    // Get user details
-    if (this.$store.state.apiToken) {
-      let vm = this
-      axios.get('/retrieve/user/', {
-        token: vm.$store.state.apiToken
-      }).then(response => {
-        if (response.data.found === true) {
-          vm.setUser(response.data)
-          // Localize to selected language
-          vm.$i18n.locale = vm.$store.state.language
-          // Fetch notifications from server
-          vm.fetchNotifications()
-        }
-      })
-    }
     if (this.$route.query.email_confirmed === '1') {
       this.$swal({
         title: this.$t('email_confirmed'),
