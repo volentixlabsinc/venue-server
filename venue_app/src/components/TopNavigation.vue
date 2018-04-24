@@ -131,6 +131,18 @@ export default {
     axios.get('/retrieve/languages/').then(response => {
       this.$store.commit('setLanguageOptions', response.data)
     })
+    // Get user details
+    if (this.$store.state.apiToken) {
+      let vm = this
+      axios.get('/retrieve/user/').then(response => {
+        if (response.data.found === true) {
+          // Localize to selected language
+          this.setLanguage(response.data.language)
+          // Fetch notifications from server
+          vm.fetchNotifications()
+        }
+      })
+    }
     if (this.$route.query.email_confirmed === '1') {
       this.$swal({
         title: this.$t('email_confirmed'),
