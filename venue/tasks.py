@@ -271,7 +271,11 @@ postmark = PostmarkClient(
 
 @shared_task
 def send_email_confirmation(email, name, code):
-    context = {'name': name, 'code': code}
+    context = {
+        'domain': settings.VENUE_DOMAIN,
+        'name': name,
+        'code': code
+    }
     html = get_template('venue/email_confirmation.html').render(context)
     mail = postmark.emails.send(
         From=settings.POSTMARK_SENDER_EMAIL,
@@ -284,7 +288,11 @@ def send_email_confirmation(email, name, code):
 
 @shared_task
 def send_deletion_confirmation(email, name, code):
-    context = {'name': name, 'code': code}
+    context = {
+        'domain': settings.VENUE_DOMAIN,
+        'name': name,
+        'code': code
+    }
     html = get_template('venue/deletion_confirmation.html').render(context)
     mail = postmark.emails.send(
         From=settings.POSTMARK_SENDER_EMAIL,
@@ -297,7 +305,11 @@ def send_deletion_confirmation(email, name, code):
 
 @shared_task
 def send_email_change_confirmation(email, name, code):
-    context = {'name': name, 'code': code}
+    context = {
+        'domain': settings.VENUE_DOMAIN,
+        'name': name,
+        'code': code
+    }
     html = get_template('venue/email_change.html').render(context)
     mail = postmark.emails.send(
         From=settings.POSTMARK_SENDER_EMAIL,
@@ -310,7 +322,11 @@ def send_email_change_confirmation(email, name, code):
 
 @shared_task
 def send_reset_password(email, name, code):
-    context = {'name': name, 'code': code}
+    context = {
+        'domain': settings.VENUE_DOMAIN,
+        'name': name,
+        'code': code
+    }
     html = get_template('venue/reset_password.html').render(context)
     mail = postmark.emails.send(
         From=settings.POSTMARK_SENDER_EMAIL,

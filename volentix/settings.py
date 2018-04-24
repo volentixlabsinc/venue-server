@@ -74,7 +74,8 @@ REST_FRAMEWORK = {
 CONSTANCE_CONFIG = {
     'DISABLE_SIGN_UP': (False, 'Disable user sign up'),
     'VTX_AVAILABLE': (120000, 'Total VTX tokens available'),
-    'TEST_MODE': (False, 'Test mode for scraping and points calculations. Signatures are always marked as found under test mode.')
+    'TEST_MODE': (DEBUG, 'Test mode for scraping and points calculations. \
+        Signatures are always marked as found under test mode.')
 }
 
 CONSTANCE_REDIS_CONNECTION = {
@@ -214,3 +215,9 @@ rollbar.BASE_DATA_HOOK = celery_base_data_hook
 log_folder = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(log_folder):
     os.mkdir(log_folder)
+
+
+if DEBUG:
+    VENUE_DOMAIN = 'http://localhost:8000'
+else:
+    VENUE_DOMAIN = 'https://venue.volentix.com'

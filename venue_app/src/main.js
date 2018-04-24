@@ -47,13 +47,14 @@ Vue.use(Rollbar, {
 
 axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN'
 axios.defaults.xsrfCookieName = 'csrftoken'
+axios.defaults.baseURL = 'http://localhost:8000'
 
-let env = process.env.NODE_ENV || 'development'
-if (env === 'development') {
-  axios.defaults.baseURL = 'http://localhost:8000'
-} else {
-  axios.defaults.baseURL = 'https://venue.volentix.com'
-}
+// let env = process.env.NODE_ENV || 'development'
+// if (env === 'development') {
+//   axios.defaults.baseURL = 'http://localhost:8000'
+// } else {
+//   axios.defaults.baseURL = 'https://venue.volentix.com'
+// }
 
 Vue.use(VueCookies)
 Vue.use(VueSwal)

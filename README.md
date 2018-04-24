@@ -1,39 +1,38 @@
-# volentix_venue
+# venue-server
 
 > Autonomous signature campaign tracking
 
-## Setup and Deployment Procedure
+### Setup for local development
 
-##### *1. Spin up a clean Ubuntu 16.04 server*
-##### *2. Connect to the server through SSH, then:*
-    1. Create a non-root sudo user named `ubuntu`
-    2. Set the SSH access port to `45976`
-    3. Add your public SSH key into the `~/.ssh/authorized_key` file to enable passwordless SSH access
-##### *3. Get a copy of the source code into your local*
+##### *1. Install Docker Community Edition (CE)*
+    1. Download the installer for your OS from the page below:<br>
+        https://www.docker.com/community-edition
+    2. Run/execute the installer
+##### *2. Get a copy of the source code into your local*
     1. Clone this repo from github: `git clone <url-of-this-repo>`
-    2. Change directory to the root of the project: `cd volentix_venue`
-##### *4. Create a virtual environment*
-    1. Make sure you have Python 3.6.1+ installed
-    2. Create a virtual environment: `python3 -m 'venv' ~/Environments/volentix`
-    3. Activate the virtual environment: `source ~/Environments/volentix/bin/activate`
-    4. Install the required Python packages: `pip install -r requirements.txt`
-##### *5. Edit the `fabfile.py` file (in your local Linux/Unix machine):*
-    1. Upate the `env.hosts` variable by replacing the IP in the existing list with the IP of the new server
-    2. Update the `env.port`
+    2. Change directory to the root of the project: `cd venue-server`
+##### *3. Run the application and open in the browser*
+    1. Run `docker-compose up`. In Linux, it may be necessary to use sudo, so you'll have to run `sudo docker-compose up`
+    2. The API docs should be accessible here: http://localhost:8000/docs/
+    3. If you're developing the frontend, make sure you set your API base URL to http://localhost:8000
+    4. To run the reference frontend, load the home page: http://localhost:8000
+
+
+### Deployment to remote server
+
+Note: This only works in Ubuntu/Unix machines because `fab sync` command uses command line `rsync` program, which has no Windows equivalent.
+
+##### *1. Spin up a server and install Docker CE*
+    1. Spin up a clean Ubuntu 16.04 LTS server (preferrably one that has Docker CE preinstalled)
+    2. Connect by SSH to the server
+    2. Install Docker CE (if not installed yet) using the command:<br>
+       `curl -fsSL https://get.docker.com | sh`
+##### *2. Edit the `fabfile.py` file:*
+    1. Upate the `env.hosts` variable by replacing the IP in the existing list with the IP of the Ubuntu server
+    2. Update the `env.port`, if necessary
     3. Test that the fab commands are working, try with `fab uname`
-    4. If the command is working, proceed to the next steps
-##### *6. Run the following commands to remotely setup the volentix_venue application:*
+    4. If the command is working, proceed to the next step
+##### *3. Sync the code to the server then run the application:*
     1. Sync the source code to the server with command `fab sync`
-    2. Setup the server: `fab setup_server`
-    3. Configure nginx: `fab setup_nginx`
-    4. Create database: `fab setup_database`
-    5. Run the application: `fab run_app`
-##### (Optional) *7. If you want to edit the Vue.js frontend app, do the following:*
-    1. Change directory to venue_app: `cd venue_app`
-    2. Make sure you have `npm` and `yarn` installed
-    3. Install the NodeJS dependencies with `yarn install`
-    4. Run the dev server with `npm run dev`
-    Note: The app will connect to the live REST API server
-##### (Optional) *8. When you modify the source code, you can deploy by doing the following:*
-    1. Sync the source code to the server with command `fab sync`
-    2. Restart all application programs with `fab restart:all`
+    2. Run the application on the remote server with `fab run_app`
+    3. Open the site in the browser: https://venue.volentix.com
