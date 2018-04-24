@@ -88,20 +88,6 @@
                       <b-col sm="9">{{ $t('batch_number') }} {{ batch.batch }}:</b-col>
                       <b-col></b-col>
                     </b-row>
-                    <!--
-                    <b-row>
-                      <b-col sm="9">{{ $t('total_posts_with_sig') }}:</b-col>
-                      <b-col>
-                        <span style="color: green;">{{ batch.totalPostsWithSig }}</span>
-                      </b-col>
-                    </b-row>
-                    <b-row v-if="batch.deletedPosts">
-                      <b-col sm="9">{{ $t('deleted_posts') }}:</b-col>
-                      <b-col>
-                        <span style="color: red;">-{{ batch.deletedPosts }}</span>
-                      </b-col>
-                    </b-row>
-                    -->
                     <b-row>
                       <b-col sm="9" class="mb-2">{{ $t('total_posts_uptime') }}:</b-col>
                       <b-col>{{ batch.totalPostDays }}</b-col>

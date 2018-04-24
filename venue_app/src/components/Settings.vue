@@ -68,8 +68,8 @@
               {{ $t('disable_2fa_btn') }}
             </b-button>
             <b-button 
-              v-if="!enabled2FA" 
-              variant="primary"
+              v-if="!enabled2FA"  
+              variant="primary" 
               v-b-modal.two-factor-modal>
               {{ $t('enable_2fa_btn') }}
             </b-button>
@@ -166,9 +166,7 @@ export default {
   },
   mounted () {
     if (this.$route.query.action === 'enable_2fa') {
-      this.$store.state.notifications = []
-      this.$refs.twoFactor.$refs.twoFactorModal.show()
-      this.request2FactorUri()
+      this.$root.$emit('bv::show::modal', 'two-factor-modal')
     }
   },
   updated () {

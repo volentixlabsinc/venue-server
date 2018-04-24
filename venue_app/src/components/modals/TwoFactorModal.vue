@@ -60,7 +60,7 @@ export default {
   name: 'TwoFactorModal',
   data () {
     return {
-      details: null,
+      details: {},
       otpCode: '',
       formSubmitted: false,
       wrongOtpCode: false

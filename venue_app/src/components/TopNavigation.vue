@@ -127,13 +127,7 @@ export default {
       return this.$store.state.userName
     }
   },
-  created () {
-    if (this.$store.state.apiToken) {
-      var authHeader = 'Token ' + this.$store.state.apiToken
-      axios.defaults.headers.common['Authorization'] = authHeader
-    } else {
-      delete axios.defaults.headers.common['Authorization']
-    }
+  mounted () {
     // Get langauge options
     axios.get('/retrieve/languages/').then(response => {
       this.$store.commit('setLanguageOptions', response.data)
@@ -191,8 +185,6 @@ export default {
         }
       })
     }
-  },
-  mounted () {
     if (this.$route.query.reset_password === '1') {
       this.$refs.resetPassword.$refs.resetPasswordModal.show()
       this.$refs.resetPassword.setCode(this.$route.query.code)
