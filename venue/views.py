@@ -1171,6 +1171,7 @@ def create_forum_profile(request):
         fp_object = ForumProfile(
             user_profile=user_profile,
             forum_user_id=info['forum_user_id'],
+            forum_username=info['forum_user_name'],
             forum=forum,
             forum_rank=rank,
             active=True

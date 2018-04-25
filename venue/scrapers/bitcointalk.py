@@ -178,7 +178,8 @@ def get_user_position(forum_user_id):
     scraper = BitcoinTalk()
     scraper.get_profile(forum_user_id)
     position = scraper.get_user_position()
-    return (scraper.status_code, position)
+    username = scraper.get_username()
+    return (scraper.status_code, position, username)
 
 
 def extract_user_id(profile_url):
