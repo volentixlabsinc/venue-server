@@ -31,21 +31,11 @@ from django.views.static import serve
 from django.conf.urls import url, include
 from django.conf import settings
 from django.contrib import admin
-from rest_framework import routers
-
-
-# API Routes
-router = routers.SimpleRouter()
-router.register(r'user-profiles', UserProfileViewSet)
-router.register(r'forum-sites', ForumSiteViewSet)
-router.register(r'forum-profiles', ForumProfileViewSet)
-router.register(r'signatures', SignatureViewSet)
 
 
 urlpatterns = [
     url(r'^$', frontend_app),
     url(r'^admin/', admin.site.urls),
-    # url(r'^models/', include(router.urls)),
 
     url(r'^docs/', include_docs_urls(
         title='Volentix Venue API',

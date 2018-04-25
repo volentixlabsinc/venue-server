@@ -262,13 +262,13 @@ CHECK_PROFILE_SCHEMA = AutoSchema(
         coreapi.Field(
             'forum_profile_id',
             required=True,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Forum profile ID')
         ),
         coreapi.Field(
             'signature_id',
             required=True,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Signature ID')
         )
     ]
@@ -884,7 +884,7 @@ CHECK_EMAIL_SCHEMA = AutoSchema(
         coreapi.Field(
             'email',
             required=True,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Email')
         )
     ]
@@ -896,7 +896,7 @@ CHECK_EMAIL_SCHEMA = AutoSchema(
 def check_email_exists(request):
     """ Checks if email exists """
     data = request.query_params
-    response = {'success': True, 'email_exists': None}
+    response = {'success': True, 'email_exists': False}
     if data.get('email'):
         user_check = User.objects.filter(email=data.get('email').lower())
         if user_check.exists():
@@ -914,7 +914,7 @@ CHECK_USERNAME_SCHEMA = AutoSchema(
         coreapi.Field(
             'username',
             required=True,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Username')
         )
     ]
@@ -926,7 +926,7 @@ CHECK_USERNAME_SCHEMA = AutoSchema(
 def check_username_exists(request):
     """ Checks if username exists """
     data = request.query_params
-    response = {'success': True, 'username_exists': None}
+    response = {'success': True, 'username_exists': False}
     if data.get('username'):
         user_check = User.objects.filter(username=data.get('username').lower())
         if user_check.exists():
@@ -1197,13 +1197,13 @@ GET_FORUM_PROFILES_SCHEMA = AutoSchema(
         coreapi.Field(
             'forum_id',
             required=True,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Forum site ID')
         ),
         coreapi.Field(
             'forum_user_id',
             required=True,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Forum user ID')
         )
     ]
@@ -1275,13 +1275,13 @@ GET_SIGNATURES_SCHEMA = AutoSchema(
         coreapi.Field(
             'forum_profile_id',
             required=False,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Forum profile ID')
         ),
         coreapi.Field(
             'own_sigs',
             required=False,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Get own signatures')
         )
     ]

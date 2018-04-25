@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework_docs',
     'corsheaders',
     'constance',
     'venue'
@@ -221,3 +220,9 @@ if DEBUG:
     VENUE_DOMAIN = 'http://localhost:8000'
 else:
     VENUE_DOMAIN = 'https://venue.volentix.com'
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
