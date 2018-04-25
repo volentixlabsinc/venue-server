@@ -37,21 +37,17 @@ def setup_nginx():
         sudo('rm ' + default_server)
     project_server = '/etc/nginx/sites-enabled/venue'
     if not is_link(project_server):
-        sudo('cp %s/venue-server/nginx/venue.conf \
-            /etc/nginx/sites-available/venue' % BASE_DIR)
-        sudo('ln -s /etc/nginx/sites-available/venue \
-            /etc/nginx/sites-enabled/')
-        sudo('cp %s/venue-server/nginx/flower.conf \
-            /etc/nginx/sites-available/flower' % BASE_DIR)
-        sudo('ln -s /etc/nginx/sites-available/flower \
-            /etc/nginx/sites-enabled/')
+        sudo('cp %s/venue-server/nginx/venue.conf /etc/nginx/sites-available/venue' % BASE_DIR)
+        sudo('ln -s /etc/nginx/sites-available/venue /etc/nginx/sites-enabled/')
+        sudo('cp %s/venue-server/nginx/flower.conf /etc/nginx/sites-available/flower' % BASE_DIR)
+        sudo('ln -s /etc/nginx/sites-available/flower /etc/nginx/sites-enabled/')
     sudo('service nginx restart')
+    # Note: HTTPS still needs to be manually set up on the server
 
 
 def run_app():
     """ Runs the application on the remote server """
     with cd(BASE_DIR + '/venue-server'):
-        run("sed -i '.backup' 's/DEBUG = True/DEBUG = False/g' \
-            volentix/settings.py")
+        run("sed -i '--' 's/DEBUG = True/DEBUG = False/g' volentix/settings.py")
         run('docker-compose up -d')
-        setup_nginx()
+        sudo('service nginx restart')

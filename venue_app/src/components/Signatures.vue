@@ -437,10 +437,10 @@ export default {
     // Get my signatures
     var params = { 'own_sigs': 1 }
     axios.get('/retrieve/signatures/', {params: params}).then(response => {
-      console.log(response)
       this.mySignatures = response.data.signatures
       this.showPage = true
       this.$Progress.finish()
+      console.log(this.mySignatures)
     })
   },
   beforeRouteLeave (to, from, next) {

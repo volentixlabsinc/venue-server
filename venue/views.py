@@ -1252,6 +1252,9 @@ class SignatureSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=200)
     verification_code = serializers.CharField(max_length=200)
     usage_count = serializers.IntegerField()
+    forum_site_name = serializers.CharField(max_length=30, required=False)
+    forum_user_name = serializers.CharField(max_length=30, required=False)
+    forum_userid = serializers.CharField(max_length=20, required=False)
 
 
 GET_SIGNATURES_SCHEMA = AutoSchema(
@@ -1326,6 +1329,9 @@ def get_signatures(request):
             )
             sig.usage_count = sig.users.count()
             sig.verification_code = verification_code
+            sig.forum_site_name = forum_profile.forum.name
+            sig.forum_user_name = forum_profile.forum_username
+            sig.forum_userid = forum_profile.forum_user_id
         response['success'] = True
     serializer = SignatureSerializer(signatures, many=True)
     response['signatures'] = serializer.data

@@ -223,7 +223,7 @@ def get_user_position(forum_user_id, credentials=None):
     scraper = BitcoinForum(credentials['username'], credentials['password'])
     scraper.get_profile(forum_user_id)
     position = scraper.get_user_position()
-    return (scraper.response.status_code, position)
+    return (scraper.status_code, position)
 
 
 def extract_user_id(profile_url):
