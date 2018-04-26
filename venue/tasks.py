@@ -8,6 +8,8 @@ from django.conf import settings
 from celery import shared_task, chain, group
 from celery.signals import task_failure
 from postmarker.core import PostmarkClient
+from ws4redis.publisher import RedisPublisher
+from ws4redis.redis_store import RedisMessage
 from constance import config
 import pandas as pd
 import rollbar
@@ -238,6 +240,10 @@ def mark_master_task_complete(master_task_id):
 
 @shared_task
 def update_data(forum_profile_id=None):
+    # Send a test message over websocket
+    redis_publisher = RedisPublisher(facility='foobar', broadcast=True)
+    message = RedisMessage('Hello World')
+    redis_publisher.publish_message(message)
     # Save this data update task
     task_id = update_data.request.id
     data_update = DataUpdateTask(task_id=task_id)

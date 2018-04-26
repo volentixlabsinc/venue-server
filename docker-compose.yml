@@ -14,7 +14,7 @@ services:
         stdin_open: true
         tty: true
         entrypoint: "/entrypoint.sh"
-        command: gunicorn volentix.wsgi --reload --bind 0.0.0.0:8000 --enable-stdio-inheritance
+        command: uwsgi --http :8000 --gevent 100 --http-websockets --module volentix.wsgi
     redis:
         image: 'bitnami/redis:latest'
         expose:

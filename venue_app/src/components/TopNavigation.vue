@@ -127,6 +127,11 @@ export default {
     }
   },
   mounted () {
+    // Create the websocket listener
+    this.$options.sockets.onmessage = function (data) {
+      console.log(data)
+    }
+
     // Get langauge options
     axios.get('/retrieve/languages/').then(response => {
       this.$store.commit('setLanguageOptions', response.data)

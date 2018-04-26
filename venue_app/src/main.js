@@ -20,6 +20,13 @@ import VueQRCodeComponent from 'vue-qrcode-component'
 import axios from 'axios'
 import Rollbar from 'vue-rollbar'
 import numeral from 'numeral'
+import VueNativeSock from 'vue-native-websocket'
+
+Vue.use(VueNativeSock, 'ws://localhost:8000/ws/foobar?subscribe-broadcast', {
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 3000
+})
 
 const options = {
   color: '#2a96b6',

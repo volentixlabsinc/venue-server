@@ -21,6 +21,7 @@ django-constance==2.0.0
 django-cors-headers==2.1.0
 django-extensions==1.9.8
 django-picklefield==1.0.0
+django-websocket-redis==0.5.1
 djangorestframework==3.7.7
 drfdocs==0.0.11
 Fabric3==1.13.1.post1
@@ -82,6 +83,7 @@ traitlets==4.3.2
 typing==3.6.2
 uritemplate==3.0.0
 urllib3==1.22
+uWSGI==2.0.17
 vine==1.1.4
 wcwidth==0.1.7
 Werkzeug==0.13
