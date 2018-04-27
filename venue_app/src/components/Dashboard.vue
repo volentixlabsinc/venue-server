@@ -152,6 +152,18 @@ export default {
       })
     }
   },
+  computed: {
+    scrapingCount () {
+      return this.$store.state.scrapingCount
+    }
+  },
+  watch: {
+    scrapingCount (newVal, oldVal) {
+      console.log('Refresh request sent!')
+      console.log(oldVal, newVal)
+      this.refreshData()
+    }
+  },
   created () {
     // Fetch data from the server
     this.refreshData()

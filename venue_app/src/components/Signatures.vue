@@ -440,7 +440,6 @@ export default {
       this.mySignatures = response.data.signatures
       this.showPage = true
       this.$Progress.finish()
-      console.log(this.mySignatures)
     })
   },
   beforeRouteLeave (to, from, next) {

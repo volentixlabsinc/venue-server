@@ -15,7 +15,8 @@ export default new Vuex.Store({
     languages: [],
     showLoginForm: false,
     showFooter: false,
-    notifications: []
+    notifications: [],
+    scrapingCount: 0
   },
   mutations: {
     updateApiToken (state, token) {
@@ -44,6 +45,9 @@ export default new Vuex.Store({
     },
     addNotification (state, notification) {
       state.notifications.push(notification)
+    },
+    incrementScrapingCount (state) {
+      state.scrapingCount += 1
     }
   }
 })

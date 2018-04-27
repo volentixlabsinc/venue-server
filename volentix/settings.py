@@ -236,3 +236,4 @@ WS4REDIS_CONNECTION = {
     'db': 3,
     'password': '4e7a84d5'
 }
+WS4REDIS_EXPIRE = 0  # Messages expire immediately
