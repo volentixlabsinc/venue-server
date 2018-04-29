@@ -50,9 +50,9 @@ axios.defaults.xsrfCookieName = 'csrftoken'
 
 let env = process.env.NODE_ENV || 'development'
 if (env === 'development') {
-  axios.defaults.baseURL = 'http://localhost:8000'
+  axios.defaults.baseURL = 'http://localhost:8000/api'
 } else {
-  axios.defaults.baseURL = 'https://venue.volentix.com'
+  axios.defaults.baseURL = 'https://venue.volentix.com/api'
 }
 
 Vue.use(VueCookies)
