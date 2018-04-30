@@ -241,7 +241,20 @@ def create_user(request):
 # ----------------------
 
 
+CONFIRM_EMAIL_SCHEMA = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'code',
+            required=True,
+            location='query',
+            schema=coreschema.String(description='Confirmation code')
+        )
+    ]
+)
+
+
 @api_view(['GET'])
+@schema(CONFIRM_EMAIL_SCHEMA)
 def confirm_email(request):
     """ Confirms email address """
     code = request.query_params.get('code')
@@ -648,9 +661,15 @@ CHANGE_EMAIL_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'email',
-            required=True,
+            required=False,
             location='form',
             schema=coreschema.String(description='New email')
+        ),
+        coreapi.Field(
+            'code',
+            required=False,
+            location='query',
+            schema=coreschema.String(description='Confirmation code')
         )
     ]
 )
