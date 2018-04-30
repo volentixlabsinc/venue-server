@@ -8,6 +8,8 @@ from django.conf import settings
 from celery import shared_task, chain, group
 from celery.signals import task_failure
 from postmarker.core import PostmarkClient
+from ws4redis.publisher import RedisPublisher
+from ws4redis.redis_store import RedisMessage
 from constance import config
 import pandas as pd
 import rollbar
@@ -225,6 +227,13 @@ def database_cleanup():
     rankings.exclude(id__in=list(dfs['id'])).delete()
 
 
+def send_websocket_signal(signal):
+    # Send a test message over websocket
+    redis_publisher = RedisPublisher(facility='foobar', broadcast=True)
+    message = RedisMessage(signal)
+    redis_publisher.publish_message(message)
+
+
 @shared_task
 def mark_master_task_complete(master_task_id):
     master_task = DataUpdateTask.objects.get(task_id=master_task_id)
@@ -234,6 +243,8 @@ def mark_master_task_complete(master_task_id):
     else:
         master_task.success = True
     master_task.save()
+    # Send refresh signal to all active users
+    send_websocket_signal('refresh')
 
 
 @shared_task
@@ -254,7 +265,7 @@ def update_data(forum_profile_id=None):
         calculate_points.si(),  # Execute task to calculate points
         mark_master_task_complete.si(task_id),  # Mark the data update run as complete
         calculate_rankings.si(),
-        database_cleanup.si()  # Trigger the database cleanup task
+        database_cleanup.si(),  # Trigger the database cleanup task
     )
     # Send to the workflow to the queue
     workflow.apply_async()

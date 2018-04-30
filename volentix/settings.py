@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'constance',
+    'ws4redis',
     'venue'
 ]
 
@@ -186,7 +187,7 @@ CELERY_BEAT_SCHEDULE = {
 POSTMARK_TOKEN = '53ac5b12-1edc-43bc-9581-561c143f7352'
 POSTMARK_SENDER_EMAIL = 'venue@volentix.com'
 
-# CORS_ORIGIN_WHITELIST = ('localhost:8080', 'localhost:8000')
+CORS_ORIGIN_WHITELIST = ('localhost:8080', 'localhost:8000')
 CORS_ORIGIN_ALLOW_ALL = True
 CSRF_COOKIE_NAME = "csrftoken"
 
@@ -226,3 +227,13 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+WEBSOCKET_URL = '/ws/'
+WS4REDIS_PREFIX = 'ws'
+WS4REDIS_CONNECTION = {
+    'host': 'redis',
+    'port': 6379,
+    'db': 3,
+    'password': '4e7a84d5'
+}
+WS4REDIS_EXPIRE = 0  # Messages expire immediately

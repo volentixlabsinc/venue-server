@@ -20,6 +20,8 @@ import VueQRCodeComponent from 'vue-qrcode-component'
 import axios from 'axios'
 import Rollbar from 'vue-rollbar'
 import numeral from 'numeral'
+import VueNativeSock from 'vue-native-websocket'
+
 
 const options = {
   color: '#2a96b6',
@@ -49,11 +51,20 @@ axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN'
 axios.defaults.xsrfCookieName = 'csrftoken'
 
 let env = process.env.NODE_ENV || 'development'
+var websocketUrl
 if (env === 'development') {
   axios.defaults.baseURL = 'http://localhost:8000/api'
+  websocketUrl = 'ws://localhost:8000/ws/foobar?subscribe-broadcast'
 } else {
   axios.defaults.baseURL = 'https://venue.volentix.com/api'
+  websocketUrl = 'wss://venue.volentix.com/ws/foobar?subscribe-broadcast'
 }
+
+Vue.use(VueNativeSock, websocketUrl, {
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 3000
+})
 
 Vue.use(VueCookies)
 Vue.use(VueSwal)

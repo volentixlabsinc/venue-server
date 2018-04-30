@@ -550,6 +550,7 @@ class SignatureCheck(models.Model):
                     SignatureCheck.objects.filter(
                         id=self.id).update(initial=True)
 
+
 class PointsCalculation(models.Model):
     """ Results of calculations of points for the given signature check in an uptime batch. """
     uptime_batch = models.ForeignKey(
