@@ -75,7 +75,10 @@ CONSTANCE_CONFIG = {
     'DISABLE_SIGN_UP': (False, 'Disable user sign up'),
     'VTX_AVAILABLE': (120000, 'Total VTX tokens available'),
     'TEST_MODE': (DEBUG, 'Test mode for scraping and points calculations. \
-        Signatures are always marked as found under test mode.')
+        Signatures are always marked as found under test mode.'),
+    'POINTS_NEW_POST': (100, 'Points for each new post'),
+    'POINTS_DELETED_POST': (-100, 'Points for each deleted post'),
+    'POINTS_POST_UPTIME': (2, 'Points for uptime of each post per hour')
 }
 
 CONSTANCE_REDIS_CONNECTION = {
