@@ -229,7 +229,7 @@ def database_cleanup():
 
 def send_websocket_signal(signal):
     # Send a test message over websocket
-    redis_publisher = RedisPublisher(facility='foobar', broadcast=True)
+    redis_publisher = RedisPublisher(facility='signals', broadcast=True)
     message = RedisMessage(signal)
     redis_publisher.publish_message(message)
 
