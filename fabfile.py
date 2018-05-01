@@ -14,22 +14,6 @@ def uname():
     run('uname')
 
 
-def sync():
-    """ Syncs the code to the remote server """
-    local('python manage.py collectstatic --no-input')
-    exc = [
-        '*.pyc', '.DS_Store', '*.pid', '*.log.*', 'media', '__pycache__',
-        '*~', '.git', '.gitignore', '*.log', 'logs', 'celerybeat-schedule'
-        '*.rdb', '*.sqlite3', '*.dump', 'node_modules'
-    ]
-    rsync_project(
-        BASE_DIR,
-        delete=False,
-        exclude=exc,
-        ssh_opts='-o stricthostkeychecking=no'
-    )
-
-
 def setup_nginx():
     """ Configures nginx webserver """
     default_server = '/etc/nginx/sites-enabled/default'
@@ -51,3 +35,22 @@ def run_app():
         run("sed -i '--' 's/DEBUG = True/DEBUG = False/g' volentix/settings.py")
         run('docker-compose up -d')
         sudo('service nginx restart')
+
+
+def sync():
+    """ Syncs the code to the remote server """
+    local('python manage.py collectstatic --no-input')
+    exc = [
+        '*.pyc', '.DS_Store', '*.pid', '*.log.*', 'media', '__pycache__',
+        '*~', '.git', '.gitignore', '*.log', 'logs', 'celerybeat-schedule'
+        '*.rdb', '*.sqlite3', '*.dump', 'node_modules'
+    ]
+    # Sync code with the remote server
+    rsync_project(
+        BASE_DIR,
+        delete=False,
+        exclude=exc,
+        ssh_opts='-o stricthostkeychecking=no'
+    )
+    # Run the app
+    run_app()
