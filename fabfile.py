@@ -33,6 +33,7 @@ def run_app():
     """ Runs the application on the remote server """
     with cd(BASE_DIR + '/venue-server'):
         run("sed -i '--' 's/DEBUG = True/DEBUG = False/g' volentix/settings.py")
+        run('docker rm venue-server_web_1 -f')
         run('docker-compose up -d')
         sudo('service nginx restart')
 
