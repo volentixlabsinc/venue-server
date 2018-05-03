@@ -390,6 +390,40 @@ class UptimeBatch(models.Model):
         return total_points
 
 
+class SignaturePoints(models.Model):
+    """ Tally of points for the signature campaign """
+    CATEGORY_CHOICES = (
+        ('post_addition', 'Post addition'),
+        ('post_deletion', 'Post deletion'),
+        ('post_uptime', 'Uptime')
+    )
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES,
+        default='uptime'
+    )
+    forum_profile = models.ForeignKey(
+        ForumProfile,
+        related_name='points',
+        on_delete=models.PROTECT
+    )
+    uptime_batch = models.ForeignKey(
+        UptimeBatch,
+        related_name='points',
+        on_delete=models.PROTECT
+    )
+    posts_count = models.IntegerField()
+    points = models.FloatField()
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['category'], name='category'),
+            models.Index(fields=['timestamp'], name='timestamp'),
+        ]
+        verbose_name_plural = 'Signature points'
+
+
 class SignatureCheck(models.Model):
     """ Results of regular scraping from forum profile pages 
     
@@ -443,6 +477,8 @@ class SignatureCheck(models.Model):
             batches = self.forum_profile.uptime_batches.all()
             new_batch_created = False
             save_this_check = True
+            carry_over_posts = 0
+            deleted_posts = 0
             if self._state.adding is True:
                 if self.status_code == 200:
                     # Automatically assign to old or new uptime batch
@@ -478,8 +514,7 @@ class SignatureCheck(models.Model):
                                                     x.new_posts for x in reg_checks]
                                                 self.new_posts = 0
                                                 if last_psts_wsig:
-                                                    adj_new_posts = sum(
-                                                        last_psts_wsig) - abs(diff)
+                                                    adj_new_posts = sum(last_psts_wsig) - abs(diff)
                                                     if adj_new_posts > 0:
                                                         self.new_posts = adj_new_posts
                                                 self.uptime_batch = batch
@@ -494,6 +529,10 @@ class SignatureCheck(models.Model):
                                                     latest_batch.num_deleted_posts = abs(
                                                         diff)
                                                 latest_batch.save()
+                                                # Overwrite the deleted_posts variable
+                                                deleted_posts = abs(diff)
+                                                # Overwrite the carry_over_posts variable
+                                                carry_over_posts = sum(last_psts_wsig)
                                             else:
                                                 self.uptime_batch = latest_batch
                                         else:
@@ -540,7 +579,8 @@ class SignatureCheck(models.Model):
                             # add set as new_posts for this check
                             # Reason: Read the `Why carry over new posts count?` in model docs
                             if latest_batch:
-                                self.new_posts += latest_batch.get_total_posts_with_sig(latest_only=False)
+                                carry_over_posts = latest_batch.get_total_posts_with_sig(latest_only=False)
+                                self.new_posts += carry_over_posts
                         else:
                             # What goes here are signature checks that did not find
                             # the signature in the profile page and where there is no
@@ -562,6 +602,8 @@ class SignatureCheck(models.Model):
                                 id=previous_check_id)
                             new_posts = int(self.total_posts) - \
                                 int(previous_check.total_posts)
+                            # assign to self.new_posts
+                            self.new_posts = new_posts
                             if new_posts > 0:
                                 SignatureCheck.objects.filter(
                                     id=self.id).update(new_posts=new_posts)
@@ -576,6 +618,28 @@ class SignatureCheck(models.Model):
                         if sc.total_posts <= init_check.total_posts:
                             SignatureCheck.objects.filter(
                                 id=self.id).update(initial=True)
+                # Assign points on the cumulative point system
+                actual_new_posts = self.new_posts - carry_over_posts
+                post_add_points = actual_new_posts * config.POINTS_NEW_POST
+                if post_add_points > 0:
+                    sig_points = SignaturePoints(
+                        category='post_addition',
+                        forum_profile=self.forum_profile,
+                        uptime_batch=self.uptime_batch,
+                        posts_count=actual_new_posts,
+                        points=post_add_points
+                    )
+                    sig_points.save()
+                post_del_points = deleted_posts * config.POINTS_DELETED_POST
+                if post_del_points > 0:
+                    sig_points = SignaturePoints(
+                        category='post_deletion',
+                        forum_profile=self.forum_profile,
+                        uptime_batch=self.uptime_batch,
+                        posts_count=deleted_posts,
+                        points=post_del_points
+                    )
+                    sig_points.save()
 
 
 class PointsCalculation(models.Model):

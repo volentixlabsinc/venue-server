@@ -2,7 +2,7 @@ from venue.models import (
     ForumSite, Signature, UserProfile, ForumProfile,
     UptimeBatch, SignatureCheck, PointsCalculation, Language,
     GlobalStats, ForumUserRank, DataUpdateTask, ScrapingError,
-    Ranking, Notification
+    Ranking, Notification, SignaturePoints
 )
 from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
@@ -235,3 +235,13 @@ class NotificationAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Notification, NotificationAdmin)
+
+
+class SignaturePointsAdmin(admin.ModelAdmin):
+    list_display = ['user', 'forum_profile', 'category', 'points']
+
+    def user(self, obj):
+        return obj.forum_profile.user_profile
+
+
+admin.site.register(SignaturePoints, SignaturePointsAdmin)
