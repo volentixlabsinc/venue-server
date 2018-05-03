@@ -15,7 +15,7 @@ services:
             - '.:/code'
         stdin_open: true
         tty: true
-        # entrypoint: '/entrypoint.sh'
+        entrypoint: '/entrypoint.sh'
         command: supervisord --nodaemon
     redis:
         image: 'bitnami/redis:latest'
