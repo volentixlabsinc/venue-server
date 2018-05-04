@@ -238,10 +238,16 @@ admin.site.register(Notification, NotificationAdmin)
 
 
 class SignaturePointsAdmin(admin.ModelAdmin):
-    list_display = ['user', 'forum_profile', 'category', 'points']
+    list_display = [
+        'user', 'forum_profile', 'signature_check', 'posts_count',
+        'category', 'points'
+    ]
 
     def user(self, obj):
         return obj.forum_profile.user_profile
+    
+    def posts_count(self, obj):
+        return obj.signature_check.posts_count
 
 
 admin.site.register(SignaturePoints, SignaturePointsAdmin)

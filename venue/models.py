@@ -391,7 +391,19 @@ class UptimeBatch(models.Model):
 
 
 class SignaturePoints(models.Model):
-    """ Tally of points for the signature campaign """
+    """ Tally of points for the signature campaign 
+    
+    How do we assign points for post uptime?
+    When we compute for uptime points we only have to consider the posts in the latest 
+    active batch since post count is carried over across batches.
+    So, for every signature check, we will:
+    1. Iterate over all the signature checks in the latest batch
+    2. For any given signature check with new posts,  check when was the last time 
+        that uptime points have been credited to it
+    3. Get that time and compute the difference with the current time and compute 
+        how many hours have elapsed since
+    4. Get that number of hours and multiply with `config.POINTS_POST_UPTIME`
+    """
     CATEGORY_CHOICES = (
         ('post_addition', 'Post addition'),
         ('post_deletion', 'Post deletion'),
@@ -412,6 +424,11 @@ class SignaturePoints(models.Model):
         related_name='points',
         on_delete=models.PROTECT
     )
+    signature_check = models.ForeignKey(
+        'SignatureCheck',
+        related_name='points',
+        on_delete=models.PROTECT
+    )
     posts_count = models.IntegerField()
     points = models.FloatField()
     timestamp = models.DateTimeField(default=timezone.now)
@@ -422,6 +439,9 @@ class SignaturePoints(models.Model):
             models.Index(fields=['timestamp'], name='timestamp'),
         ]
         verbose_name_plural = 'Signature points'
+
+    def __str__(self):
+        return str(self.id)
 
 
 class SignatureCheck(models.Model):
@@ -508,7 +528,8 @@ class SignatureCheck(models.Model):
                                                 # deleted posts have always had signature
                                                 # So, we report as new posts the posts with sig
                                                 # in previous batch minus the deleted posts
-                                                # Reason: Read the `Why carry over new posts count?` in model docs
+                                                # Reason: Read the `Why carry over new posts count?` in 
+                                                # this model's docs
                                                 reg_checks = latest_batch.regular_checks.all()
                                                 last_psts_wsig = [
                                                     x.new_posts for x in reg_checks]
@@ -577,7 +598,7 @@ class SignatureCheck(models.Model):
                             # If a previous inactive batch exists,
                             # carry over the posts with sig count from it and
                             # add set as new_posts for this check
-                            # Reason: Read the `Why carry over new posts count?` in model docs
+                            # Reason: Read the `Why carry over new posts count?` in this model's docs
                             if latest_batch:
                                 carry_over_posts = latest_batch.get_total_posts_with_sig(latest_only=False)
                                 self.new_posts += carry_over_posts
@@ -619,6 +640,7 @@ class SignatureCheck(models.Model):
                             SignatureCheck.objects.filter(
                                 id=self.id).update(initial=True)
                 # Assign points on the cumulative point system
+                # Post additions
                 actual_new_posts = self.new_posts - carry_over_posts
                 post_add_points = actual_new_posts * config.POINTS_NEW_POST
                 if post_add_points > 0:
@@ -626,18 +648,42 @@ class SignatureCheck(models.Model):
                         category='post_addition',
                         forum_profile=self.forum_profile,
                         uptime_batch=self.uptime_batch,
+                        signature_check_id=self.id,
                         posts_count=actual_new_posts,
                         points=post_add_points
                     )
                     sig_points.save()
+                # Post deletions
                 post_del_points = deleted_posts * config.POINTS_DELETED_POST
                 if post_del_points > 0:
                     sig_points = SignaturePoints(
                         category='post_deletion',
                         forum_profile=self.forum_profile,
                         uptime_batch=self.uptime_batch,
+                        signature_check_id=self.id,
                         posts_count=deleted_posts,
                         points=post_del_points
+                    )
+                    sig_points.save()
+                # Posts uptime
+                # Read more here: `How do we assign points for post uptime?` 
+                # in the docs of the SignaturePoints model
+                for check in self.uptime_batch.regular_checks.filter(new_posts__gt=0):
+                    latest_pts = SignaturePoints.objects.filter(signature_check_id=self.id)
+                    if latest_pts.last():
+                        latest_pts = latest_pts.last()
+                        time_diff = timezone.now() - latest_pts.timestamp
+                        hours = time_diff.total_seconds() / 3600
+                        points = hours * config.POINTS_POST_UPTIME
+                    else:
+                        points = 0
+                    sig_points = SignaturePoints(
+                        category='post_uptime',
+                        forum_profile=self.forum_profile,
+                        uptime_batch=self.uptime_batch,
+                        signature_check_id=check.id,
+                        posts_count=check.new_posts,
+                        points=points
                     )
                     sig_points.save()
 
