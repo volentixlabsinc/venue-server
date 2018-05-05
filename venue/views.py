@@ -262,7 +262,7 @@ def confirm_email(request):
     user_profile = UserProfile.objects.get(user_id=user_id)
     user_profile.email_confirmed = True
     user_profile.save()
-    return redirect('/#/?email_confirmed=1')
+    return redirect('%s/#/?email_confirmed=1' % settings.VENUE_FRONTEND)
 
 
 # ----------------------
@@ -647,7 +647,7 @@ def delete_account(request):
         if code:
             user_id, = hashids.decode(code)
             User.objects.filter(id=user_id).delete()
-            return redirect('/#/?account_deleted=1')
+            return redirect('%s/#/?account_deleted=1' % settings.VENUE_FRONTEND)
         else:
             return Response({'success': False})
 
@@ -705,7 +705,7 @@ def change_email(request):
             new_email = rtemp.retrieve(code)
             User.objects.filter(id=user_id).update(email=new_email)
             rtemp.remove(code)
-        return redirect('/#/settings/?updated_email=1')
+        return redirect('%s/#/settings/?updated_email=1' % settings.VENUE_FRONTEND)
 
 
 # ------------------------
