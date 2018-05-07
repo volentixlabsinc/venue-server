@@ -2,6 +2,7 @@ import os
 import decimal
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models import Sum
 from django.conf import settings
 from django.db import models
 from constance import config
@@ -70,6 +71,60 @@ class Language(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class SignaturePoints(models.Model):
+    """ Tally of points for the signature campaign 
+    
+    How do we assign points for post uptime?
+    When we compute for uptime points we only have to consider the posts in the latest 
+    active batch since post count is carried over across batches.
+    So, for every signature check, we will:
+    1. Iterate over all the signature checks in the latest batch
+    2. For any given signature check with new posts,  check when was the last time 
+        that uptime points have been credited to it
+    3. Get that time and compute the difference with the current time and compute 
+        how many hours have elapsed since
+    4. Get that number of hours and multiply with `config.POINTS_POST_UPTIME`
+    """
+    CATEGORY_CHOICES = (
+        ('post_addition', 'Post addition'),
+        ('post_deletion', 'Post deletion'),
+        ('post_uptime', 'Uptime')
+    )
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES,
+        default='uptime'
+    )
+    forum_profile = models.ForeignKey(
+        'ForumProfile',
+        related_name='points',
+        on_delete=models.PROTECT
+    )
+    uptime_batch = models.ForeignKey(
+        'UptimeBatch',
+        related_name='points',
+        on_delete=models.PROTECT
+    )
+    signature_check = models.ForeignKey(
+        'SignatureCheck',
+        related_name='points',
+        on_delete=models.PROTECT
+    )
+    posts_count = models.IntegerField()
+    points = models.DecimalField(max_digits=7, decimal_places=4)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['category'], name='category'),
+            models.Index(fields=['timestamp'], name='timestamp'),
+        ]
+        verbose_name_plural = 'Signature points'
+
+    def __str__(self):
+        return str(self.id)
 
 
 class UserProfile(models.Model):
@@ -198,6 +253,31 @@ class UserProfile(models.Model):
         tokens = (total_points * config.VTX_AVAILABLE) / 10000
         return round(tokens, 2)
 
+    @property
+    def total_post_points(self):
+        pts = 0
+        if self.forum_profiles.count():
+            pts = sum([x.total_post_points
+                       for x in self.forum_profiles.all()])
+        return round(pts, 4)
+
+    @property
+    def total_uptime_points(self):
+        pts = 0
+        if self.forum_profiles.count():
+            pts = sum([x.total_uptime_points
+                       for x in self.forum_profiles.all()])
+        return round(pts, 4)
+
+    @property
+    def percent_contribution(self):
+        total_points = self.total_post_points + self.total_uptime_points
+        grand_total = SignaturePoints.objects.aggregate(
+            total=Sum('points')
+        )['total']
+        pct_contrib = (total_points / float(grand_total)) * 100
+        return round(pct_contrib, 2)
+
 
 class Ranking(models.Model):
     """ Record of the daily rankings """
@@ -229,6 +309,23 @@ class ForumProfile(models.Model):
     date_added = models.DateTimeField(default=timezone.now)
     date_updated = models.DateTimeField(default=timezone.now)
 
+    class Meta:
+        unique_together = ('forum', 'forum_user_id', 'verified')
+
+    def __str__(self):
+        return '%s @ %s' % (self.forum_user_id, self.forum.name)
+
+    def save(self, *args, **kwargs):
+        self.date_updated = timezone.now()
+        super(ForumProfile, self).save(*args, **kwargs)
+        if not self.verification_code:
+            hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
+            forum_profile_id, forum_user_id = self.id, self.forum_user_id
+            verification_code = hashids.encode(
+                forum_profile_id, int(forum_user_id))
+            ForumProfile.objects.filter(id=self.id).update(
+                verification_code=verification_code)
+
     def get_total_posts(self, actual=True):
         value = 0
         latest_batch = self.uptime_batches.last()
@@ -251,22 +348,21 @@ class ForumProfile(models.Model):
                          for x in self.uptime_batches.all()])
         return value
 
-    def __str__(self):
-        return '%s @ %s' % (self.forum_user_id, self.forum.name)
+    @property
+    def total_post_points(self):
+        pts = 0
+        if self.uptime_batches.count():
+            pts = sum([x.total_post_points
+                       for x in self.uptime_batches.all()])
+        return round(pts, 4)
 
-    def save(self, *args, **kwargs):
-        self.date_updated = timezone.now()
-        super(ForumProfile, self).save(*args, **kwargs)
-        if not self.verification_code:
-            hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
-            forum_profile_id, forum_user_id = self.id, self.forum_user_id
-            verification_code = hashids.encode(
-                forum_profile_id, int(forum_user_id))
-            ForumProfile.objects.filter(id=self.id).update(
-                verification_code=verification_code)
-
-    class Meta:
-        unique_together = ('forum', 'forum_user_id', 'verified')
+    @property
+    def total_uptime_points(self):
+        pts = 0
+        if self.uptime_batches.count():
+            pts = sum([x.total_uptime_points
+                       for x in self.uptime_batches.all()])
+        return round(pts, 4)
 
 
 class GlobalStats(models.Model):
@@ -389,59 +485,29 @@ class UptimeBatch(models.Model):
         total_points = post_points + uptime_points + influence_points
         return total_points
 
+    @property
+    def total_post_points(self):
+        post_addition_pts = self.points.filter(category='post_addition').aggregate(
+            total=Sum('points')
+        )['total']
+        if not post_addition_pts:
+            post_addition_pts = 0
+        post_deletion_pts = self.points.filter(category='post_deletion').aggregate(
+            total=Sum('points')
+        )['total']
+        if not post_deletion_pts:
+            post_deletion_pts = 0
+        post_pts = post_addition_pts + post_deletion_pts
+        return round(float(post_pts), 4)
 
-class SignaturePoints(models.Model):
-    """ Tally of points for the signature campaign 
-    
-    How do we assign points for post uptime?
-    When we compute for uptime points we only have to consider the posts in the latest 
-    active batch since post count is carried over across batches.
-    So, for every signature check, we will:
-    1. Iterate over all the signature checks in the latest batch
-    2. For any given signature check with new posts,  check when was the last time 
-        that uptime points have been credited to it
-    3. Get that time and compute the difference with the current time and compute 
-        how many hours have elapsed since
-    4. Get that number of hours and multiply with `config.POINTS_POST_UPTIME`
-    """
-    CATEGORY_CHOICES = (
-        ('post_addition', 'Post addition'),
-        ('post_deletion', 'Post deletion'),
-        ('post_uptime', 'Uptime')
-    )
-    category = models.CharField(
-        max_length=30,
-        choices=CATEGORY_CHOICES,
-        default='uptime'
-    )
-    forum_profile = models.ForeignKey(
-        ForumProfile,
-        related_name='points',
-        on_delete=models.PROTECT
-    )
-    uptime_batch = models.ForeignKey(
-        UptimeBatch,
-        related_name='points',
-        on_delete=models.PROTECT
-    )
-    signature_check = models.ForeignKey(
-        'SignatureCheck',
-        related_name='points',
-        on_delete=models.PROTECT
-    )
-    posts_count = models.IntegerField()
-    points = models.FloatField()
-    timestamp = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        indexes = [
-            models.Index(fields=['category'], name='category'),
-            models.Index(fields=['timestamp'], name='timestamp'),
-        ]
-        verbose_name_plural = 'Signature points'
-
-    def __str__(self):
-        return str(self.id)
+    @property
+    def total_uptime_points(self):
+        post_uptime_pts = self.points.filter(category='post_uptime').aggregate(
+            total=Sum('points')
+        )['total']
+        if not post_uptime_pts:
+            post_uptime_pts = 0
+        return round(float(post_uptime_pts), 4)
 
 
 class SignatureCheck(models.Model):
@@ -669,7 +735,7 @@ class SignatureCheck(models.Model):
                 # Read more here: `How do we assign points for post uptime?` 
                 # in the docs of the SignaturePoints model
                 for check in self.uptime_batch.regular_checks.filter(new_posts__gt=0):
-                    latest_pts = SignaturePoints.objects.filter(signature_check_id=self.id)
+                    latest_pts = SignaturePoints.objects.filter(signature_check_id=check.id)
                     if latest_pts.last():
                         latest_pts = latest_pts.last()
                         time_diff = timezone.now() - latest_pts.timestamp
