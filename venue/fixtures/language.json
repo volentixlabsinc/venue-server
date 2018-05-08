@@ -1,0 +1,1 @@
+[{"model": "venue.language", "pk": 1, "fields": {"name": "English", "code": "en", "active": true}}, {"model": "venue.language", "pk": 3, "fields": {"name": "Japanese", "code": "ja", "active": true}}, {"model": "venue.language", "pk": 4, "fields": {"name": "Filipino", "code": "tl", "active": true}}]

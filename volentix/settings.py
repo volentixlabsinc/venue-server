@@ -118,7 +118,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'volentix.wsgi.application'
+WSGI_APPLICATION = 'volentix.wsgi_django.application'
 
 
 # Database
