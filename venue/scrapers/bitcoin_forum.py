@@ -210,9 +210,7 @@ def verify_and_scrape(forum_profile_id,
     scraper.get_profile(forum_user_id)
     username = scraper.get_username()
     verified = scraper.check_signature()
-    posts = 0
-    if verified:
-        posts = scraper.get_total_posts()
+    posts = scraper.get_total_posts()
     data = (scraper.status_code, verified, posts, username)
     return data
 

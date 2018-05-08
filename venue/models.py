@@ -185,7 +185,7 @@ class UserPostStats(models.Model):
             try:
                 tdiff = self.timestamp - previous.uptime_stats.timestamp
                 tdiff_minutes = tdiff.total_seconds() / 60
-                if previous.is_signature_valid:
+                if self.is_signature_valid:
                     valid_sig_minutes = previous.uptime_stats.valid_sig_minutes
                     valid_sig_minutes += tdiff_minutes
                 else:

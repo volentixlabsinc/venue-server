@@ -1,23 +1,14 @@
 from __future__ import absolute_import, unicode_literals
-import traceback
-from operator import itemgetter
-from datetime import timedelta
 from django.template.loader import get_template
-from django.utils import timezone
 from django.conf import settings
-from celery import shared_task, chain, group
+from celery import shared_task
 from celery.signals import task_failure
 from postmarker.core import PostmarkClient
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
 from constance import config
-import pandas as pd
 import rollbar
-# from .models import (UserProfile, UptimeBatch, GlobalStats, SignatureCheck,
-#                     PointsCalculation, DataUpdateTask, ScrapingError,
-#                     ForumSite, ForumProfile, Signature, Ranking)
-from .models import (ForumSite, Signature, ForumProfile, UserPostStats, 
-                     PostUptimeStats)
+from .models import (ForumSite, Signature, ForumProfile, UserPostStats)
 
 
 @task_failure.connect
