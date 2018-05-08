@@ -13,9 +13,9 @@ from ws4redis.redis_store import RedisMessage
 from constance import config
 import pandas as pd
 import rollbar
-from .models import (UserProfile, UptimeBatch, GlobalStats, SignatureCheck,
-                     PointsCalculation, DataUpdateTask, ScrapingError,
-                     ForumSite, ForumProfile, Signature, Ranking)
+# from .models import (UserProfile, UptimeBatch, GlobalStats, SignatureCheck,
+#                     PointsCalculation, DataUpdateTask, ScrapingError,
+#                     ForumSite, ForumProfile, Signature, Ranking)
 
 
 @task_failure.connect

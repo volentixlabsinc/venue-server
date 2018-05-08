@@ -15,7 +15,7 @@ services:
             - '.:/code'
         stdin_open: true
         tty: true
-        # entrypoint: '/entrypoint.sh'
+        entrypoint: '/entrypoint.sh'
         command: supervisord --nodaemon
     redis:
         image: 'bitnami/redis:latest'
@@ -28,6 +28,6 @@ services:
         expose:
             - '5432'
         environment:
-            POSTGRES_DB: 'volentix'
+            POSTGRES_DB: 'volentix_v2'
             POSTGRES_USER: 'volentix'
             POSTGRES_PASSWORD : 'BxKkpaihl67B'

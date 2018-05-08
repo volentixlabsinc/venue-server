@@ -127,7 +127,7 @@ WSGI_APPLICATION = 'volentix.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'volentix',
+        'NAME': 'volentix_v2',
         'USER': 'volentix',
         'PASSWORD': 'BxKkpaihl67B',
         'HOST': 'postgres'

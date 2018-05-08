@@ -1,8 +1,6 @@
 from venue.models import (
     ForumSite, Signature, UserProfile, ForumProfile,
-    UptimeBatch, SignatureCheck, PointsCalculation, Language,
-    GlobalStats, ForumUserRank, DataUpdateTask, ScrapingError,
-    Ranking, Notification, SignaturePoints
+    Language, ForumUserRank, Notification
 )
 from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
@@ -43,105 +41,6 @@ class LanguageAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Language, LanguageAdmin)
-
-
-class RankingAdmin(admin.ModelAdmin):
-    list_display = ['username', 'rank', 'ranking_date']
-
-    def username(self, obj):
-        return obj.user_profile.user.username
-
-
-admin.site.register(Ranking, RankingAdmin)
-
-
-class ScrapingErrorAdmin(admin.ModelAdmin):
-    list_display = ['error_type', 'forum_profile', 'date_created']
-    
-
-admin.site.register(ScrapingError, ScrapingErrorAdmin)
-
-
-class UptimeBatchAdmin(admin.ModelAdmin):
-    list_display = [
-        'user', 'forum_profile', 'batch_number', 'total_posts',
-        'total_posts_with_sig', 'total_days', 'post_points',
-        'post_days_points', 'influence_points', 'active',
-        'date_started', 'date_ended', 'reason_closed', 'num_deleted_posts'
-    ]
-    list_filter = [FieldForumProfileFilter, 'forum_profile__user_profile']
-    
-    def user(self, obj):
-        return obj.forum_profile.user_profile.user.username
-        
-    def forum_profile(self, obj):
-        return obj.forum_profile
-        
-    def batch_number(self, obj):
-        return obj.get_batch_number()
-        
-    def total_posts(self, obj):
-        return obj.get_total_posts()
-        
-    def total_posts_with_sig(self, obj):
-        return obj.get_total_posts_with_sig()
-        
-    def total_days(self, obj):
-        return obj.get_total_days()
-        
-    def post_points(self, obj):
-        return obj.get_post_points()
-        
-    def post_days_points(self, obj):
-        return obj.get_post_days_points()
-        
-    def influence_points(self, obj):
-        return obj.get_influence_points()
-    
-
-admin.site.register(UptimeBatch, UptimeBatchAdmin)
-
-
-class PointsCalculationAdmin(admin.ModelAdmin):
-    list_display = ['id', 'uptime_batch', 'forum_profile', 'user', 'signature_check', 'post_points', 
-        'post_days_points', 'influence_points', 'date_calculated']
-    list_filter = ['uptime_batch__forum_profile', 'uptime_batch__forum_profile__user_profile']
-        
-    def user(self, obj):
-        return obj.uptime_batch.forum_profile.user_profile.user.username
-    
-    def forum_profile(self, obj):
-        return obj.uptime_batch.forum_profile
-        
-
-admin.site.register(PointsCalculation, PointsCalculationAdmin)
-
-
-class GlobalStatsAdmin(admin.ModelAdmin):
-    list_display = [
-        'total_posts', 'total_posts_with_sig', 'total_days',
-        'date_updated'
-    ]
-    
-
-admin.site.register(GlobalStats, GlobalStatsAdmin)
-
-
-class SignatureCheckAdmin(admin.ModelAdmin):
-    list_display = [
-        'id', 'user', 'forum_profile', 'uptime_batch', 'total_posts',
-        'new_posts', 'signature_found', 'date_checked'
-    ]
-    list_filter = [FieldForumProfileFilter, 'forum_profile__user_profile']
-
-    def user(self, obj):
-        return obj.uptime_batch.forum_profile.user_profile.user.username
-
-    def forum_profile(self, obj):
-        return obj.uptime_batch.forum_profile
-
-
-admin.site.register(SignatureCheck, SignatureCheckAdmin)
 
 
 class UserProfileAdmin(admin.ModelAdmin):
@@ -220,34 +119,8 @@ class ForumProfileAdmin(admin.ModelAdmin):
 admin.site.register(ForumProfile, ForumProfileAdmin)
 
 
-class DataUpdateTaskAdmin(admin.ModelAdmin):
-    list_display = ['task_id', 'date_started', 'success', 'date_completed', 'errors_count']
-
-    def errors_count(self, obj):
-        return obj.scraping_errors.all().count()
-
-
-admin.site.register(DataUpdateTask, DataUpdateTaskAdmin)
-
-
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ['text', 'dismissible', 'active', 'date_created']
 
 
 admin.site.register(Notification, NotificationAdmin)
-
-
-class SignaturePointsAdmin(admin.ModelAdmin):
-    list_display = [
-        'user', 'forum_profile', 'signature_check', 'posts_count',
-        'category', 'points'
-    ]
-
-    def user(self, obj):
-        return obj.forum_profile.user_profile
-    
-    def posts_count(self, obj):
-        return obj.signature_check.posts_count
-
-
-admin.site.register(SignaturePoints, SignaturePointsAdmin)
