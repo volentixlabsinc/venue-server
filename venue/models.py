@@ -1,6 +1,5 @@
 import os
 from django.contrib.auth.models import User
-from .tasks import compute_ranking
 from django.utils import timezone
 from django.conf import settings
 from django.db import models
@@ -78,6 +77,7 @@ class UserProfile(models.Model):
     otp_secret = models.TextField(blank=True)
     enabled_2fa = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
+    rank = models.IntegerField(default=0)
 
     def __str__(self):
         return self.user.username
@@ -154,10 +154,6 @@ class PostUptimeStats(models.Model):
     class Meta:
         verbose_name_plural = 'Post uptime stats'
 
-    def save(self, *args, **kwargs):
-        super(PostUptimeStats, self).save(*args, **kwargs)
-        compute_ranking.delay()
-
 
 class UserPostStats(models.Model):
     user_profile = models.ForeignKey(
@@ -192,12 +188,12 @@ class UserPostStats(models.Model):
             if self.is_signature_valid:
                 valid_sig_seconds = previous.uptime_stats.valid_sig_seconds
                 valid_sig_seconds += tdiff_seconds
-                # Copy over the invalid sig minutes
+                # Copy over the invalid sig seconds
                 invalid_sig_seconds = previous.uptime_stats.invalid_sig_seconds
             else:
                 invalid_sig_seconds = previous.uptime_stats.invalid_sig_seconds
                 invalid_sig_seconds += tdiff_seconds
-                # Copy over the valid sig minutes
+                # Copy over the valid sig seconds
                 valid_sig_seconds = previous.uptime_stats.valid_sig_seconds
         uptime_stats = PostUptimeStats(
             user_post_stats_id=self.id,

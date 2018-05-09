@@ -9,8 +9,8 @@ from ws4redis.redis_store import RedisMessage
 from operator import itemgetter
 from constance import config
 import rollbar
-from .models import (ForumSite, Signature, UserProfile, ForumProfile,
-                     UserPostStats)
+from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
+                          UserPostStats)
 
 
 @task_failure.connect
@@ -165,6 +165,11 @@ def compute_ranking():
         key=itemgetter('total_points'),
         reverse=True
     )
+    for rank, user in enumerate(user_points, 1):
+        # Update user's ranking
+        UserProfile.objects.filter(
+            id=user['user_profile_id']
+        ).update(rank=rank)
     return user_points
 
 
