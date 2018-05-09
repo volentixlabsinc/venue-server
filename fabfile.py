@@ -54,4 +54,4 @@ def sync():
         ssh_opts='-o stricthostkeychecking=no'
     )
     # Run the app
-    run_app()
+    # run_app()
