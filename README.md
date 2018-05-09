@@ -21,6 +21,13 @@
     3. Run the app with `npm run dev`
     4. Load the app at this URL: http://localhost:8080
 
+#### Note: In certain cases, you might need to recreate the docker containers from scratch (which will also wipe your DB clean). If that is needed, this is how you do that:
+```
+On the `venue-server` base directory, run these commands in sequence:
+1. `docker-compose down`
+2. `docker-compose build web`
+3. `docker-compose up`
+```
 
 ### Deployment to remote server
 

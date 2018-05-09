@@ -221,8 +221,10 @@ if not os.path.exists(log_folder):
 
 if DEBUG:
     VENUE_DOMAIN = 'http://localhost:8000'
+    VENUE_FRONTEND = 'http://localhost:8080'
 else:
     VENUE_DOMAIN = 'https://venue.volentix.com'
+    VENUE_FRONTEND = 'https://venue.volentix.com'
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
