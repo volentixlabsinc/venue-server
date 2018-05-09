@@ -1,6 +1,6 @@
 import os
-from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
+from .tasks import compute_ranking
 from django.utils import timezone
 from django.conf import settings
 from django.db import models
@@ -141,10 +141,11 @@ class ForumProfile(models.Model):
 class PostUptimeStats(models.Model):
     user_post_stats = models.OneToOneField(
         'UserPostStats',
-        related_name='uptime_stats'
+        related_name='uptime_stats',
+        on_delete=models.PROTECT
     )
-    valid_sig_minutes = models.FloatField()
-    invalid_sig_minutes = models.FloatField()
+    valid_sig_seconds = models.IntegerField()
+    invalid_sig_seconds = models.IntegerField()
     timestamp = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
@@ -152,6 +153,10 @@ class PostUptimeStats(models.Model):
 
     class Meta:
         verbose_name_plural = 'Post uptime stats'
+
+    def save(self, *args, **kwargs):
+        super(PostUptimeStats, self).save(*args, **kwargs)
+        compute_ranking.delay()
 
 
 class UserPostStats(models.Model):
@@ -179,24 +184,25 @@ class UserPostStats(models.Model):
         # Save the current post stats
         super(UserPostStats, self).save(*args, **kwargs)
         # Process the recording of uptime stats
-        valid_sig_minutes = 0
-        invalid_sig_minutes = 0
+        valid_sig_seconds = 0
+        invalid_sig_seconds = 0
         if previous:
-            try:
-                tdiff = self.timestamp - previous.uptime_stats.timestamp
-                tdiff_minutes = tdiff.total_seconds() / 60
-                if self.is_signature_valid:
-                    valid_sig_minutes = previous.uptime_stats.valid_sig_minutes
-                    valid_sig_minutes += tdiff_minutes
-                else:
-                    invalid_sig_minutes = previous.uptime_stats.invalid_sig_minutes
-                    invalid_sig_minutes += tdiff_minutes
-            except ObjectDoesNotExist:
-                pass
+            tdiff = self.timestamp - previous.uptime_stats.timestamp
+            tdiff_seconds = tdiff.total_seconds()
+            if self.is_signature_valid:
+                valid_sig_seconds = previous.uptime_stats.valid_sig_seconds
+                valid_sig_seconds += tdiff_seconds
+                # Copy over the invalid sig minutes
+                invalid_sig_seconds = previous.uptime_stats.invalid_sig_seconds
+            else:
+                invalid_sig_seconds = previous.uptime_stats.invalid_sig_seconds
+                invalid_sig_seconds += tdiff_seconds
+                # Copy over the valid sig minutes
+                valid_sig_seconds = previous.uptime_stats.valid_sig_seconds
         uptime_stats = PostUptimeStats(
             user_post_stats_id=self.id,
-            valid_sig_minutes=valid_sig_minutes,
-            invalid_sig_minutes=invalid_sig_minutes
+            valid_sig_seconds=valid_sig_seconds,
+            invalid_sig_seconds=invalid_sig_seconds
         )
         uptime_stats.save()
 

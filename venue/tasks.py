@@ -6,9 +6,11 @@ from celery.signals import task_failure
 from postmarker.core import PostmarkClient
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
+from operator import itemgetter
 from constance import config
 import rollbar
-from .models import (ForumSite, Signature, ForumProfile, UserPostStats)
+from .models import (ForumSite, Signature, UserProfile, ForumProfile,
+                     UserPostStats)
 
 
 @task_failure.connect
@@ -134,6 +136,36 @@ def update_data(forum_profile_id=None):
     # Send scraping tasks to the queue
     for profile in forum_profiles:
         scrape_forum_profile.delay(profile.id)
+
+
+@shared_task
+def compute_ranking():
+    users = UserProfile.objects.all()
+    user_points = []
+    for user in users:
+        points = {
+            'user_profile_id': int(user.id),
+            'total_points': 0
+        }
+        for forum_profile in user.forum_profiles.filter(verified=True):
+            # Compute post points
+            post_stats = forum_profile.post_stats.last()
+            post_points = post_stats.num_posts
+            post_points *= config.POST_POINTS_MULTIPLIER
+            points['total_points'] += round(post_points, 4)
+            # Compute uptime points
+            uptime_stats = post_stats.uptime_stats
+            uptime_points = (uptime_stats.valid_sig_seconds / 3600)
+            uptime_points *= config.UPTIME_POINTS_MULTIPLIER
+            points['total_points'] += round(uptime_points, 4)
+        user_points.append(points)
+    # Sort the points based on the total
+    user_points = sorted(
+        user_points,
+        key=itemgetter('total_points'),
+        reverse=True
+    )
+    return user_points
 
 
 # -----------------------------------

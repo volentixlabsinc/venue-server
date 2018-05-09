@@ -128,7 +128,7 @@ admin.site.register(Notification, NotificationAdmin)
 
 class UserPostStatsAdmin(admin.ModelAdmin):
     list_display = [
-        'user_profile', 'forum_profile', 'num_posts',
+        'id', 'user_profile', 'forum_profile', 'num_posts',
         'is_signature_valid', 'timestamp'
     ]
 
@@ -138,8 +138,8 @@ admin.site.register(UserPostStats, UserPostStatsAdmin)
 
 class PostUptimeStatsAdmin(admin.ModelAdmin):
     list_display = [
-        'user_post_stats', 'valid_sig_minutes',
-        'invalid_sig_minutes', 'timestamp'
+        'user_post_stats', 'valid_sig_seconds',
+        'invalid_sig_seconds', 'timestamp'
     ]
 
 
