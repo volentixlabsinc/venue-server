@@ -1,0 +1,18 @@
+[
+  {
+    "model": "venue.notification",
+    "pk": 2,
+    "fields": {
+      "code": "2fA_notification",
+      "text": "Secure your account with two-factor authentication.",
+      "action_text": "Enable it now.",
+      "action_link": "/#/settings/?action=enable_2fa",
+      "variant": "primary",
+      "dismissible": true,
+      "active": true,
+      "date_created": "2018-03-15T12:13:11Z",
+      "created_by": 1,
+      "dismissed_by": []
+    }
+  }
+]

@@ -1,12 +1,10 @@
 import os
-import decimal
 from django.contrib.auth.models import User
+from .tasks import compute_ranking
 from django.utils import timezone
 from django.conf import settings
 from django.db import models
-from constance import config
 from hashids import Hashids
-import pandas as pd
 
 
 class ForumSite(models.Model):
@@ -81,6 +79,9 @@ class UserProfile(models.Model):
     enabled_2fa = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.user.username
+
     @property
     def with_forum_profile(self):
         if self.forum_profiles.count() > 0:
@@ -88,125 +89,14 @@ class UserProfile(models.Model):
         else:
             return False
 
-    def __str__(self):
-        return self.user.username
-
     def get_daily_total_posts(self, date):
-        value = 0
-        checks = SignatureCheck.objects.filter(
-            forum_profile__user_profile_id=self.id,
-            date_checked__date=date)
-        if checks.exists():
-            data = [{'id': x.id, 'profile': x.forum_profile.id,
-                     'posts': x.total_posts} for x in checks]
-            df = pd.DataFrame(data)
-            df = df.groupby('profile').agg({'posts': 'max'})
-            value = int(df['posts'].sum())
-        return value
+        pass
 
     def get_daily_new_posts(self, date):
-        value = 0
-        checks = SignatureCheck.objects.filter(
-            forum_profile__user_profile_id=self.id,
-            date_checked__date=date, new_posts__gt=0).exclude(initial=True)
-        if checks.exists():
-            value = sum([x.get_new_posts() for x in checks])
-        return value
-
-    def get_total_posts(self):
-        value = 0
-        if self.get_total_posts_with_sig():
-            total_per_forum = []
-            for site in self.forum_profiles.filter(verified=True):
-                if site.uptime_batches.count():
-                    for batch in site.uptime_batches.all():
-                        total_per_forum.append(batch.get_total_posts())
-            value = sum(total_per_forum)
-        return value
+        pass
 
     def get_total_posts_with_sig(self, latest_only=True):
-        total_per_forum = []
-        for site in self.forum_profiles.filter(verified=True):
-            if site.uptime_batches.count():
-                posts_with_sig = site.get_total_posts_with_sig(
-                    latest_only=latest_only)
-                total_per_forum.append(posts_with_sig)
-        return sum(total_per_forum)
-
-    def get_total_days(self):
-        value = 0
-        if self.get_total_posts_with_sig(latest_only=True):
-            total_per_forum = []
-            for site in self.forum_profiles.filter(verified=True):
-                if site.uptime_batches.count():
-                    for batch in site.uptime_batches.all():
-                        total_per_forum.append(batch.get_total_days())
-            value = sum(total_per_forum)
-        return value
-
-    def get_post_points(self):
-        value = 0
-        for site in self.forum_profiles.filter(verified=True):
-            if site.uptime_batches.count():
-                latest_batch = site.uptime_batches.last()
-                # for batch in site.uptime_batches.all():
-                value += latest_batch.get_post_points()
-        return value
-
-    def get_post_days_points(self):
-        value = 0
-        for site in self.forum_profiles.filter(verified=True):
-            if site.uptime_batches.count():
-                for batch in site.uptime_batches.all():
-                    value += batch.get_post_days_points()
-        return value
-
-    def get_influence_points(self):
-        value = 0
-        for site in self.forum_profiles.filter(verified=True):
-            if site.uptime_batches.count():
-                latest_batch = site.uptime_batches.last()
-                # for batch in site.uptime_batches.all():
-                value += latest_batch.get_influence_points()
-        return value
-
-    def get_total_points(self, date=None):
-        value = 0
-        if self.get_total_posts_with_sig():
-            total_per_forum = []
-            for site in self.forum_profiles.filter(verified=True):
-                for batch in site.uptime_batches.all():
-                    total_points = batch.get_total_points(date=date)
-                    total_per_forum.append(total_points)
-            value = sum(total_per_forum)
-        return value
-
-    def get_ranking(self, date=None):
-        rank = None
-        if date:
-            ranking_check = self.rankings.filter(ranking_date__date=date)
-            if ranking_check.exists():
-                rank = ranking_check.last().rank
-        else:
-            latest_ranking = self.rankings.last()
-            if latest_ranking:
-                rank = latest_ranking.rank
-        return rank
-
-    def get_total_tokens(self):
-        total_points = self.get_total_points()
-        tokens = (total_points * config.VTX_AVAILABLE) / 10000
-        return round(tokens, 2)
-
-
-class Ranking(models.Model):
-    """ Record of the daily rankings """
-    user_profile = models.ForeignKey(UserProfile, related_name='rankings')
-    ranking_date = models.DateTimeField(default=timezone.now)
-    rank = models.IntegerField()
-
-    def __str__(self):
-        return '%s => #%s' % (self.user_profile.user.username, self.rank)
+        pass
 
 
 class ForumProfile(models.Model):
@@ -225,31 +115,13 @@ class ForumProfile(models.Model):
     verification_code = models.CharField(max_length=20, blank=True)
     active = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
+    initial_posts_count = models.IntegerField(default=0)
     date_verified = models.DateTimeField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
     date_updated = models.DateTimeField(default=timezone.now)
 
-    def get_total_posts(self, actual=True):
-        value = 0
-        latest_batch = self.uptime_batches.last()
-        if latest_batch:
-            value = latest_batch.get_total_posts(actual=actual)
-        return value
-
-    def get_total_posts_with_sig(self, latest_only=True):
-        value = 0
-        if self.uptime_batches.count():
-            latest_batch = self.uptime_batches.last()
-            value = latest_batch.get_total_posts_with_sig(
-                latest_only=latest_only)
-        return value
-
-    def get_total_days(self):
-        value = 0
-        if self.uptime_batches.count():
-            value = sum([x.get_total_days()
-                         for x in self.uptime_batches.all()])
-        return value
+    class Meta:
+        unique_together = ('forum', 'forum_user_id', 'verified')
 
     def __str__(self):
         return '%s @ %s' % (self.forum_user_id, self.forum.name)
@@ -265,400 +137,74 @@ class ForumProfile(models.Model):
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
 
-    class Meta:
-        unique_together = ('forum', 'forum_user_id', 'verified')
 
-
-class GlobalStats(models.Model):
-    """ Records the sitewide or global stats """
-    total_posts = models.IntegerField()
-    total_posts_with_sig = models.IntegerField()
-    total_days = models.DecimalField(max_digits=12, decimal_places=4)
-    date_updated = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        verbose_name_plural = 'Global stats'
-
-
-class UptimeBatch(models.Model):
-    """ Grouping of calculation results into periods of continuous uptime """
-    forum_profile = models.ForeignKey(
-        ForumProfile, related_name='uptime_batches')
-    date_started = models.DateTimeField(default=timezone.now)
-    active = models.BooleanField(default=True)
-    date_ended = models.DateTimeField(null=True, blank=True)
-    reason_closed = models.CharField(max_length=100, blank=True)
-    num_deleted_posts = models.IntegerField(default=0)
-
-    class Meta:
-        verbose_name_plural = 'Uptime batches'
+class PostUptimeStats(models.Model):
+    user_post_stats = models.OneToOneField(
+        'UserPostStats',
+        related_name='uptime_stats',
+        on_delete=models.PROTECT
+    )
+    valid_sig_seconds = models.IntegerField()
+    invalid_sig_seconds = models.IntegerField()
+    timestamp = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return str(self.id)
 
-    def get_batch_number(self):
-        batch_ids = self.forum_profile.uptime_batches.all().values_list('id', flat=True)
-        batch_ids = list(batch_ids)
-        return sorted(batch_ids).index(self.id) + 1
+    class Meta:
+        verbose_name_plural = 'Post uptime stats'
 
-    def get_total_posts(self, actual=False):
-        value = 0
-        latest_batch = self.forum_profile.uptime_batches.last()
-        if latest_batch:
-            if actual:
-                latest_check = latest_batch.regular_checks.last()
-                if latest_check:
-                    value = latest_check.total_posts
+    def save(self, *args, **kwargs):
+        super(PostUptimeStats, self).save(*args, **kwargs)
+        compute_ranking.delay()
+
+
+class UserPostStats(models.Model):
+    user_profile = models.ForeignKey(
+        UserProfile,
+        related_name='post_stats'
+    )
+    forum_profile = models.ForeignKey(
+        ForumProfile,
+        related_name='post_stats'
+    )
+    num_posts = models.IntegerField()
+    is_signature_valid = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return str(self.id)
+
+    class Meta:
+        verbose_name_plural = 'User post stats'
+
+    def save(self, *args, **kwargs):
+        # Take the previous first
+        previous = self.forum_profile.post_stats.last()
+        # Save the current post stats
+        super(UserPostStats, self).save(*args, **kwargs)
+        # Process the recording of uptime stats
+        valid_sig_seconds = 0
+        invalid_sig_seconds = 0
+        if previous:
+            tdiff = self.timestamp - previous.uptime_stats.timestamp
+            tdiff_seconds = tdiff.total_seconds()
+            if self.is_signature_valid:
+                valid_sig_seconds = previous.uptime_stats.valid_sig_seconds
+                valid_sig_seconds += tdiff_seconds
+                # Copy over the invalid sig minutes
+                invalid_sig_seconds = previous.uptime_stats.invalid_sig_seconds
             else:
-                if self.forum_profile.get_total_posts_with_sig():
-                    if latest_batch.id == self.id:
-                        latest_check = latest_batch.regular_checks.last()
-                        value = latest_check.total_posts
-        return value
-
-    def get_total_posts_with_sig(self, latest_only=True):
-        value = 0
-        latest_batch = self.forum_profile.uptime_batches.last()
-        if latest_batch:
-            if latest_only:
-                if self.id == latest_batch.id:
-                    if self.regular_checks.count() > 0:
-                        value = sum(
-                            [x.new_posts for x in self.regular_checks.all()])
-            else:
-                for check in self.regular_checks.all():
-                    value += check.new_posts
-        return value
-
-    def get_total_days(self):
-        value = 0
-        if self.get_total_posts_with_sig(latest_only=False):
-            if self.regular_checks.count() > 1:
-                earliest_check = self.regular_checks.filter(
-                    signature_found=True, new_posts__gt=0).first()
-                if earliest_check:
-                    latest_check = self.regular_checks.filter(
-                        signature_found=True).last()
-                    earliest_check_date = earliest_check.date_checked
-                    latest_check_date = latest_check.date_checked
-                    tdiff = latest_check_date - earliest_check_date
-                    days = tdiff.total_seconds() / 86400  # converts total seconds to days
-                    value = round(days, 4)
-        return value
-
-    def get_post_points(self):
-        pts = 0
-        try:
-            latest_gs = GlobalStats.objects.last()
-            pts = decimal.Decimal(self.get_total_posts_with_sig() * 6000)
-            pts /= latest_gs.total_posts_with_sig
-        except (decimal.InvalidOperation, decimal.DivisionByZero, AttributeError):
-            pass
-        return round(pts, 4)
-
-    def get_post_days_points(self):
-        pts = 0
-        try:
-            latest_gs = GlobalStats.objects.last()
-            pts = decimal.Decimal(self.get_total_days() * 3800)
-            pts /= latest_gs.total_days
-        except (decimal.InvalidOperation, decimal.DivisionByZero, AttributeError):
-            pass
-        return round(pts, 4)
-
-    def get_influence_points(self):
-        pts = 0
-        errors = (
-            decimal.InvalidOperation,
-            decimal.DivisionByZero,
-            AttributeError
+                invalid_sig_seconds = previous.uptime_stats.invalid_sig_seconds
+                invalid_sig_seconds += tdiff_seconds
+                # Copy over the valid sig minutes
+                valid_sig_seconds = previous.uptime_stats.valid_sig_seconds
+        uptime_stats = PostUptimeStats(
+            user_post_stats_id=self.id,
+            valid_sig_seconds=valid_sig_seconds,
+            invalid_sig_seconds=invalid_sig_seconds
         )
-        if self.get_total_posts():
-            try:
-                latest_gs = GlobalStats.objects.last()
-                pts = decimal.Decimal(self.get_total_posts() * 200)
-                pts /= latest_gs.total_posts
-            except errors:
-                pass
-        return round(pts, 4)
-
-    def get_total_points(self, date=None):
-        post_points = self.get_post_points()
-        uptime_points = self.get_post_days_points()
-        influence_points = self.get_influence_points()
-        total_points = post_points + uptime_points + influence_points
-        return total_points
-
-
-class SignatureCheck(models.Model):
-    """ Results of regular scraping from forum profile pages 
-    
-    The scraping only gets the total posts in a forum profile and does not
-    provide the number of new posts for each check. That number has to be
-    determined by subtracting the total posts from the last signature check
-    from the total posts of the current check.
-
-    However, when a new batch is created by a signature check (either because
-    of post deletion or removal of signature), the number of new posts has to be
-    computed differently. In such a scenario, the number of new posts from the
-    last check of the previous batch has to be carried over to the current check.
-    In the case of post deletion, an additional step has to be done. The number
-    of deleted posts has to be subtracted from the carried over number of new posts.
-    
-    Why carry over new posts count?
-    It's a design decision for simplicity. We want the latest uptime batch
-    to contain the actual running count of new posts. The idea is that when we add up
-    the new posts of all the signature checks in a batch, it should give cumulative
-    count of posts made since the user started using our signature minus the deleted
-    posts.
-    """
-    forum_profile = models.ForeignKey(
-        ForumProfile, related_name='regular_checks')
-    uptime_batch = models.ForeignKey(
-        UptimeBatch, related_name='regular_checks')
-    date_checked = models.DateTimeField(default=timezone.now)
-    total_posts = models.IntegerField(default=0)
-    new_posts = models.IntegerField(default=0)
-    signature_found = models.BooleanField(default=True)
-    status_code = models.IntegerField()
-    initial = models.BooleanField(default=False)
-
-    def __str__(self):
-        return str(self.id)
-
-    def get_new_posts(self):
-        if self.initial:
-            fp_batches = self.forum_profile.uptime_batches.all().order_by('-date_started')
-            fp_batches_ids = [x.id for x in fp_batches]
-            target_index = fp_batches_ids.index(self.uptime_batch.id)
-            if fp_batches.count() > 1:
-                prev_batch = fp_batches[target_index - 1]
-                return self.new_posts - prev_batch.get_total_posts_with_sig(latest_only=False)
-            else:
-                return self.new_posts
-        else:
-            return self.new_posts
-
-    def save(self, *args, **kwargs):
-            batches = self.forum_profile.uptime_batches.all()
-            new_batch_created = False
-            save_this_check = True
-            if self._state.adding is True:
-                if self.status_code == 200:
-                    # Automatically assign to old or new uptime batch
-                    if batches.filter(active=True).count():
-                        latest_batch = batches.last()
-                        if self.signature_found:
-                            # Check if the latest batch is closed
-                            if latest_batch.active:
-                                if latest_batch.regular_checks.count():
-                                    # Check if the number of posts has levelled out with or gone below
-                                    # the last check for this batch
-                                    earliest_batch = batches.first()
-                                    earliest_check = earliest_batch.regular_checks.first()
-                                    latest_check = latest_batch.regular_checks.last()
-                                    latest_total = latest_check.total_posts
-                                    diff = int(self.total_posts) - \
-                                        int(latest_total)
-                                    if latest_batch.regular_checks.count() > 1:
-                                        if diff < 0:
-                                            if latest_batch.get_total_posts_with_sig(latest_only=False):
-                                                # Open a new batch for this
-                                                batch = UptimeBatch(
-                                                    forum_profile=self.forum_profile)
-                                                batch.save()
-                                                # We can’t detect which specific posts are deleted
-                                                # (either old or new) so we always assume that the
-                                                # deleted posts have always had signature
-                                                # So, we report as new posts the posts with sig
-                                                # in previous batch minus the deleted posts
-                                                # Reason: Read the `Why carry over new posts count?` in model docs
-                                                reg_checks = latest_batch.regular_checks.all()
-                                                last_psts_wsig = [
-                                                    x.new_posts for x in reg_checks]
-                                                self.new_posts = 0
-                                                if last_psts_wsig:
-                                                    adj_new_posts = sum(
-                                                        last_psts_wsig) - abs(diff)
-                                                    if adj_new_posts > 0:
-                                                        self.new_posts = adj_new_posts
-                                                self.uptime_batch = batch
-                                                self.initial = True
-                                                # Close the current batch
-                                                latest_batch.active = False
-                                                latest_batch.date_ended = timezone.now()
-                                                latest_batch.reason_closed = 'post_deletion'
-                                                # You can't delete more than the diff of posts between
-                                                # the earliest check and latest check
-                                                if self.total_posts >= earliest_check.total_posts:
-                                                    latest_batch.num_deleted_posts = abs(
-                                                        diff)
-                                                latest_batch.save()
-                                            else:
-                                                self.uptime_batch = latest_batch
-                                        else:
-                                            self.uptime_batch = latest_batch
-                                    else:
-                                        self.uptime_batch = latest_batch
-                                else:
-                                    self.uptime_batch = latest_batch
-                                    self.initial = True
-                            else:
-                                # Detect if post deletion happened
-                                total_diff = self.total_posts 
-                                total_diff -= latest_batch.get_total_posts()
-                                # Compute the new posts
-                                new_posts = latest_batch.get_total_posts_with_sig(latest_only=False) 
-                                new_posts += total_diff
-                                self.new_posts = new_posts
-                                # Create a new batch
-                                batch = UptimeBatch(
-                                    forum_profile=self.forum_profile)
-                                batch.save()
-                                new_batch_created = True
-                                self.uptime_batch = batch
-                                self.initial = True
-                        else:
-                            latest_batch.reason_closed = 'signature_removal'
-                            # Close the current batch
-                            latest_batch.active = False
-                            latest_batch.date_ended = timezone.now()
-                            latest_batch.save()
-                            self.uptime_batch = latest_batch
-                    else:
-                        # No active batch exists
-                        latest_batch = batches.last()
-                        if self.signature_found:
-                            # If the signature is found, create a new batch
-                            batch = UptimeBatch(forum_profile=self.forum_profile)
-                            batch.save()
-                            new_batch_created = True
-                            self.uptime_batch = batch
-                            self.initial = True
-                            # If a previous inactive batch exists,
-                            # carry over the posts with sig count from it and
-                            # add set as new_posts for this check
-                            # Reason: Read the `Why carry over new posts count?` in model docs
-                            if latest_batch:
-                                self.new_posts += latest_batch.get_total_posts_with_sig(latest_only=False)
-                        else:
-                            # What goes here are signature checks that did not find
-                            # the signature in the profile page and where there is no
-                            # active uptime batch in the forum profile. We ignore this check,
-                            # we're not saving this to the database
-                            save_this_check = False
-            if save_this_check:
-                super(SignatureCheck, self).save(*args, **kwargs)
-                if not new_batch_created:
-                    latest_batch = batches.last()
-                    # Compute the number of new posts in this check
-                    checks_ids = latest_batch.regular_checks.all().order_by(
-                        'id').values_list('id', flat=True)
-                    if len(checks_ids) > 1:
-                        previous_check_index = list(checks_ids).index(int(self.id)) - 1
-                        if previous_check_index > -1:
-                            previous_check_id = checks_ids[previous_check_index]
-                            previous_check = SignatureCheck.objects.get(
-                                id=previous_check_id)
-                            new_posts = int(self.total_posts) - \
-                                int(previous_check.total_posts)
-                            if new_posts > 0:
-                                SignatureCheck.objects.filter(
-                                    id=self.id).update(new_posts=new_posts)
-                if latest_batch:
-                    # Compare this to initial value and flag this as initial
-                    # if total posts is equal or below the real initial
-                    # check for this batch
-                    init_check = latest_batch.regular_checks.filter(
-                        initial=True).last()
-                    if init_check:
-                        sc = SignatureCheck.objects.get(id=self.id)
-                        if sc.total_posts <= init_check.total_posts:
-                            SignatureCheck.objects.filter(
-                                id=self.id).update(initial=True)
-
-
-class PointsCalculation(models.Model):
-    """ Results of calculations of points for the given signature check in an uptime batch. """
-    uptime_batch = models.ForeignKey(
-        UptimeBatch, related_name='points_calculations')
-    date_calculated = models.DateTimeField(default=timezone.now)
-    signature_check = models.ForeignKey(
-        SignatureCheck, related_name='points_calculations')
-    post_points = models.DecimalField(max_digits=12, decimal_places=4)
-    post_days_points = models.DecimalField(max_digits=12, decimal_places=4)
-    influence_points = models.DecimalField(max_digits=12, decimal_places=4)
-    total_points = models.DecimalField(max_digits=12, decimal_places=4)
-
-    def save(self, *args, **kwargs):
-        # if self._state.adding == True:
-        batch = self.uptime_batch
-        latest_gs = GlobalStats.objects.last()
-        # Calculate points for posts with sig
-        self.post_points = 0.0
-        if batch.get_total_posts_with_sig() and latest_gs.total_posts_with_sig:
-            self.post_points = decimal.Decimal(
-                batch.get_total_posts_with_sig() * 6000)
-            self.post_points /= latest_gs.total_posts_with_sig
-        # Calculate post days points
-        self.post_days_points = 0.0
-        if batch.get_total_days() and latest_gs.total_days:
-            self.post_days_points = decimal.Decimal(
-                batch.get_total_days() * 3800)
-            self.post_days_points /= latest_gs.total_days
-        # Calculate influence points
-        self.influence_points = 0.0
-        if batch.get_total_posts() and latest_gs.total_posts:
-            self.influence_points = decimal.Decimal(
-                batch.get_total_posts() * 200)
-            self.influence_points /= latest_gs.total_posts
-        # Calculate total points
-        self.total_points = decimal.Decimal(self.post_points)
-        self.total_points += decimal.Decimal(self.post_days_points)
-        self.total_points += decimal.Decimal(self.influence_points)
-        super(PointsCalculation, self).save(*args, **kwargs)
-
-    def get_total_tokens(self):
-        total_points = self.total_points
-        tokens = (total_points * config.VTX_AVAILABLE) / 10000
-        return round(tokens, 2)
-
-
-class ScrapingError(models.Model):
-    """ Record of scraping errors """
-    forum = models.ForeignKey(ForumSite, related_name='scraping_errors')
-    forum_profile = models.ForeignKey(
-        ForumProfile, related_name='scraping_errors')
-    error_type = models.CharField(max_length=30)
-    traceback = models.TextField()
-    resolved = models.BooleanField(default=False)
-    date_created = models.DateTimeField(default=timezone.now)
-    date_resolved = models.DateTimeField(null=True, blank=True)
-
-    def __str__(self):
-        return str(self.id)
-
-
-class DataUpdateTask(models.Model):
-    """ Record details about the execution run of scraping and data update tasks """
-    task_id = models.CharField(max_length=50)
-    date_started = models.DateTimeField(default=timezone.now)
-    success = models.NullBooleanField(null=True)
-    date_completed = models.DateTimeField(null=True, blank=True)
-    scraping_errors = models.ManyToManyField(ScrapingError)
-
-    def __str__(self):
-        return str(self.id)
-
-
-VARIANT_CHOICES = (
-    ('primary', 'Primary'),
-    ('secondary', 'Secondary'),
-    ('success', 'Success'),
-    ('danger', 'Danger'),
-    ('warning', 'Warning'),
-    ('info', 'Info')
-)
+        uptime_stats.save()
 
 
 class Notification(models.Model):
@@ -666,6 +212,14 @@ class Notification(models.Model):
     text = models.CharField(max_length=100)
     action_text = models.CharField(max_length=30, blank=True)
     action_link = models.CharField(max_length=100, blank=True)
+    VARIANT_CHOICES = (
+        ('primary', 'Primary'),
+        ('secondary', 'Secondary'),
+        ('success', 'Success'),
+        ('danger', 'Danger'),
+        ('warning', 'Warning'),
+        ('info', 'Info')
+    )
     variant = models.CharField(max_length=10, choices=VARIANT_CHOICES)
     dismissible = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
