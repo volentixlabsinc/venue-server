@@ -405,75 +405,19 @@ def get_stats(request):
         verified=True
     )
     if fps.count():
-        fps_batch_initials = 0  # Used later for userlevel stats
         for fp in fps:
-            fields = [
-                'postPoints', 'totalPostsWithSig', 'postDaysPoints',
-                'totalPostDays', 'influencePoints', 'totalPosts',
-                'totalPoints', 'VTX_Tokens'
-            ]
-            fp_data = {k: [] for k in fields}
-            latest_batch = fp.uptime_batches.last()
-            if latest_batch:
-                fp_data['totalPosts'].append(
-                    latest_batch.get_total_posts(actual=True)
-                )
-                # Sum up the credits and points from all batches for this forum profiles
-                for batch in fp.uptime_batches.all():
-                    latest_check = batch.regular_checks.last()
-                    if latest_check:
-                        # latest_calc = latest_check.points_calculations.last()
-                        # if latest_calc:
-                        post_points = batch.get_post_points()
-                        fp_data['postPoints'].append(float(post_points))
-                        psts_with_sig = batch.get_total_posts_with_sig()
-                        fp_data['totalPostsWithSig'].append(psts_with_sig)
-                        fp_data['totalPostDays'].append(batch.get_total_days())
-                        uptime_points = batch.get_post_days_points()
-                        fp_data['postDaysPoints'].append(float(uptime_points))
-                        influence_points = batch.get_influence_points()
-                        influence_points = float(influence_points)
-                        fp_data['influencePoints'].append(influence_points)
-                        total_points = batch.get_total_points()
-                        fp_data['totalPoints'].append(float(total_points))
-                        total_tokens = (total_points / 10000)
-                        total_tokens *= config.VTX_AVAILABLE
-                        fp_data['VTX_Tokens'].append(float(total_tokens))
-                sum_up_data = {k:  '{:,}'.format(int(round(sum(v), 0)))
-                               for k, v in fp_data.items()}
-                sum_up_data['User_ID'] = fp.forum_user_id
-                sum_up_data['forumSite'] = fp.forum.name
-                sum_up_data['forumUserId'] = fp.forum_user_id
-                sum_up_data['forumUserRank'] = fp.forum_rank.name
-                sum_up_data['_showDetails'] = False
-                if not latest_batch.active:
-                    sum_up_data['_rowVariant'] = 'danger'
-                current_branch_no = latest_batch.get_batch_number()
-                sum_up_data['currentUptimeBatch'] = {}
-                if fp.uptime_batches.count() > 1:
-                    sum_up_data['hasPreviousBatches'] = True
-                    sum_up_data['previousBatches'] = []
-                for item in fp.uptime_batches.all():
-                    batch_no = item.get_batch_number()
-                    data = {
-                        'batch': batch_no,
-                        'totalPostsWithSig': item.get_total_posts_with_sig(
-                            latest_only=False
-                        ),
-                        'totalPostDays': item.get_total_days(),
-                        'reasonClosed': item.reason_closed,
-                        'deletedPosts': item.num_deleted_posts
-                    }
-                    if batch_no == current_branch_no:
-                        sum_up_data['currentUptimeBatch'] = data
-                    else:
-                        sum_up_data['previousBatches'].append(data)
-                profile_stats.append(sum_up_data)
-                # Get the initial count of posts from initial batches
-                earliest_batch = fp.uptime_batches.first()
-                earliest_check = earliest_batch.regular_checks.filter(initial=True).first()
-                if earliest_check:
-                    fps_batch_initials += earliest_check.total_posts
+            fp_data = {
+                'User_ID': fp.forum_user_id,
+                'forumSite': fp.forum.name,
+                'forumUserId': fp.forum_user_id,
+                'forumUserRank': fp.forum_rank.name,
+                'numPosts': fp.total_posts,
+                'postPoints': fp.post_points,
+                'uptimeSeconds': fp.uptime_seconds,
+                'uptimePoints': fp.uptime_points,
+                'totalPoints': fp.total_points
+            }
+            profile_stats.append(fp_data)
         stats['profile_level'] = profile_stats
         # --------------------------
         # Generate user-level stats
@@ -488,43 +432,16 @@ def get_stats(request):
         # Iterate over the reversed list
         for day in days[::-1]:
             data = {}
-            data['posts'] = user_profile.get_daily_new_posts(date=day)
+            data['posts'] = user_profile.get_num_posts(date=day)
             data['rank'] = user_profile.get_ranking(date=day)
             data['date'] = day
             userlevel_stats['daily_stats'].append(data)
-        userlevel_stats['fps_batch_initials'] = fps_batch_initials
-        # Post points:
-        post_points = round(user_profile.get_post_points(), 0)
-        userlevel_stats['post_points'] = int(post_points)
-        userlevel_stats['post_points_pct'] = points_to_percentage(
-            post_points,
-            category='posts'
-        )
-        # Post uptime points:
-        post_days_points = round(user_profile.get_post_days_points(), 0)
-        userlevel_stats['post_days_points'] = int(post_days_points)
-        userlevel_stats['post_days_points_pct'] = points_to_percentage(
-            post_days_points,
-            category='uptime'
-        )
-        # Influence points:
-        influence_points = round(user_profile.get_influence_points(), 0)
-        userlevel_stats['influence_points'] = int(influence_points)
-        userlevel_stats['influence_points_pct'] = points_to_percentage(
-            influence_points,
-            category='influence'
-        )
-        # Total points:
-        total_points = round(user_profile.get_total_points(), 0)
-        userlevel_stats['total_points'] = int(total_points)
-        userlevel_stats['total_points_pct'] = points_to_percentage(
-            total_points,
-            category='total'
-        )
-        # Total posts, tokens, and rank:
-        total_posts = round(user_profile.get_total_posts_with_sig(), 0)
-        userlevel_stats['total_posts'] = total_posts
-        userlevel_stats['total_tokens'] = round(user_profile.get_total_tokens(), 0)
+        # Points, tokens, and overall user rank
+        userlevel_stats['num_posts'] = user_profile.get_num_posts()
+        userlevel_stats['post_points'] = 0
+        userlevel_stats['uptime_points'] = 0
+        userlevel_stats['total_points'] = 0
+        userlevel_stats['total_tokens'] = 0
         userlevel_stats['overall_rank'] = user_profile.get_ranking()
         stats['user_level'] = userlevel_stats
         # -------------------------
@@ -533,7 +450,7 @@ def get_stats(request):
         sitewide_stats = {}
         users = UserProfile.objects.filter(email_confirmed=True)
         users_with_fp = [x.id for x in users if x.with_forum_profile]
-        total_posts = [x.get_total_posts_with_sig() for x in users]
+        total_posts = [x.get_num_posts() for x in users]
         sitewide_stats['total_users'] = len(users_with_fp)
         sitewide_stats['total_posts'] = int(sum(total_posts))
         available_tokens = '{:,}'.format(config.VTX_AVAILABLE)

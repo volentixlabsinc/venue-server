@@ -1,5 +1,5 @@
 from venue.models import (
-    ForumSite, Signature, UserProfile, ForumProfile,
+    ForumSite, Signature, UserProfile, Ranking, ForumProfile,
     Language, ForumUserRank, UserPostStats, PostUptimeStats,
     Notification
 )
@@ -144,3 +144,10 @@ class PostUptimeStatsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PostUptimeStats, PostUptimeStatsAdmin)
+
+
+class RankingAdmin(admin.ModelAdmin):
+    list_display = ['user_profile', 'rank', 'timestamp']
+
+
+admin.site.register(Ranking, RankingAdmin)

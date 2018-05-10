@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.db import models
 from hashids import Hashids
+from constance import config
 
 
 class ForumSite(models.Model):
@@ -89,14 +90,41 @@ class UserProfile(models.Model):
         else:
             return False
 
-    def get_daily_total_posts(self, date):
-        pass
+    def get_num_posts(self, date=None):
+        num_posts = 0
+        for fp in self.forum_profiles.filter(active=True):
+            if not date:
+                date = timezone.now().date
+            post_stats = fp.post_stats.filter(timestamp__date=date)
+            if post_stats.last():
+                num_posts += post_stats.last().num_posts
+                num_posts -= fp.initial_posts_count
+        return num_posts
 
-    def get_daily_new_posts(self, date):
-        pass
+    def get_ranking(self, date=None):
+        if not date:
+            date = timezone.now().date
+        rankings = Ranking.objects.filter(timestamp__date=date)
+        rank = 0
+        if rankings.last():
+            rank = rankings.last().rank
+        return rank
 
-    def get_total_posts_with_sig(self, latest_only=True):
-        pass
+    @property
+    def post_points(self):
+        points = 0
+        for fp in self.forum_profiles.filter(active=True):
+            points += fp.
+
+
+
+class Ranking(models.Model):
+    user_profile = models.ForeignKey(
+        UserProfile,
+        related_name='rankings'
+    )
+    rank = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(default=timezone.now)
 
 
 class ForumProfile(models.Model):
@@ -136,6 +164,33 @@ class ForumProfile(models.Model):
                 forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
+
+    @property
+    def total_posts(self):
+        post_stats = self.post_stats.last()
+        return post_stats.num_posts - self.initial_posts_count
+
+    @property
+    def post_points(self):
+        points = self.total_posts * config.POST_POINTS_MULTIPLIER
+        return round(points, 2)
+
+    @property
+    def uptime_seconds(self):
+        post_stats = self.post_stats.last()
+        uptime_stats = post_stats.uptime_stats
+        return uptime_stats.valid_sig_seconds
+
+    @property
+    def uptime_points(self):
+        points = (self.uptime_seconds / 3600)
+        points *= config.UPTIME_POINTS_MULTIPLIER
+        return round(points, 2)
+
+    @property
+    def total_points(self):
+        points = self.post_points + self.uptime_points
+        return round(points, 2)
 
 
 class PostUptimeStats(models.Model):

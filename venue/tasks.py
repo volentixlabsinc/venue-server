@@ -10,7 +10,7 @@ from operator import itemgetter
 from constance import config
 import rollbar
 from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
-                          UserPostStats)
+                          UserPostStats, Ranking)
 
 
 @task_failure.connect
@@ -167,10 +167,11 @@ def compute_ranking():
     )
     for rank, user in enumerate(user_points, 1):
         # Update user's ranking
-        UserProfile.objects.filter(
-            id=user['user_profile_id']
-        ).update(rank=rank)
-    return user_points
+        ranking = Ranking(
+            user_profile_id=user['user_profile_id'],
+            rank=rank
+        )
+        ranking.save()
 
 
 # -----------------------------------

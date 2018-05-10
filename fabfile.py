@@ -1,4 +1,4 @@
-from fabric.api import env, run, sudo, put, local, open_shell
+from fabric.api import env, run, sudo, local, open_shell
 from fabric.contrib.project import rsync_project
 from fabric.contrib.files import is_link
 from fabric.context_managers import cd
