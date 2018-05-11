@@ -29,8 +29,7 @@ from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
                     send_email_change_confirmation, send_reset_password)
 from .models import (UserProfile, ForumSite, ForumProfile, Notification,
-                     Language, Signature, ForumUserRank)
-
+                     Language, Signature, ForumUserRank, compute_total_points)
 from .utils import RedisTemp
 
 
@@ -404,6 +403,7 @@ def get_stats(request):
         user_profile__user=request.user,
         verified=True
     )
+    global_total_pts = compute_total_points()
     if fps.count():
         for fp in fps:
             fp_data = {
@@ -415,8 +415,11 @@ def get_stats(request):
                 'postPoints': fp.post_points,
                 'uptimeSeconds': fp.uptime_seconds,
                 'uptimePoints': fp.uptime_points,
-                'totalPoints': fp.total_points
+                'totalPoints': fp.total_points,
             }
+            pct_contrib = fp.total_points / global_total_pts
+            fp_tokens = pct_contrib * config.VTX_AVAILABLE
+            fp_data['VTX_Tokens'] = int(round(fp_tokens, 0))
             profile_stats.append(fp_data)
         stats['profile_level'] = profile_stats
         # --------------------------
@@ -437,11 +440,16 @@ def get_stats(request):
             data['date'] = day
             userlevel_stats['daily_stats'].append(data)
         # Points, tokens, and overall user rank
-        userlevel_stats['num_posts'] = user_profile.get_num_posts()
-        userlevel_stats['post_points'] = 0
-        userlevel_stats['uptime_points'] = 0
-        userlevel_stats['total_points'] = 0
-        userlevel_stats['total_tokens'] = 0
+        userlevel_stats['total_posts'] = user_profile.get_num_posts()
+        post_points = user_profile.post_points
+        userlevel_stats['post_points'] = post_points
+        uptime_points = user_profile.uptime_points
+        userlevel_stats['uptime_points'] = uptime_points
+        total_points = post_points + uptime_points
+        userlevel_stats['total_points'] = total_points
+        pct_contrib = total_points / global_total_pts
+        userlevel_stats['total_points_pct'] = int(round(pct_contrib * 100, 0))
+        userlevel_stats['total_tokens'] = user_profile.total_tokens
         userlevel_stats['overall_rank'] = user_profile.get_ranking()
         stats['user_level'] = userlevel_stats
         # -------------------------
@@ -476,21 +484,17 @@ def get_leaderboard_data(request):
     user_profiles = UserProfile.objects.all()
     leaderboard_data = []
     for user_profile in user_profiles:
-        if user_profile.forum_profiles.count():
-            user_data = {}
-            user_data['rank'] = user_profile.get_ranking()
-            user_data['username'] = user_profile.user.username
-            user_data['total_posts'] = user_profile.get_total_posts_with_sig()
-            points = round(user_profile.get_total_points(), 0)
-            user_data['total_points'] = '{:,}'.format(int(points))
-            tokens = round(user_profile.get_total_tokens(), 0)
-            user_data['total_tokens'] = '{:,}'.format(int(tokens))
-            points = round(user_profile.get_post_points(), 0)
-            user_data['post_points'] = '{:,}'.format(int(points))
-            points = round(user_profile.get_post_days_points(), 0)
-            user_data['uptime_points'] = '{:,}'.format(int(points))
-            points = round(user_profile.get_influence_points(), 0)
-            user_data['influence_points'] = '{:,}'.format(int(points))
+        fps = user_profile.forum_profiles.filter(active=True)
+        if fps.count():
+            user_data = {
+                'username': user_profile.user.username,
+                'rank': user_profile.get_ranking(),
+                'total_posts': user_profile.total_posts,
+                'total_points': user_profile.total_points,
+                'total_tokens': user_profile.total_tokens,
+                'post_points': user_profile.post_points,
+                'uptime_points': user_profile.uptime_points
+            }
             leaderboard_data.append(user_data)
     # Order according to amount of tokens
     if leaderboard_data:
@@ -503,13 +507,13 @@ def get_leaderboard_data(request):
             'available_points': '10,000',
             'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
             'total_users': len(users_with_fp),
-            'total_posts': int(sum([x.get_total_posts_with_sig() for x in users]))
+            'total_posts': int(sum([x.total_posts for x in users]))
         }
         if request.user.is_anonymous():
             response['userstats'] = {}
         else:
             user_profile = UserProfile.objects.get(user=request.user)
-            total_tokens = user_profile.get_total_tokens()
+            total_tokens = user_profile.total_tokens
             response['userstats'] = {
                 'overall_rank': user_profile.get_ranking(),
                 'total_tokens': int(round(total_tokens, 0))
@@ -525,7 +529,7 @@ def get_leaderboard_data(request):
         total_posts = 0
         fps = site.forum_profiles.filter(verified=True)
         for fp in fps:
-            total_posts += fp.get_total_posts_with_sig()
+            total_posts += fp.total_posts
         total_users = fps.count()
         forum_stats['posts'].append({
             'forumSite': site.name,

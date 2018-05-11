@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import redis
 import rollbar
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -80,8 +81,9 @@ CONSTANCE_CONFIG = {
     'UPTIME_POINTS_MULTIPLIER': (2, 'Points for uptime of each post per hour')
 }
 
+REDIS_PASSWORD = '4e7a84d5'
 CONSTANCE_REDIS_CONNECTION = {
-    'password': '4e7a84d5',
+    'password': REDIS_PASSWORD,
     'host': 'redis',
     'port': 6379,
     'db': 0,
@@ -238,6 +240,15 @@ WS4REDIS_CONNECTION = {
     'host': 'redis',
     'port': 6379,
     'db': 3,
-    'password': '4e7a84d5'
+    'password': REDIS_PASSWORD
 }
 WS4REDIS_EXPIRE = 0  # Messages expire immediately
+
+
+REDIS_DB = redis.StrictRedis(
+    host='redis',
+    port=6379,
+    db=4,
+    password=REDIS_PASSWORD,
+    decode_responses=True
+)

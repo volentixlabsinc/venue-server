@@ -53,7 +53,7 @@ let env = process.env.NODE_ENV || 'development'
 var websocketUrl
 if (env === 'development') {
   axios.defaults.baseURL = 'http://localhost:8000/api'
-  websocketUrl = 'ws://localhost:8000/ws/signals?subscribe-broadcast'
+  websocketUrl = 'ws://localhost:9000/ws/signals?subscribe-broadcast'
 } else {
   axios.defaults.baseURL = 'https://venue.volentix.com/api'
   websocketUrl = 'wss://venue.volentix.com/ws/signals?subscribe-broadcast'

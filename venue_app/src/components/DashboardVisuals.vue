@@ -25,22 +25,13 @@
           <div>
             <div class="legend-color" style="background-color: #2a96b6;"></div> 
             <span class="legend-text" v-b-tooltip.hover :title="$t('posts_pct_info')">
-              {{ $t('post_points') }} - {{ userstats.post_points | thousands_sep }} {{ $t('points') }} 
-              ({{ userstats.post_points_pct }} %)
+              {{ $t('post_points') }}
             </span>
           </div>
           <div>
             <div class="legend-color" style="background-color: #5a2998;"></div> 
             <span class="legend-text" v-b-tooltip.hover :title="$t('uptime_pct_info')">
-              {{ $t('post_uptime_points') }} - {{ userstats.post_days_points | thousands_sep }} {{ $t('points') }} 
-              ({{ userstats.post_days_points_pct }} %)
-            </span>
-          </div>
-          <div>
-            <div class="legend-color" style="background-color: #b62da9;"></div> 
-            <span class="legend-text" v-b-tooltip.hover :title="$t('influence_pct_info')">
-              {{ $t('influence_points') }} - {{ userstats.influence_points }} {{ $t('points') }}
-              ({{ userstats.influence_points_pct }} %)
+              {{ $t('post_uptime_points') }}
             </span>
           </div>
         </b-col>

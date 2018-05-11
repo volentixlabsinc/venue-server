@@ -7,6 +7,13 @@ from hashids import Hashids
 from constance import config
 
 
+def compute_total_points():
+    total_points = settings.REDIS_DB.get('global_total_points')
+    if not total_points:
+        total_points = 0
+    return round(float(total_points), 2)
+
+
 class ForumSite(models.Model):
     """ Forum site names and addresses """
     name = models.CharField(max_length=30)
@@ -94,8 +101,8 @@ class UserProfile(models.Model):
         num_posts = 0
         for fp in self.forum_profiles.filter(active=True):
             if not date:
-                date = timezone.now().date
-            post_stats = fp.post_stats.filter(timestamp__date=date)
+                date = timezone.now().date()
+            post_stats = fp.post_stats.filter(timestamp__date=str(date))
             if post_stats.last():
                 num_posts += post_stats.last().num_posts
                 num_posts -= fp.initial_posts_count
@@ -103,19 +110,53 @@ class UserProfile(models.Model):
 
     def get_ranking(self, date=None):
         if not date:
-            date = timezone.now().date
-        rankings = Ranking.objects.filter(timestamp__date=date)
-        rank = 0
+            date = timezone.now().date()
+        rankings = Ranking.objects.filter(
+            user_profile_id=self.id,
+            timestamp__date=str(date)
+        )
+        rank = None
         if rankings.last():
             rank = rankings.last().rank
         return rank
 
     @property
+    def total_posts(self):
+        posts = 0
+        for fp in self.forum_profiles.filter(active=True):
+            if fp.post_stats.last():
+                posts += fp.total_posts
+        return posts
+
+    @property
     def post_points(self):
         points = 0
         for fp in self.forum_profiles.filter(active=True):
-            points += fp.
+            if fp.post_stats.last():
+                points += fp.total_posts * config.POST_POINTS_MULTIPLIER
+        return round(points, 2)
 
+    @property
+    def uptime_points(self):
+        points = 0
+        for fp in self.forum_profiles.filter(active=True):
+            if fp.post_stats.last():
+                uptime_stats = fp.post_stats.last().uptime_stats
+                points = uptime_stats.valid_sig_seconds / 3600
+                points *= config.UPTIME_POINTS_MULTIPLIER
+        return round(points, 2)
+
+    @property
+    def total_points(self):
+        points = self.post_points + self.uptime_points
+        return round(points, 2)
+
+    @property
+    def total_tokens(self):
+        global_total_pts = compute_total_points()
+        pct_contrib = self.total_points / global_total_pts
+        tokens = pct_contrib * config.VTX_AVAILABLE
+        return int(round(tokens, 0))
 
 
 class Ranking(models.Model):
@@ -143,7 +184,6 @@ class ForumProfile(models.Model):
     verification_code = models.CharField(max_length=20, blank=True)
     active = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
-    initial_posts_count = models.IntegerField(default=0)
     date_verified = models.DateTimeField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
     date_updated = models.DateTimeField(default=timezone.now)
@@ -164,6 +204,11 @@ class ForumProfile(models.Model):
                 forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
+
+    @property
+    def initial_posts_count(self):
+        post_stats = self.post_stats.first()
+        return post_stats.num_posts
 
     @property
     def total_posts(self):

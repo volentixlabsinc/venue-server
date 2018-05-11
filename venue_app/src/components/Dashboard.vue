@@ -117,11 +117,9 @@ export default {
         {key: 'forumSite', sortable: true, label: this.$t('forum_site')},
         {key: 'User_ID', sortable: true, label: this.$t('user_id')},
         {key: 'postPoints', sortable: true, label: this.$t('post_points')},
-        {key: 'postDaysPoints', sortable: true, label: this.$t('post_uptime_points')},
-        {key: 'influencePoints', sortable: true, label: this.$t('influence_points')},
+        {key: 'uptimePoints', sortable: true, label: this.$t('post_uptime_points')},
         {key: 'totalPoints', sortable: true, label: this.$t('total_points')},
-        {key: 'VTX_Tokens', sortable: true, label: this.$t('vtx_tokens')},
-        {key: 'show_details', label: this.$t('show_details')}
+        {key: 'VTX_Tokens', sortable: true, label: this.$t('vtx_tokens')}
       ],
       stats: {},
       refreshing: false

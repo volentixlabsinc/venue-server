@@ -8,11 +8,6 @@
         <b-row style="margin-bottom: 45px;">
           <b-col>
             <b-card class="text-center">
-              <p class="card-text sm">{{ $t('points_available') }}: {{ sitewideStats.available_points }}</p>
-            </b-card>
-          </b-col>
-          <b-col>
-            <b-card class="text-center">
               <p class="card-text sm">{{ $t('tokens_available') }}: {{ sitewideStats.available_tokens }}</p>
             </b-card>
           </b-col>
@@ -105,10 +100,6 @@
                           <b-row>
                             <b-col sm="7">{{ $t('post_uptime_points') }}:</b-col>
                             <b-col align="right">{{ row.item.uptime_points }} points</b-col>
-                          </b-row>
-                          <b-row style="border-bottom: 1px solid black;">
-                            <b-col sm="7">{{ $t('influence_points') }}:</b-col>
-                            <b-col align="right">{{ row.item.influence_points }} points</b-col>
                           </b-row>
                           <b-row>
                             <b-col sm="7"><strong>{{ $t('total_points') }}</strong>:</b-col>

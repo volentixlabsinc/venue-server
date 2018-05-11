@@ -10,8 +10,8 @@ export default {
       datasets: [
         {
           label: 'Overview Pie Chart',
-          backgroundColor: ['#2a96b6', '#5a2998', '#b62da9'],
-          data: [this.data.post_points, this.data.post_days_points, this.data.influence_points]
+          backgroundColor: ['#2a96b6', '#5a2998'],
+          data: [this.data.post_points, this.data.uptime_points]
         }
       ]
     }, {
