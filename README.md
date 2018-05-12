@@ -15,11 +15,16 @@
     1. Run `docker-compose up`. In Linux, it may be necessary to use sudo, so you'll have to run `sudo docker-compose up`
     2. The API docs should be accessible here: http://localhost:8000/docs/
     3. If you're developing the frontend, make sure you set your API base URL to http://localhost:8000
-##### *3. (Optional) Run the provided reference frontend*
+##### *4. Run the provided reference frontend*
     1. Change directory to `venue_app`
     2. Install npm packages by running `yarn`
     3. Run the app with `npm run dev`
     4. Load the app at this URL: http://localhost:8080
+#### *5. Login as the test user*
+    * The test user credentials is:<br>
+    username: joemar.ct
+    password: default2018
+
 
 #### Note: In certain cases, you might need to recreate the docker containers from scratch (which will also wipe your DB clean). If that is needed, this is how you do that:
 ```
