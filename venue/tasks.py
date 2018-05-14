@@ -18,12 +18,12 @@ def handle_task_failure(**kw):
     rollbar.report_exc_info(extra_data=kw)
 
 
-@shared_task
+@shared_task(queue='default')
 def multiplier(x, y):
     return x * y
 
 
-@shared_task
+@shared_task(queue='default')
 def test_task():
     import time
     import random
@@ -37,7 +37,7 @@ def load_scraper(name):
     return scraper
 
 
-@shared_task
+@shared_task(queue='default')
 def scrape_forum_profile(forum_profile_id, test_mode=None):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     test_mode = test_mode
@@ -65,7 +65,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
     post_stats.save()
 
 
-@shared_task
+@shared_task(queue='default')
 def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     signature = Signature.objects.get(id=signature_id)
@@ -87,7 +87,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     return verified
 
 
-@shared_task
+@shared_task(queue='default')
 def get_user_position(forum_site_id, profile_url, user_id):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
@@ -131,7 +131,7 @@ def send_websocket_signal(signal):
     redis_publisher.publish_message(message)
 
 
-@shared_task
+@shared_task(queue='default')
 def update_data(forum_profile_id=None):
     # Create a bakcground tasks workflow as a chain
     if forum_profile_id:
@@ -146,7 +146,7 @@ def update_data(forum_profile_id=None):
         scrape_forum_profile.delay(profile.id)
 
 
-@shared_task
+@shared_task(queue='ranking')
 def compute_ranking():
     users = UserProfile.objects.all()
     user_points = []
@@ -176,7 +176,7 @@ def compute_ranking():
     return {'total': global_total}
 
 
-@shared_task
+@shared_task(queue='control')
 def set_scraping_rate(num_users=None):
     from subprocess import Popen, PIPE
     if not num_users:
@@ -209,7 +209,7 @@ postmark = PostmarkClient(
     account_token=settings.POSTMARK_TOKEN)
 
 
-@shared_task
+@shared_task(queue='mails')
 def send_email_confirmation(email, name, code):
     context = {
         'domain': settings.VENUE_DOMAIN,
@@ -226,7 +226,7 @@ def send_email_confirmation(email, name, code):
     return mail
 
 
-@shared_task
+@shared_task(queue='mails')
 def send_deletion_confirmation(email, name, code):
     context = {
         'domain': settings.VENUE_DOMAIN,
@@ -243,7 +243,7 @@ def send_deletion_confirmation(email, name, code):
     return mail
 
 
-@shared_task
+@shared_task(queue='mails')
 def send_email_change_confirmation(email, name, code):
     context = {
         'domain': settings.VENUE_DOMAIN,
@@ -260,7 +260,7 @@ def send_email_change_confirmation(email, name, code):
     return mail
 
 
-@shared_task
+@shared_task(queue='mails')
 def send_reset_password(email, name, code):
     context = {
         'domain': settings.VENUE_DOMAIN,
