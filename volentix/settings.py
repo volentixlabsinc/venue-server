@@ -181,10 +181,12 @@ MEDIA_URL = '/media/'
 CELERY_BROKER_URL = 'redis://:4e7a84d5@redis:6379/0'
 CELERY_RESULT_BACKEND = 'redis://:4e7a84d5@redis:6379/1'
 CELERY_TIMEZONE = 'UTC'
+
+USER_SCRAPE_INTERVAL = 300  # seconds
 CELERY_BEAT_SCHEDULE = {
     'update-data-every-2-minutes': {
         'task': 'venue.tasks.update_data',
-        'schedule': 120 # seconds
+        'schedule': USER_SCRAPE_INTERVAL
     }
 }
 
@@ -207,6 +209,7 @@ rollbar.init(
     'ab9dbc1f9b494685810779e9460e480b',
     environment='development' if DEBUG else 'production'
 )
+
 
 def celery_base_data_hook(request, data):
     del request

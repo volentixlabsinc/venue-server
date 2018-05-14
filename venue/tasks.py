@@ -9,7 +9,6 @@ from ws4redis.redis_store import RedisMessage
 from operator import itemgetter
 from constance import config
 import rollbar
-import redis
 from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
                           UserPostStats, Ranking)
 
@@ -22,6 +21,14 @@ def handle_task_failure(**kw):
 @shared_task
 def multiplier(x, y):
     return x * y
+
+
+@shared_task
+def test_task():
+    import time
+    import random
+    time.sleep(2)
+    return random.randint(0, 100)
 
 
 def load_scraper(name):
@@ -167,6 +174,29 @@ def compute_ranking():
     global_total = sum([x['total_points'] for x in user_points])
     settings.REDIS_DB.set('global_total_points', global_total)
     return {'total': global_total}
+
+
+@shared_task
+def set_scraping_rate(num_users=None):
+    from subprocess import Popen, PIPE
+    if not num_users:
+        forum_profiles = ForumProfile.objects.filter(active=True)
+        num_users = forum_profiles.count()
+    rate = '1/s'
+    rate_per_sec = num_users / settings.USER_SCRAPE_INTERVAL
+    rate_per_sec = int(round(rate_per_sec, 2))
+    if rate_per_sec > 1:
+        rate = '%s/s' % rate_per_sec
+    else:
+        rate_per_min = num_users / (settings.USER_SCRAPE_INTERVAL/60)
+        rate_per_min = int(round(rate_per_min, 2))
+        if rate_per_min > 1:
+            rate = '%s/m' % rate_per_min
+    cmd = 'celery -A volentix control rate_limit'
+    cmd += ' venue.tasks.scrape_forum_profile %s' % rate
+    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = proc.communicate()
+    return (rate, stdout)
 
 
 # -----------------------------------

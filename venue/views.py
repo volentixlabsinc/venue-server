@@ -27,7 +27,8 @@ from rest_framework.decorators import permission_classes
 from rest_framework.schemas import AutoSchema
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
-                    send_email_change_confirmation, send_reset_password)
+                    send_email_change_confirmation, send_reset_password,
+                    set_scraping_rate)
 from .models import (UserProfile, ForumSite, ForumProfile, Notification,
                      Language, Signature, ForumUserRank, compute_total_points)
 from .utils import RedisTemp
@@ -1119,6 +1120,8 @@ def create_forum_profile(request):
         fp_object.save()
         response['id'] = fp_object.id
         response['success'] = True
+        # Trigger the task to adjust the scraping rate
+        set_scraping_rate()
     return Response(response)
 
 
