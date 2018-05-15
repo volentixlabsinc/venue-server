@@ -114,7 +114,8 @@ export default {
             this.$refs.signUpModal.hide()
           })
         }
-      }).catch(e => {
+      }, error => {
+        console.log(error)
         this.signUpError = true
       })
     }

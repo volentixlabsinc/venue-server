@@ -17,6 +17,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.models import User
 from django.conf import settings
 from venue.utils import encrypt_data, decrypt_data
+from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
@@ -92,6 +93,7 @@ def authenticate(request):
     data = request.data
     response = {'success': False}
     error_code = 'unknown_error'
+    resp_status = status.HTTP_400_BAD_REQUEST
     try:
         if '@' in data['username']:
             user = User.objects.get(email__iexact=data['username'])
@@ -132,13 +134,14 @@ def authenticate(request):
                     'email_confirmed': user_profile.email_confirmed,
                     'language': user_profile.language.code
                 }
+                resp_status = status.HTTP_200_OK
         else:
             error_code = 'wrong_credentials'
     except User.DoesNotExist:
         error_code = 'wrong_credentials'
     if not response['success']:
         response['error_code'] = error_code
-    return Response(response)
+    return Response(response, status=resp_status)
 
 
 # -------------------------
@@ -230,10 +233,12 @@ def create_user(request):
         code = hashids.encode(int(user.id))
         send_email_confirmation.delay(user.email, user.username, code)
         response['status'] = 'success'
+        resp_status = status.HTTP_200_OK
     except Exception as exc:
         response['status'] = 'error'
         response['message'] = str(exc)
-    return Response(response)
+        resp_status = status.HTTP_400_BAD_REQUEST
+    return Response(response, status=resp_status)
 
 
 # ----------------------

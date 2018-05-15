@@ -143,6 +143,11 @@ export default {
             this.showOtpInput = true
           }
         }
+      }, error => {
+        console.log(error)
+        this.loginError = true
+        this.formSubmitted = false
+        this.loginErrorCode = 'wrong_credentials'
       })
     },
     togglePasswordResetForm () {
