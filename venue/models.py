@@ -153,9 +153,11 @@ class UserProfile(models.Model):
 
     @property
     def total_tokens(self):
+        tokens = 0
         global_total_pts = compute_total_points()
-        pct_contrib = self.total_points / global_total_pts
-        tokens = pct_contrib * config.VTX_AVAILABLE
+        if global_total_pts:
+            pct_contrib = self.total_points / global_total_pts
+            tokens = pct_contrib * config.VTX_AVAILABLE
         return int(round(tokens, 0))
 
 
