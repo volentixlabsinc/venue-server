@@ -18,12 +18,12 @@ def handle_task_failure(**kw):
     rollbar.report_exc_info(extra_data=kw)
 
 
-@shared_task(queue='default')
+@shared_task(queue='scrapers')
 def multiplier(x, y):
     return x * y
 
 
-@shared_task(queue='default')
+@shared_task(queue='scrapers')
 def test_task():
     import time
     import random
@@ -37,7 +37,7 @@ def load_scraper(name):
     return scraper
 
 
-@shared_task(queue='default')
+@shared_task(queue='scrapers')
 def scrape_forum_profile(forum_profile_id, test_mode=None):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     test_mode = test_mode
@@ -65,7 +65,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
     post_stats.save()
 
 
-@shared_task(queue='default')
+@shared_task(queue='scrapers')
 def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     signature = Signature.objects.get(id=signature_id)
@@ -87,7 +87,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     return verified
 
 
-@shared_task(queue='default')
+@shared_task(queue='scrapers')
 def get_user_position(forum_site_id, profile_url, user_id):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
@@ -131,7 +131,7 @@ def send_websocket_signal(signal):
     redis_publisher.publish_message(message)
 
 
-@shared_task(queue='default')
+@shared_task(queue='scrapers')
 def update_data(forum_profile_id=None):
     # Create a bakcground tasks workflow as a chain
     if forum_profile_id:
@@ -196,7 +196,7 @@ def set_scraping_rate(num_users=None):
     cmd += ' venue.tasks.scrape_forum_profile %s' % rate
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    return (rate, stdout)
+    return (rate, stdout.decode())
 
 
 # -----------------------------------

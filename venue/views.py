@@ -1121,7 +1121,7 @@ def create_forum_profile(request):
         response['id'] = fp_object.id
         response['success'] = True
         # Trigger the task to adjust the scraping rate
-        set_scraping_rate()
+        set_scraping_rate.delay()
     return Response(response)
 
 
