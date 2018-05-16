@@ -225,13 +225,19 @@ class ForumProfile(models.Model):
 
     @property
     def initial_posts_count(self):
+        count = 0
         post_stats = self.post_stats.first()
-        return post_stats.num_posts
+        if post_stats:
+            count = post_stats.num_posts
+        return count
 
     @property
     def total_posts(self):
         post_stats = self.post_stats.last()
-        return post_stats.num_posts - self.initial_posts_count
+        total = 0
+        if post_stats:
+            total = post_stats.num_posts - self.initial_posts_count
+        return total
 
     @property
     def post_points(self):
@@ -240,9 +246,12 @@ class ForumProfile(models.Model):
 
     @property
     def uptime_seconds(self):
+        uptime = 0
         post_stats = self.post_stats.last()
-        uptime_stats = post_stats.uptime_stats
-        return uptime_stats.valid_sig_seconds
+        if post_stats:
+            uptime_stats = post_stats.uptime_stats
+            uptime = uptime_stats.valid_sig_seconds
+        return uptime
 
     @property
     def uptime_points(self):
