@@ -110,7 +110,7 @@ def get_user_position(forum_site_id, profile_url, user_id):
         result['own'] = False
         if fp.user_profile.user.id == user_id:
             result['own'] = True
-            if fp.uptime_batches.filter(active=True).count():
+            if fp.post_stats.count():
                 result['active'] = True
             else:
                 result['active'] = False
