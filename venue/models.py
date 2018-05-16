@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import models
 from hashids import Hashids
 from constance import config
+import celery
 
 
 def compute_total_points():
@@ -111,13 +112,28 @@ class UserProfile(models.Model):
     def get_ranking(self, date=None):
         if not date:
             date = timezone.now().date()
-        rankings = Ranking.objects.filter(
-            user_profile_id=self.id,
-            timestamp__date=str(date)
-        )
+
+        def query_db(date):
+            rankings = Ranking.objects.filter(
+                user_profile_id=self.id,
+                timestamp__date=str(date)
+            )
+            return rankings
+
+        rankings = query_db(date)
         rank = None
         if rankings.last():
             rank = rankings.last().rank
+        else:
+            # Trigger ranking task if ranking does not exist
+            job = celery.current_app.send_task(
+                'venue.tasks.compute_ranking',
+                queue='ranking'
+            )
+            job.get()
+            rankings = query_db(date)
+            if rankings.last():
+                rank = rankings.last().rank
         return rank
 
     @property

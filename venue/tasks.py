@@ -103,6 +103,8 @@ def get_user_position(forum_site_id, profile_url, user_id):
         forum=forum,
         forum_user_id=forum_user_id
     )
+    result['active'] = False
+    result['with_signature'] = False
     result['exists'] = fp_check.exists()
     if fp_check.exists():
         fp = fp_check.last()
@@ -112,11 +114,9 @@ def get_user_position(forum_site_id, profile_url, user_id):
             result['own'] = True
             if fp.post_stats.count():
                 result['active'] = True
-            else:
-                result['active'] = False
         result['verified'] = fp.verified
-        result['with_signature'] = False
-        if fp.signature:
+        if fp.signature and fp.verified:
+            print(fp.signature)
             result['with_signature'] = True
     return result
 
@@ -165,6 +165,7 @@ def compute_ranking():
     )
     for rank, user in enumerate(user_points, 1):
         # Update user's ranking
+        user_points[rank-1]['rank'] = rank
         ranking = Ranking(
             user_profile_id=user['user_profile_id'],
             rank=rank
@@ -173,7 +174,7 @@ def compute_ranking():
     # Save the global total points in redis
     global_total = sum([x['total_points'] for x in user_points])
     settings.REDIS_DB.set('global_total_points', global_total)
-    return {'total': global_total}
+    return {'total': global_total, 'points': user_points}
 
 
 @shared_task(queue='control')

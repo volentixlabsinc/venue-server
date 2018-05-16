@@ -301,7 +301,10 @@ def check_profile(request):
     data = request.query_params
     user = request.user
     forum = ForumSite.objects.get(id=data.get('forum'))
-    response = {'found': False, 'forum_id': data.get('forum')}
+    response = {
+        'found': False,
+        'forum_id': data.get('forum')
+    }
     info = get_user_position(forum.id, data.get('profile_url'), user.id)
     if info['status_code'] == 200 and info['position']:
         response['position'] = info['position']
