@@ -348,42 +348,17 @@ export default {
               window.location.href = '/#/dashboard'
             })
             this.signitureVerified = true
-          } else {
-            this.$swal({
-              title: this.$t('signature_not_found'),
-              text: this.$t('signature_not_found_msg'),
-              icon: 'error',
-              button: {
-                text: 'OK',
-                className: 'btn-primary',
-                closeModal: true
-              }
-            })
           }
         }
       }).catch(error => {
         this.showVerifySpinner = false
-        var alreadyExists = error.response.data[0].includes('already contains')
-        if (error.response.status === 400 && alreadyExists) {
+        if (error.response.status === 404) {
           this.$swal({
-            title: this.$t('already_onboard'),
-            text: this.$t('already_onboard_msg'),
-            icon: 'info',
-            button: {
-              text: this.$t('ok'),
-              className: 'btn-primary',
-              closeModal: true
-            }
-          })
-        }
-        var signatureNotFound = error.response.data[0].includes('signature was not found')
-        if (error.response.status === 400 && signatureNotFound) {
-          this.$swal({
-            title: this.$t('verification_failed'),
-            text: error.response.data[0],
+            title: this.$t('signature_not_found'),
+            text: this.$t('signature_not_found_msg'),
             icon: 'error',
             button: {
-              text: this.$t('ok'),
+              text: 'OK',
               className: 'btn-primary',
               closeModal: true
             }

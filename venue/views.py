@@ -371,8 +371,8 @@ def save_signature(request):
         response['task_id'] = job.id
         resp_status = status.HTTP_200_OK
     else:
-        # response['success'] = False
-        # response['message'] = 'The signature could not be found in the profile page.'
+        response['success'] = False
+        response['message'] = 'The signature could not be found in the profile page.'
         resp_status = status.HTTP_404_NOT_FOUND
     return Response(response, status=resp_status)
 
