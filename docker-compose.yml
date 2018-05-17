@@ -17,6 +17,9 @@ services:
         tty: true
         entrypoint: '/entrypoint.sh'
         command: supervisord --nodaemon
+        depends_on:
+          - postgres
+          - redis
     redis:
         image: 'bitnami/redis:latest'
         expose:
