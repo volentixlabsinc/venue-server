@@ -156,6 +156,42 @@ class BitcoinTalk(object):
             sig_found = True
         return sig_found
 
+    def _scrape_posts_page(self, soup):
+        post_details = []
+        posts = soup.select('.post')
+        for post in posts:
+            header = post.parent.parent.parent.select('tr')[0]
+            title = header.select('td')[1]
+            post_link = title.select('a')[-1].attrs['href']
+            topic_id = post_link.split('topic=')[-1].split('.')[0]
+            message_id = post_link.split('topic=')[-1].split('#')[-1]
+            message_id = message_id.replace('msg', '')
+            date = header.select('td')[2].text.strip().replace('on: ', '')
+            content = post.text
+            clean_content = content  # TODO - remove quoted text in content
+            details = {
+                'topic_id': topic_id,
+                'message_id': message_id,
+                'timestamp': date,
+                'content_length': len(clean_content)
+            }
+            post_details.append(details)
+        return post_details
+
+    def scrape_posts(self, user_id):
+        url = self.base_url + '/index.php?action=profile;u=%s;'
+        url += 'sa=showPosts;start=0' % user_id
+        resp = requests.get(url)
+        soup = BeautifulSoup(resp.content, 'html.parser')
+        pages = soup.select('.navPages')
+        pages = [x.attrs['href'] for x in pages]
+        posts = self._scrape_posts_page(soup)
+        for page in pages:
+            resp = requests.get(page)
+            soup = BeautifulSoup(resp.content, 'html.parser')
+            posts += self._scrape_posts_page(soup)
+        return posts
+
 
 def verify_and_scrape(forum_profile_id,
                       forum_user_id,

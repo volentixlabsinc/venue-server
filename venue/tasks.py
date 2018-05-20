@@ -116,7 +116,6 @@ def get_user_position(forum_site_id, profile_url, user_id):
                 result['active'] = True
         result['verified'] = fp.verified
         if fp.signature and fp.verified:
-            print(fp.signature)
             result['with_signature'] = True
     return result
 
