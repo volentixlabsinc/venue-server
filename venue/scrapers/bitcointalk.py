@@ -167,8 +167,13 @@ class BitcoinTalk(object):
             message_id = post_link.split('topic=')[-1].split('#')[-1]
             message_id = message_id.replace('msg', '')
             date = header.select('td')[2].text.strip().replace('on: ', '')
-            content = post.text
-            clean_content = content  # TODO - remove quoted text in content
+            # Remove all the elements with inside quotes
+            for div in post.find_all("div", {'class': 'quoteheader'}):
+                div.decompose()
+            for div in post.find_all("div", {'class': 'quote'}):
+                div.decompose()
+            # Get the cleaned up text
+            clean_content = post.text.strip()
             details = {
                 'topic_id': topic_id,
                 'message_id': message_id,
@@ -179,8 +184,8 @@ class BitcoinTalk(object):
         return post_details
 
     def scrape_posts(self, user_id):
-        url = self.base_url + '/index.php?action=profile;u=%s;'
-        url += 'sa=showPosts;start=0' % user_id
+        url = self.base_url + '/index.php?action=profile;u=%s;' % user_id
+        url += 'sa=showPosts;start=0'
         resp = requests.get(url)
         soup = BeautifulSoup(resp.content, 'html.parser')
         pages = soup.select('.navPages')
