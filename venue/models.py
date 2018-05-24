@@ -86,6 +86,7 @@ class UserProfile(models.Model):
     otp_secret = models.TextField(blank=True)
     enabled_2fa = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
+    receive_emails = models.BooleanField(default=False)
     rank = models.IntegerField(default=0)
 
     def __str__(self):

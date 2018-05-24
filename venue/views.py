@@ -193,10 +193,16 @@ CREATE_USER_SCHEMA = AutoSchema(
             schema=coreschema.String(description='Password')
         ),
         coreapi.Field(
+            'receive_emails',
+            required=False,
+            location='form',
+            schema=coreschema.Boolean(description='Receive newsletter emails')
+        ),
+        coreapi.Field(
             'language',
             required=False,
             location='form',
-            schema=coreschema.String(description='Language Code')
+            schema=coreschema.String(description='Language code')
         )
     ]
 )
@@ -213,6 +219,10 @@ def create_user(request):
     try:
         language = data['language']
         del data['language']
+        receive_emails = False
+        if 'receive_emails' in data.keys():
+            receive_emails = data['receive_emails']
+            del data['receive_emails']
         if user_check.exists():
             response['status'] = 'exists'
             user = user_check.first()
@@ -226,7 +236,10 @@ def create_user(request):
             'token': token.key
         }
         response['user'] = user_data
-        user_profile = UserProfile(user=user)
+        user_profile = UserProfile(
+            user=user,
+            receive_emails=receive_emails
+        )
         user_profile.language = Language.objects.get(code=language)
         user_profile.save()
         # Send confirmation email

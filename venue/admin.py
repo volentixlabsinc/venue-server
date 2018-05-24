@@ -45,48 +45,7 @@ admin.site.register(Language, LanguageAdmin)
 
 
 class UserProfileAdmin(admin.ModelAdmin):
-    change_list_template = 'admin/userprofile_change_list.html'
-    list_display = [
-        'user', 'total_posts', 'total_posts_with_sig',
-        'total_post_days', 'total_points', 'total_tokens'
-    ]
-    search_fields = ['user__username']
-
-    def changelist_view(self, request, extra_context=None):
-        user_profiles = UserProfile.objects.all()
-        sum_posts = sum([float(x.get_total_posts()) for x in user_profiles])
-        sum_posts_with_sig = sum([float(x.get_total_posts_with_sig()) for x in user_profiles])
-        sum_post_days = sum([float(x.get_total_days()) for x in user_profiles])
-        sum_points = sum([float(x.get_total_points()) for x in user_profiles])
-        sum_vtx = sum([float(x.get_total_tokens()) for x in user_profiles])
-        dashboard_cards = [
-            {'name': 'Total Users', 'value': user_profiles.count()},
-            {'name': 'Total Posts', 'value': int(sum_posts)},
-            {'name': 'Total Posts With Sig', 'value': int(sum_posts_with_sig)},
-            {'name': 'Total Post Days', 'value': round(sum_post_days, 2)},
-            {'name': 'Total Points', 'value': int(sum_points)},
-            {'name': 'Total VTX', 'value': int(round(sum_vtx, 0))}
-        ]
-        response = super().changelist_view(
-            request,
-            extra_context={'dashboard_cards': dashboard_cards},
-        )
-        return response
-
-    def total_posts(self, obj):
-        return obj.get_total_posts()
-
-    def total_posts_with_sig(self, obj):
-        return obj.get_total_posts_with_sig()
-
-    def total_post_days(self, obj):
-        return round(obj.get_total_days(), 4)
-
-    def total_points(self, obj):
-        return round(obj.get_total_points(), 2)
-
-    def total_tokens(self, obj):
-        return obj.get_total_tokens()
+    list_display = ['user', 'email_confirmed', 'receive_emails']
 
 
 admin.site.register(UserProfile, UserProfileAdmin)
