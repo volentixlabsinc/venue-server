@@ -224,14 +224,6 @@ class ForumProfile(models.Model):
                 verification_code=verification_code)
 
     @property
-    def initial_posts_count(self):
-        count = 0
-        post_stats = self.post_stats.first()
-        if post_stats:
-            count = post_stats.num_posts
-        return count
-
-    @property
     def total_posts(self):
         post_stats = self.post_stats.last()
         total = 0
@@ -265,6 +257,36 @@ class ForumProfile(models.Model):
         return round(points, 2)
 
 
+class ForumPost(models.Model):
+    user_profile = models.ForeignKey(
+        UserProfile,
+        related_name='posts',
+        on_delete=models.PROTECT
+    )
+    forum_profile = models.ForeignKey(
+        ForumProfile,
+        related_name='posts',
+        on_delete=models.PROTECT
+    )
+    topic_id = models.CharField(max_length=20)
+    message_id = models.CharField(max_length=20)
+    unique_content_length = models.IntegerField()
+    timestamp = models.DateTimeField()
+    post_stats = models.ForeignKey(
+        'PostStats',
+        related_name='posts',
+        on_delete=models.PROTECT
+    )
+    # A post becomes `credited` with corresponding points
+    # when a Venue signature: (1) was active when it was posted,
+    # and (2) it has been active for the whole duration of
+    # a defined post maturation period
+    credited = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.id)
+
+
 class PostUptimeStats(models.Model):
     user_post_stats = models.OneToOneField(
         'UserPostStats',
@@ -292,6 +314,8 @@ class UserPostStats(models.Model):
         related_name='post_stats'
     )
     num_posts = models.IntegerField()
+    # Tracks a cumulative count of credited posts
+    credited_posts = models.IntegerField(default=0)
     is_signature_valid = models.BooleanField(default=False)
     timestamp = models.DateTimeField(default=timezone.now)
 

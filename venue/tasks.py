@@ -7,10 +7,11 @@ from postmarker.core import PostmarkClient
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
 from operator import itemgetter
+from dateutil import parser
 from constance import config
 import rollbar
 from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
-                          UserPostStats, Ranking)
+                          UserPostStats, Ranking, ForumPost)
 
 
 @task_failure.connect
@@ -52,9 +53,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         test_signature=forum_profile.signature.test_signature)
     status_code, signature_found, total_posts, username = results
     del username
-    # Record initial post count
-    if forum_profile.post_stats.count() == 0:
-        forum_profile.initial_posts_count = total_posts
     # Record the post stats
     post_stats = UserPostStats(
         user_profile=forum_profile.user_profile,
@@ -63,6 +61,19 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         is_signature_valid=signature_found
     )
     post_stats.save()
+    # Get the latest post from this forum profile
+    posts = scraper.scrape_posts(forum_profile_id)
+    for post in posts:
+        forum_post = ForumPost(
+            user_profile=forum_profile.user_profile,
+            forum_profile=forum_profile,
+            topic_id=post['topic_id'],
+            message_id=post['message_id'],
+            unique_content_length=post['content_length'],
+            timestamp=parser.parse(post['timestamp']),
+            post_stats=post_stats
+        )
+        forum_post.save()
 
 
 @shared_task(queue='scrapers')
