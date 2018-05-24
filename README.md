@@ -26,7 +26,8 @@
     password: default2018
 
 
-#### Note: In certain cases, you might need to recreate the docker containers from scratch (which will also wipe your DB clean). If that is needed, this is how you do that:
+### Rebuilding the web image and recreating the containers
+**Note: In certain cases, you might need to recreate the docker containers from scratch (which will also wipe your DB clean). If that is needed, this is how you do that:
 ```
 On the `venue-server` base directory, run these commands in sequence:
 1. `docker-compose down`
