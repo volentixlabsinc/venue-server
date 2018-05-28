@@ -7,11 +7,11 @@ from postmarker.core import PostmarkClient
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
 from operator import itemgetter
-from dateutil import parser
 from constance import config
+from django.utils import timezone
 import rollbar
 from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
-                          UserPostStats, Ranking, ForumPost)
+                          Ranking, ForumPost)
 
 
 @task_failure.connect
@@ -53,27 +53,48 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         test_signature=forum_profile.signature.test_signature)
     status_code, signature_found, total_posts, username = results
     del username
-    # Record the post stats
-    post_stats = UserPostStats(
-        user_profile=forum_profile.user_profile,
-        forum_profile=forum_profile,
-        num_posts=total_posts,
-        is_signature_valid=signature_found
+    # Get the current last scrape timestamp
+    last_scrape = forum_profile.get_last_scrape()
+    # Check posts that haven't reached maturatation
+    tracked_posts = []
+    for post in forum_profile.posts.filter(matured=False):
+        # Check if it's not due to mature yet
+        tdiff = timezone.now() - post.timestamp
+        tdiff_hours = tdiff.total_seconds() / 3600
+        if tdiff_hours > config.MATURATION_PERIOD:
+            post.matured = True
+            post.save()
+        else:
+            tracked_posts.append(post.message_id)
+    # Get the latest posts from this forum profile
+    posts = scraper.scrape_posts(
+        forum_profile.forum_user_id,
+        last_scrape=last_scrape.replace(tzinfo=None)
     )
-    post_stats.save()
-    # Get the latest post from this forum profile
-    posts = scraper.scrape_posts(forum_profile_id)
+    # Save each new post
     for post in posts:
+        print(post)
         forum_post = ForumPost(
             user_profile=forum_profile.user_profile,
             forum_profile=forum_profile,
             topic_id=post['topic_id'],
             message_id=post['message_id'],
             unique_content_length=post['content_length'],
-            timestamp=parser.parse(post['timestamp']),
-            post_stats=post_stats
+            timestamp=post['timestamp']
         )
         forum_post.save()
+    # Update tracked posts
+    for post in tracked_posts:
+        forum_post = ForumPost.objects.get(
+            message_id=post,
+            forum_profile=forum_profile
+        )
+        forum_post.save()
+    # Update the forum_profile's last scrape timestamp
+    forum_profile.last_scrape = timezone.now()
+    # Update the signature_found flag
+    forum_profile.signature_found = signature_found
+    forum_profile.save()
 
 
 @shared_task(queue='scrapers')

@@ -206,6 +206,9 @@ class ForumProfile(models.Model):
     date_verified = models.DateTimeField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
     date_updated = models.DateTimeField(default=timezone.now)
+    # The flag below is overwritten every scrape
+    signature_found = models.BooleanField(default=False)
+    last_scrape = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('forum', 'forum_user_id', 'verified')
@@ -223,6 +226,12 @@ class ForumProfile(models.Model):
                 forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
+
+    def get_last_scrape(self):
+        if self.last_scrape:
+            return self.last_scrape
+        else:
+            return self.date_verified
 
     @property
     def total_posts(self):
@@ -270,24 +279,55 @@ class ForumPost(models.Model):
         on_delete=models.PROTECT
     )
     topic_id = models.CharField(max_length=20)
-    message_id = models.CharField(max_length=20)
+    message_id = models.CharField(max_length=20, db_index=True)
     unique_content_length = models.IntegerField()
     timestamp = models.DateTimeField()
-    post_stats = models.ForeignKey(
-        'PostStats',
-        related_name='posts',
-        on_delete=models.PROTECT
-    )
-    # A post becomes `credited` with corresponding points
-    # when a Venue signature: (1) was active when it was posted,
-    # and (2) it has been active for the whole duration of
-    # a defined post maturation period
     credited = models.BooleanField(default=False)
+    matured = models.BooleanField(default=False)
+    base_points = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+    influence_bonus_pct = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        default=0
+    )
+    influence_points_bonus = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+    total_points = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+    valid_sig_minutes = models.IntegerField(default=0)
+    invalid_sig_minutes = models.IntegerField(default=0)
 
     def __str__(self):
         return str(self.id)
 
+    def save(self, *args, **kwargs):
+        if not self.matured:
+            current = ForumPost.objects.filter(
+                message_id=self.message_id).last()
+            if current:
+                last_scrape = self.forum_profile.last_scrape
+                tdiff = self.timestamp - last_scrape
+                tdiff_minutes = tdiff.total_seconds() / 60
+                if self.forum_profile.signature_found:
+                    self.valid_sig_minutes = current.valid_sig_minutes
+                    self.valid_sig_minutes += tdiff_minutes
+                else:
+                    self.invalid_sig_minutes = current.invalid_sig_minutes
+                    self.invalid_sig_minutes += tdiff_minutes
+        super(ForumPost, self).save(*args, **kwargs)
 
+
+"""
 class PostUptimeStats(models.Model):
     user_post_stats = models.OneToOneField(
         'UserPostStats',
@@ -353,6 +393,7 @@ class UserPostStats(models.Model):
             invalid_sig_seconds=invalid_sig_seconds
         )
         uptime_stats.save()
+"""
 
 
 class Notification(models.Model):

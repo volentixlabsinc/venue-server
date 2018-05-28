@@ -1,0 +1,403 @@
+[
+  {
+    "model": "venue.signature",
+    "pk": 1,
+    "fields": {
+      "name": "BitcoinTalk Test Signature 1",
+      "forum_site": 1,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "The pen is mightier than the sword",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2017-11-24T01:38:55Z",
+      "user_ranks": [1, 2, 3, 4, 5, 6, 7, 8]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 2,
+    "fields": {
+      "name": "Bitcoin Forum Test Signature 1",
+      "forum_site": 2,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "No man is an island",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2017-11-27T03:53:51Z",
+      "user_ranks": [9, 10, 11, 12, 16, 17, 18, 13, 14, 15]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 3,
+    "fields": {
+      "name": "BitcoinTalk Test Signature 2",
+      "forum_site": 1,
+      "code": "link2",
+      "expected_links": "link2",
+      "test_signature": "When in Rome, do as the Romans",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2017-12-04T01:40:48Z",
+      "user_ranks": [1, 2, 3, 4, 5, 6, 7, 8]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 4,
+    "fields": {
+      "name": "Bitcoin Forum Test Signature 2",
+      "forum_site": 2,
+      "code": "link2",
+      "expected_links": "link2",
+      "test_signature": "Two wrongs don't make a right",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2017-12-04T01:41:33Z",
+      "user_ranks": [10, 11, 12, 13, 14, 15, 16, 17, 18]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 5,
+    "fields": {
+      "name": "BitcoinTalk Test Signature 3",
+      "forum_site": 1,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "Knowledge comes, but wisdom lingers",
+      "image": "",
+      "active": true,
+      "date_added": "2018-04-06T12:38:05Z",
+      "user_ranks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 6,
+    "fields": {
+      "name": "BitcoinTalk Test Signature 4",
+      "forum_site": 1,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "In teaching others we teach ourselves",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:40:23Z",
+      "user_ranks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 7,
+    "fields": {
+      "name": "BitcoinTalk Test Signature 5",
+      "forum_site": 1,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature":
+        "Follow love and it will flee, flee love and it will follow",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:43:17Z",
+      "user_ranks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 8,
+    "fields": {
+      "name": "BitcoinTalk Test Signature 6",
+      "forum_site": 1,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "A friend walks in when everyone else walks out",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:44:51Z",
+      "user_ranks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 9,
+    "fields": {
+      "name": "BitcoinTalk Test Signature 7",
+      "forum_site": 1,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "Men never remember, but women never forget",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:45:48Z",
+      "user_ranks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 10,
+    "fields": {
+      "name": "Bitcoin Forum Test Signature 3",
+      "forum_site": 2,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "He who dares to teach must never cease to learn",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:46:19Z",
+      "user_ranks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 11,
+    "fields": {
+      "name": "Bitcoin Forum Test Signature 4",
+      "forum_site": 2,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "Everything has beauty, but not everyone sees it",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:47:38Z",
+      "user_ranks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 12,
+    "fields": {
+      "name": "Bitcoin Forum Test Signature 5",
+      "forum_site": 2,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "He who opens a school door, closes a prison",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:48:09Z",
+      "user_ranks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 13,
+    "fields": {
+      "name": "Bitcoin Forum Test Signature 6",
+      "forum_site": 2,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "Every accomplishment starts with the decision to try",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:48:51Z",
+      "user_ranks": [
+        18,
+        17,
+        16,
+        15,
+        14,
+        13,
+        12,
+        11,
+        10,
+        9,
+        8,
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1
+      ]
+    }
+  },
+  {
+    "model": "venue.signature",
+    "pk": 14,
+    "fields": {
+      "name": "Bitcoin Forum Test Signature 7",
+      "forum_site": 2,
+      "code": "link",
+      "expected_links": "link",
+      "test_signature": "The hottest love has the coldest end",
+      "image": "static/img/signature_img.png",
+      "active": true,
+      "date_added": "2018-04-06T12:49:32Z",
+      "user_ranks": [
+        18,
+        17,
+        16,
+        15,
+        14,
+        13,
+        12,
+        11,
+        10,
+        9,
+        8,
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1
+      ]
+    }
+  }
+]
