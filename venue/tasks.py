@@ -53,6 +53,9 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         test_signature=forum_profile.signature.test_signature)
     status_code, signature_found, total_posts, username = results
     del username
+    # Update the signature_found flag in forum profile
+    forum_profile.signature_found = signature_found
+    forum_profile.save()
     # Get the current last scrape timestamp
     last_scrape = forum_profile.get_last_scrape()
     # Check posts that haven't reached maturatation
@@ -92,9 +95,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         forum_post.save()
     # Update the forum_profile's last scrape timestamp
     forum_profile.last_scrape = timezone.now()
-    # Update the signature_found flag
-    forum_profile.signature_found = signature_found
-    forum_profile.save()
 
 
 @shared_task(queue='scrapers')

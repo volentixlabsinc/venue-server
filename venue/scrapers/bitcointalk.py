@@ -29,7 +29,7 @@ class BitcoinTalk(object):
         self.soup = None
         self.test = test
         self.test_signature = test_signature
-        
+
     def list_forum_positions(self):
         positions = [
             'Brand New',
@@ -42,12 +42,12 @@ class BitcoinTalk(object):
             'Legendary'
         ]
         return positions
-        
+
     def set_params(self, forum_profile_id, forum_user_id, expected_links):
         self.forum_profile_id = forum_profile_id
         self.forum_user_id = forum_user_id
         self.expected_links = expected_links
-        
+
     def get_profile(self, user_id):
         if user_id.startswith('http'):
             profile_url = user_id
@@ -96,7 +96,7 @@ class BitcoinTalk(object):
                 raise ScraperError('Cannot get username')
         except IndexError:
             return ''
-            
+
     def verify_code(self, code, forum_profile_id, forum_user_id):
         verified = False
         if self.test:
@@ -108,7 +108,7 @@ class BitcoinTalk(object):
             if numbers == (forum_profile_id, int(forum_user_id)):
                 verified = True
         return verified
-        
+
     def verify_links(self,
                      scraped_links,
                      expected_links,
@@ -132,7 +132,7 @@ class BitcoinTalk(object):
                 if set(links) == set(expected_links):
                     verified = True
         return (verified, vcode)
-        
+
     def check_signature(self):
         sig = self.soup.select('div#bodyarea tr')[26]
         # Find links and check their integrity

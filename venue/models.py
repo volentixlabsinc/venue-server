@@ -316,7 +316,7 @@ class ForumPost(models.Model):
                 message_id=self.message_id).last()
             if current:
                 last_scrape = self.forum_profile.last_scrape
-                tdiff = self.timestamp - last_scrape
+                tdiff = last_scrape - self.timestamp
                 tdiff_minutes = tdiff.total_seconds() / 60
                 if self.forum_profile.signature_found:
                     self.valid_sig_minutes = current.valid_sig_minutes
