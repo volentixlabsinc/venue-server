@@ -8,9 +8,12 @@ from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
 from operator import itemgetter
 from constance import config
+from django.utils import timezone
+from celery.result import AsyncResult, ResultSet
+
 import rollbar
 from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
-                          UserPostStats, Ranking)
+                          Ranking, ForumPost)
 
 
 @task_failure.connect
@@ -52,17 +55,55 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         test_signature=forum_profile.signature.test_signature)
     status_code, signature_found, total_posts, username = results
     del username
-    # Record initial post count
-    if forum_profile.post_stats.count() == 0:
-        forum_profile.initial_posts_count = total_posts
-    # Record the post stats
-    post_stats = UserPostStats(
-        user_profile=forum_profile.user_profile,
-        forum_profile=forum_profile,
-        num_posts=total_posts,
-        is_signature_valid=signature_found
+    # Update the signature_found flag in forum profile
+    forum_profile.signature_found = signature_found
+    forum_profile.save()
+    # Get the current last scrape timestamp
+    last_scrape = forum_profile.get_last_scrape()
+    # Check posts that haven't reached maturatation
+    tracked_posts = []
+    for post in forum_profile.posts.filter(matured=False):
+        # Check if it's not due to mature yet
+        post_timestamp = post.timestamp.replace(tzinfo=None)
+        tdiff = timezone.now().replace(tzinfo=None) - post_timestamp
+        tdiff_hours = tdiff.total_seconds() / 3600
+        if tdiff_hours > config.MATURATION_PERIOD:
+            post.matured = True
+            post.save()
+        else:
+            tracked_posts.append(post.message_id)
+    # Get the latest posts from this forum profile
+    posts = scraper.scrape_posts(
+        forum_profile.forum_user_id,
+        last_scrape=last_scrape.replace(tzinfo=None)
     )
-    post_stats.save()
+    # Save each new post
+    for post in posts:
+        post_check = ForumPost.objects.filter(
+            forum_profile=forum_profile,
+            topic_id=post['topic_id'],
+            message_id=post['message_id'],
+        )
+        if not post_check.exists():
+            forum_post = ForumPost(
+                user_profile=forum_profile.user_profile,
+                forum_profile=forum_profile,
+                topic_id=post['topic_id'],
+                message_id=post['message_id'],
+                unique_content_length=post['content_length'],
+                timestamp=post['timestamp']
+            )
+            forum_post.save()
+    # Update tracked posts
+    for post in tracked_posts:
+        forum_post = ForumPost.objects.get(
+            message_id=post,
+            forum_profile=forum_profile
+        )
+        forum_post.save()
+    # Update the forum_profile's last scrape timestamp
+    forum_profile.last_scrape = timezone.now()
+    forum_profile.save()
 
 
 @shared_task(queue='scrapers')
@@ -108,11 +149,11 @@ def get_user_position(forum_site_id, profile_url, user_id):
     result['exists'] = fp_check.exists()
     if fp_check.exists():
         fp = fp_check.last()
-        result['forum_profile_id'] = fp.id
+        result['forum_profile_id'] = fp.id   
         result['own'] = False
         if fp.user_profile.user.id == user_id:
             result['own'] = True
-            if fp.post_stats.count():
+            if fp.posts.count():
                 result['active'] = True
         result['verified'] = fp.verified
         if fp.signature and fp.verified:
@@ -130,27 +171,12 @@ def send_websocket_signal(signal):
     redis_publisher.publish_message(message)
 
 
-@shared_task(queue='scrapers')
-def update_data(forum_profile_id=None):
-    # Create a bakcground tasks workflow as a chain
-    if forum_profile_id:
-        forum_profiles = ForumProfile.objects.filter(id__in=[forum_profile_id])
-    else:
-        forum_profiles = ForumProfile.objects.filter(
-            active=True,
-            verified=True
-        )
-    # Send scraping tasks to the queue
-    for profile in forum_profiles:
-        scrape_forum_profile.delay(profile.id)
-
-
-@shared_task(queue='ranking')
+@shared_task(queue='compute')
 def compute_ranking():
     users = UserProfile.objects.all()
     user_points = []
     for user in users:
-        total_points = user.post_points + user.uptime_points
+        total_points = user.total_points
         info = {
             'user_profile_id': int(user.id),
             'total_points': total_points
@@ -174,6 +200,64 @@ def compute_ranking():
     global_total = sum([x['total_points'] for x in user_points])
     settings.REDIS_DB.set('global_total_points', global_total)
     return {'total': global_total, 'points': user_points}
+
+
+@shared_task(queue='compute', bind=True, max_retries=600)
+def compute_points(self, subtasks=None):
+    proceed = False
+    if subtasks:
+        jobs = [AsyncResult(x) for x in subtasks]
+        results = ResultSet(jobs)
+        if results.ready():
+            proceed = True
+    else:
+        proceed = True
+    # Proceed to compute the points
+    if proceed:
+        posts = ForumPost.objects.filter(
+            credited=False,
+            matured=True
+        )
+        for post in posts:
+            if post.valid_sig_minutes:
+                pct_threshold = config.UPTIME_PERCENTAGE_THRESHOLD
+                maturation = config.MATURATION_PERIOD
+                uptime_pct = (post.valid_sig_minutes / (maturation * 60))
+                uptime_pct *= 100
+                if uptime_pct >= pct_threshold:
+                    base_points = config.POST_POINTS_MULTIPLIER
+                    bonus_pct = post.forum_profile.forum_rank.bonus_percentage
+                    influence_bonus = base_points * (float(bonus_pct) / 100)
+                    total_points = base_points + influence_bonus
+                    post.base_points = base_points
+                    post.influence_bonus_pct = bonus_pct
+                    post.influence_bonus_pts = influence_bonus
+                    post.total_points = total_points
+                    post.credited = True
+                    post.save()
+        # Call the task to compute the ranking
+        compute_ranking.delay()
+    else:
+        self.retry(countdown=5)
+
+
+@shared_task(queue='scrapers')
+def update_data(forum_profile_id=None):
+    # Create a bakcground tasks workflow as a chain
+    if forum_profile_id:
+        forum_profiles = ForumProfile.objects.filter(id__in=[forum_profile_id])
+    else:
+        forum_profiles = ForumProfile.objects.filter(
+            active=True,
+            verified=True
+        )
+    # Send scraping tasks to the queue
+    subtasks = []
+    for profile in forum_profiles:
+        job = scrape_forum_profile.delay(profile.id)
+        subtasks.append(job.id)
+    compute_points.delay(subtasks)
+    return subtasks
 
 
 @shared_task(queue='control')

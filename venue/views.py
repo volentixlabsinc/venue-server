@@ -436,12 +436,9 @@ def get_stats(request):
                 'forumUserId': fp.forum_user_id,
                 'forumUserRank': fp.forum_rank.name,
                 'numPosts': fp.total_posts,
-                'postPoints': fp.post_points,
-                'uptimeSeconds': fp.uptime_seconds,
-                'uptimePoints': fp.uptime_points,
-                'totalPoints': fp.total_points,
+                'totalPoints': fp.total_points
             }
-            pct_contrib = fp.total_points / global_total_pts
+            pct_contrib = float(fp.total_points) / global_total_pts
             fp_tokens = pct_contrib * config.VTX_AVAILABLE
             fp_data['VTX_Tokens'] = int(round(fp_tokens, 0))
             profile_stats.append(fp_data)
@@ -464,12 +461,8 @@ def get_stats(request):
             data['date'] = day
             userlevel_stats['daily_stats'].append(data)
         # Points, tokens, and overall user rank
-        userlevel_stats['total_posts'] = user_profile.get_num_posts()
-        post_points = user_profile.post_points
-        userlevel_stats['post_points'] = post_points
-        uptime_points = user_profile.uptime_points
-        userlevel_stats['uptime_points'] = uptime_points
-        total_points = post_points + uptime_points
+        userlevel_stats['total_posts'] = user_profile.get_num_posts()['total']
+        total_points = user_profile.total_points
         userlevel_stats['total_points'] = total_points
         pct_contrib = total_points / global_total_pts
         userlevel_stats['total_points_pct'] = int(round(pct_contrib * 100, 0))
@@ -482,7 +475,7 @@ def get_stats(request):
         sitewide_stats = {}
         users = UserProfile.objects.filter(email_confirmed=True)
         users_with_fp = [x.id for x in users if x.with_forum_profile]
-        total_posts = [x.get_num_posts() for x in users]
+        total_posts = [x.get_num_posts()['total'] for x in users]
         sitewide_stats['total_users'] = len(users_with_fp)
         sitewide_stats['total_posts'] = int(sum(total_posts))
         available_tokens = '{:,}'.format(config.VTX_AVAILABLE)
@@ -515,9 +508,7 @@ def get_leaderboard_data(request):
                 'rank': user_profile.get_ranking(),
                 'total_posts': user_profile.total_posts,
                 'total_points': user_profile.total_points,
-                'total_tokens': user_profile.total_tokens,
-                'post_points': user_profile.post_points,
-                'uptime_points': user_profile.uptime_points
+                'total_tokens': user_profile.total_tokens
             }
             leaderboard_data.append(user_data)
     # Order according to amount of tokens

@@ -1,7 +1,6 @@
 from venue.models import (
     ForumSite, Signature, UserProfile, Ranking, ForumProfile,
-    Language, ForumUserRank, UserPostStats, PostUptimeStats,
-    Notification
+    Language, ForumUserRank, ForumPost, Notification
 )
 from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
@@ -52,7 +51,7 @@ admin.site.register(UserProfile, UserProfileAdmin)
 
 
 class ForumUserRankAdmin(admin.ModelAdmin):
-    list_display = ['name', 'forum_site', 'allowed']
+    list_display = ['name', 'forum_site', 'allowed', 'bonus_percentage']
     list_filter = ['forum_site']
 
 
@@ -85,24 +84,16 @@ class NotificationAdmin(admin.ModelAdmin):
 admin.site.register(Notification, NotificationAdmin)
 
 
-class UserPostStatsAdmin(admin.ModelAdmin):
+class ForumPostAdmin(admin.ModelAdmin):
     list_display = [
-        'id', 'user_profile', 'forum_profile', 'num_posts',
-        'is_signature_valid', 'timestamp'
+        'forum_profile', 'message_id', 'timestamp',
+        'unique_content_length', 'valid_sig_minutes', 'invalid_sig_minutes',
+        'base_points', 'influence_bonus_pts', 'total_points',
+        'credited', 'matured'
     ]
 
 
-admin.site.register(UserPostStats, UserPostStatsAdmin)
-
-
-class PostUptimeStatsAdmin(admin.ModelAdmin):
-    list_display = [
-        'user_post_stats', 'valid_sig_seconds',
-        'invalid_sig_seconds', 'timestamp'
-    ]
-
-
-admin.site.register(PostUptimeStats, PostUptimeStatsAdmin)
+admin.site.register(ForumPost, ForumPostAdmin)
 
 
 class RankingAdmin(admin.ModelAdmin):

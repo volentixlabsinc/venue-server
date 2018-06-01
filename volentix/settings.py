@@ -78,7 +78,8 @@ CONSTANCE_CONFIG = {
     'TEST_MODE': (DEBUG, 'Test mode for scraping and points calculations. \
         Signatures are always marked as found under test mode.'),
     'POST_POINTS_MULTIPLIER': (100, 'Points for each new post'),
-    'UPTIME_POINTS_MULTIPLIER': (2, 'Points for uptime of each post per hour')
+    'MATURATION_PERIOD': (24, 'Maturation period'),
+    'UPTIME_PERCENTAGE_THRESHOLD': (90, 'Percentage of uptime required')
 }
 
 REDIS_PASSWORD = '4e7a84d5'

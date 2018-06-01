@@ -4,6 +4,9 @@ from hashids import Hashids
 from bs4 import BeautifulSoup
 from django.conf import settings
 from selenium import webdriver
+from django.utils import timezone
+from datetime import datetime
+from dateutil import parser
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
@@ -26,7 +29,7 @@ class BitcoinTalk(object):
         self.soup = None
         self.test = test
         self.test_signature = test_signature
-        
+
     def list_forum_positions(self):
         positions = [
             'Brand New',
@@ -39,12 +42,12 @@ class BitcoinTalk(object):
             'Legendary'
         ]
         return positions
-        
+
     def set_params(self, forum_profile_id, forum_user_id, expected_links):
         self.forum_profile_id = forum_profile_id
         self.forum_user_id = forum_user_id
         self.expected_links = expected_links
-        
+
     def get_profile(self, user_id):
         if user_id.startswith('http'):
             profile_url = user_id
@@ -93,7 +96,7 @@ class BitcoinTalk(object):
                 raise ScraperError('Cannot get username')
         except IndexError:
             return ''
-            
+
     def verify_code(self, code, forum_profile_id, forum_user_id):
         verified = False
         if self.test:
@@ -105,7 +108,7 @@ class BitcoinTalk(object):
             if numbers == (forum_profile_id, int(forum_user_id)):
                 verified = True
         return verified
-        
+
     def verify_links(self,
                      scraped_links,
                      expected_links,
@@ -129,7 +132,7 @@ class BitcoinTalk(object):
                 if set(links) == set(expected_links):
                     verified = True
         return (verified, vcode)
-        
+
     def check_signature(self):
         sig = self.soup.select('div#bodyarea tr')[26]
         # Find links and check their integrity
@@ -156,9 +159,11 @@ class BitcoinTalk(object):
             sig_found = True
         return sig_found
 
-    def _scrape_posts_page(self, soup):
+    def _scrape_posts_page(self, soup, last_scrape=None):
         post_details = []
         posts = soup.select('.post')
+        check_datetime = timezone.now()
+        last_scrape_reached = False
         for post in posts:
             header = post.parent.parent.parent.select('tr')[0]
             title = header.select('td')[1]
@@ -167,34 +172,53 @@ class BitcoinTalk(object):
             message_id = post_link.split('topic=')[-1].split('#')[-1]
             message_id = message_id.replace('msg', '')
             date = header.select('td')[2].text.strip().replace('on: ', '')
-            # Remove all the elements with inside quotes
-            for div in post.find_all("div", {'class': 'quoteheader'}):
-                div.decompose()
-            for div in post.find_all("div", {'class': 'quote'}):
-                div.decompose()
-            # Get the cleaned up text
-            clean_content = post.text.strip()
-            details = {
-                'topic_id': topic_id,
-                'message_id': message_id,
-                'timestamp': date,
-                'content_length': len(clean_content)
-            }
-            post_details.append(details)
-        return post_details
+            if 'Today ' in date:
+                date = date.strip().replace('Today at ', '')
+                timestamp = datetime.combine(
+                    check_datetime.date(),
+                    parser.parse(date).time()
+                )
+            else:
+                timestamp = parser.parse(date)
+            if timestamp >= last_scrape:
+                # if message_id in tracked_posts:
+                # Remove all the elements with inside quotes
+                for div in post.find_all("div", {'class': 'quoteheader'}):
+                    div.decompose()
+                for div in post.find_all("div", {'class': 'quote'}):
+                    div.decompose()
+                # Get the cleaned up text
+                clean_content = post.text.strip()
+                details = {
+                    'topic_id': topic_id,
+                    'message_id': message_id,
+                    'timestamp': timestamp,
+                    'content_length': len(clean_content),
+                    'check_datetime': check_datetime
+                }
+                post_details.append(details)
+            else:
+                last_scrape_reached = True
+        return (post_details, last_scrape_reached)
 
-    def scrape_posts(self, user_id):
+    def scrape_posts(self, user_id, **kwargs):
         url = self.base_url + '/index.php?action=profile;u=%s;' % user_id
         url += 'sa=showPosts;start=0'
         resp = requests.get(url)
         soup = BeautifulSoup(resp.content, 'html.parser')
         pages = soup.select('.navPages')
         pages = [x.attrs['href'] for x in pages]
-        posts = self._scrape_posts_page(soup)
-        for page in pages:
-            resp = requests.get(page)
-            soup = BeautifulSoup(resp.content, 'html.parser')
-            posts += self._scrape_posts_page(soup)
+        posts, last_scrape_reached = self._scrape_posts_page(soup, **kwargs)
+        if not last_scrape_reached:
+            for page in pages:
+                resp = requests.get(page)
+                soup = BeautifulSoup(resp.content, 'html.parser')
+                posts, last_scrape_reached = self._scrape_posts_page(
+                    soup,
+                    **kwargs
+                )
+                if last_scrape_reached:
+                    break
         return posts
 
 
@@ -225,3 +249,9 @@ def extract_user_id(profile_url):
     user_id = profile_url.split('profile;u=')[-1]
     user_id = user_id.split(';')[0].strip()
     return user_id
+
+
+def scrape_posts(forum_user_id, **kwargs):
+    scraper = BitcoinTalk()
+    posts = scraper.scrape_posts(forum_user_id, **kwargs)
+    return posts

@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import models
 from hashids import Hashids
 from constance import config
+from dateutil import parser
 import celery
 
 
@@ -29,6 +30,11 @@ class ForumUserRank(models.Model):
     """ Names of forum user ranks/positions """
     forum_site = models.ForeignKey(ForumSite, related_name='ranks')
     name = models.CharField(max_length=30)
+    bonus_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
     allowed = models.BooleanField(default=False)
 
     def __str__(self):
@@ -100,14 +106,30 @@ class UserProfile(models.Model):
             return False
 
     def get_num_posts(self, date=None):
-        num_posts = 0
-        for fp in self.forum_profiles.filter(active=True):
-            if not date:
-                date = timezone.now().date()
-            post_stats = fp.post_stats.filter(timestamp__date=str(date))
-            if post_stats.last():
-                num_posts += post_stats.last().num_posts
-                num_posts -= fp.initial_posts_count
+        if date:
+            date = parser.parse(date).date()
+        else:
+            date = timezone.now().date()
+        num_posts = {
+            'credited': 0,
+            'pending': 0,
+            'total': 0
+        }
+        for fp in self.forum_profiles.filter(verified=True):
+            posts = fp.posts.filter(timestamp__date__lte=date)
+            for post in posts:
+                if post.date_credited:
+                    date_credited = post.date_credited.date()
+                    if date_credited >= date:
+                        num_posts['credited'] += 1
+                if post.date_matured:
+                    date_matured = post.date_matured.date()
+                    if date_matured >= date:
+                        num_posts['pending'] += 1
+                else:
+                    num_posts['pending'] += 1
+                if post.timestamp.date() <= date:
+                    num_posts['total'] += 1
         return num_posts
 
     def get_ranking(self, date=None):
@@ -125,48 +147,21 @@ class UserProfile(models.Model):
         rank = None
         if rankings.last():
             rank = rankings.last().rank
-        else:
-            # Trigger ranking task if ranking does not exist
-            job = celery.current_app.send_task(
-                'venue.tasks.compute_ranking',
-                queue='ranking'
-            )
-            job.get()
-            rankings = query_db(date)
-            if rankings.last():
-                rank = rankings.last().rank
         return rank
 
     @property
     def total_posts(self):
         posts = 0
-        for fp in self.forum_profiles.filter(active=True):
-            if fp.post_stats.last():
-                posts += fp.total_posts
+        for fp in self.forum_profiles.filter(active=True, verified=True):
+            posts += fp.total_posts
         return posts
 
     @property
-    def post_points(self):
-        points = 0
-        for fp in self.forum_profiles.filter(active=True):
-            if fp.post_stats.last():
-                points += fp.total_posts * config.POST_POINTS_MULTIPLIER
-        return round(points, 2)
-
-    @property
-    def uptime_points(self):
-        points = 0
-        for fp in self.forum_profiles.filter(active=True):
-            if fp.post_stats.last():
-                uptime_stats = fp.post_stats.last().uptime_stats
-                points = uptime_stats.valid_sig_seconds / 3600
-                points *= config.UPTIME_POINTS_MULTIPLIER
-        return round(points, 2)
-
-    @property
     def total_points(self):
-        points = self.post_points + self.uptime_points
-        return round(points, 2)
+        points = 0
+        for fp in self.forum_profiles.filter(active=True, verified=True):
+            points += fp.total_points
+        return round(float(points), 2)
 
     @property
     def total_tokens(self):
@@ -206,6 +201,9 @@ class ForumProfile(models.Model):
     date_verified = models.DateTimeField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
     date_updated = models.DateTimeField(default=timezone.now)
+    # The flag below is overwritten every scrape
+    signature_found = models.BooleanField(default=False)
+    last_scrape = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('forum', 'forum_user_id', 'verified')
@@ -224,111 +222,91 @@ class ForumProfile(models.Model):
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
 
-    @property
-    def initial_posts_count(self):
-        count = 0
-        post_stats = self.post_stats.first()
-        if post_stats:
-            count = post_stats.num_posts
-        return count
+    def get_last_scrape(self):
+        if self.last_scrape:
+            return self.last_scrape
+        else:
+            return self.date_verified
 
     @property
     def total_posts(self):
-        post_stats = self.post_stats.last()
-        total = 0
-        if post_stats:
-            total = post_stats.num_posts - self.initial_posts_count
-        return total
-
-    @property
-    def post_points(self):
-        points = self.total_posts * config.POST_POINTS_MULTIPLIER
-        return round(points, 2)
-
-    @property
-    def uptime_seconds(self):
-        uptime = 0
-        post_stats = self.post_stats.last()
-        if post_stats:
-            uptime_stats = post_stats.uptime_stats
-            uptime = uptime_stats.valid_sig_seconds
-        return uptime
-
-    @property
-    def uptime_points(self):
-        points = (self.uptime_seconds / 3600)
-        points *= config.UPTIME_POINTS_MULTIPLIER
-        return round(points, 2)
+        count = 0
+        if self.posts.exists():
+            count = self.posts.count()
+        return count
 
     @property
     def total_points(self):
-        points = self.post_points + self.uptime_points
+        points = sum([x.total_points for x in self.posts.all()])
         return round(points, 2)
 
 
-class PostUptimeStats(models.Model):
-    user_post_stats = models.OneToOneField(
-        'UserPostStats',
-        related_name='uptime_stats',
-        on_delete=models.PROTECT
-    )
-    valid_sig_seconds = models.IntegerField()
-    invalid_sig_seconds = models.IntegerField()
-    timestamp = models.DateTimeField(default=timezone.now)
-
-    def __str__(self):
-        return str(self.id)
-
-    class Meta:
-        verbose_name_plural = 'Post uptime stats'
-
-
-class UserPostStats(models.Model):
+class ForumPost(models.Model):
     user_profile = models.ForeignKey(
         UserProfile,
-        related_name='post_stats'
+        related_name='posts',
+        on_delete=models.PROTECT
     )
     forum_profile = models.ForeignKey(
         ForumProfile,
-        related_name='post_stats'
+        related_name='posts',
+        on_delete=models.PROTECT
     )
-    num_posts = models.IntegerField()
-    is_signature_valid = models.BooleanField(default=False)
-    timestamp = models.DateTimeField(default=timezone.now)
+    topic_id = models.CharField(max_length=20)
+    message_id = models.CharField(max_length=20, db_index=True)
+    unique_content_length = models.IntegerField()
+    timestamp = models.DateTimeField(db_index=True)
+    credited = models.BooleanField(default=False)
+    matured = models.BooleanField(default=False)
+    date_matured = models.DateTimeField(null=True, blank=True)
+    date_credited = models.DateTimeField(null=True, blank=True)
+    base_points = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+    influence_bonus_pct = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        default=0
+    )
+    influence_bonus_pts = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+    total_points = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+    valid_sig_minutes = models.IntegerField(default=0)
+    invalid_sig_minutes = models.IntegerField(default=0)
 
     def __str__(self):
         return str(self.id)
 
-    class Meta:
-        verbose_name_plural = 'User post stats'
-
     def save(self, *args, **kwargs):
-        # Take the previous first
-        previous = self.forum_profile.post_stats.last()
-        # Save the current post stats
-        super(UserPostStats, self).save(*args, **kwargs)
-        # Process the recording of uptime stats
-        valid_sig_seconds = 0
-        invalid_sig_seconds = 0
-        if previous:
-            tdiff = self.timestamp - previous.uptime_stats.timestamp
-            tdiff_seconds = tdiff.total_seconds()
-            if self.is_signature_valid:
-                valid_sig_seconds = previous.uptime_stats.valid_sig_seconds
-                valid_sig_seconds += tdiff_seconds
-                # Copy over the invalid sig seconds
-                invalid_sig_seconds = previous.uptime_stats.invalid_sig_seconds
-            else:
-                invalid_sig_seconds = previous.uptime_stats.invalid_sig_seconds
-                invalid_sig_seconds += tdiff_seconds
-                # Copy over the valid sig seconds
-                valid_sig_seconds = previous.uptime_stats.valid_sig_seconds
-        uptime_stats = PostUptimeStats(
-            user_post_stats_id=self.id,
-            valid_sig_seconds=valid_sig_seconds,
-            invalid_sig_seconds=invalid_sig_seconds
-        )
-        uptime_stats.save()
+        if not self.matured:
+            current = ForumPost.objects.filter(
+                message_id=self.message_id).last()
+            if current:
+                last_scrape = self.forum_profile.get_last_scrape()
+                last_scrape = last_scrape.replace(tzinfo=None)
+                post_timestamp = self.timestamp.replace(tzinfo=None)
+                if not self.forum_profile.last_scrape:
+                    last_scrape = post_timestamp
+                dt_now = timezone.now().replace(tzinfo=None)
+                tdiff = dt_now - last_scrape
+                tdiff_minutes = tdiff.total_seconds() / 60
+                print(tdiff_minutes)
+                if self.forum_profile.signature_found:
+                    self.valid_sig_minutes = current.valid_sig_minutes
+                    self.valid_sig_minutes += tdiff_minutes
+                else:
+                    self.invalid_sig_minutes = current.invalid_sig_minutes
+                    self.invalid_sig_minutes += tdiff_minutes
+        super(ForumPost, self).save(*args, **kwargs)
 
 
 class Notification(models.Model):
