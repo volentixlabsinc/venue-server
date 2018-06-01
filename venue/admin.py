@@ -51,7 +51,7 @@ admin.site.register(UserProfile, UserProfileAdmin)
 
 
 class ForumUserRankAdmin(admin.ModelAdmin):
-    list_display = ['name', 'forum_site', 'allowed']
+    list_display = ['name', 'forum_site', 'allowed', 'bonus_percentage']
     list_filter = ['forum_site']
 
 
@@ -88,6 +88,7 @@ class ForumPostAdmin(admin.ModelAdmin):
     list_display = [
         'forum_profile', 'message_id', 'timestamp',
         'unique_content_length', 'valid_sig_minutes', 'invalid_sig_minutes',
+        'base_points', 'influence_bonus_pts', 'total_points',
         'credited', 'matured'
     ]
 

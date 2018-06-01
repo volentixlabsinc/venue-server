@@ -1,1 +1,0 @@
-[{"model": "venue.forumsite", "pk": 1, "fields": {"name": "bitcointalk.org", "address": "https://bitcointalk.org", "scraper_name": "bitcointalk.py"}}, {"model": "venue.forumsite", "pk": 2, "fields": {"name": "forum.bitcoin.com", "address": "https://forum.bitcoin.com", "scraper_name": "bitcoin_forum.py"}}]
