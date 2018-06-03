@@ -12,7 +12,7 @@ import coreapi
 from hashids import Hashids
 from constance import config
 from django.utils import timezone
-from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -56,7 +56,7 @@ def points_to_percentage(points, category=None):
 
 @ensure_csrf_cookie
 def frontend_app(request):
-    return render(request, 'index.html')
+    return HttpResponse('Volentix Venue API Server')
 
 
 # ==============
