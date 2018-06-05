@@ -96,45 +96,52 @@ def authenticate(request):
     resp_status = status.HTTP_400_BAD_REQUEST
     try:
         if '@' in data['username']:
-            user = User.objects.get(email__iexact=data['username'])
+            user = User.objects.get(
+                email__iexact=data['username']
+            )
         else:
-            user = User.objects.get(username__iexact=data['username'])
+            user = User.objects.get(
+                username__iexact=data['username']
+            )
         pass_check = user.check_password(data['password'])
         if pass_check:
-            profile = user.profiles.first()
-            proceed = False
-            if profile.enabled_2fa:
-                if data['otpCode']:
-                    secret = decrypt_data(
-                        profile.otp_secret,
-                        settings.SECRET_KEY
-                    )
-                    totp = pyotp.TOTP(secret)
-                    verified = totp.verify(data['otpCode'])
-                    if verified:
-                        proceed = True
+            if user.is_active:
+                profile = user.profiles.first()
+                proceed = False
+                if profile.enabled_2fa:
+                    if data['otpCode']:
+                        secret = decrypt_data(
+                            profile.otp_secret,
+                            settings.SECRET_KEY
+                        )
+                        totp = pyotp.TOTP(secret)
+                        verified = totp.verify(data['otpCode'])
+                        if verified:
+                            proceed = True
+                        else:
+                            error_code = 'wrong_otp'
                     else:
-                        error_code = 'wrong_otp'
+                        error_code = 'otp_required'
                 else:
-                    error_code = 'otp_required'
+                    proceed = True
+                if proceed:
+                    token, created = Token.objects.get_or_create(user=user)
+                    del created
+                    user.last_login = timezone.now()
+                    user.save()
+                    user_profile = user.profiles.first()
+                    response = {
+                        'success': True,
+                        'token': token.key,
+                        'username': user.username,
+                        'email': token.user.email,
+                        'user_profile_id': user_profile.id,
+                        'email_confirmed': user_profile.email_confirmed,
+                        'language': user_profile.language.code
+                    }
+                    resp_status = status.HTTP_200_OK
             else:
-                proceed = True
-            if proceed:
-                token, created = Token.objects.get_or_create(user=user)
-                del created
-                user.last_login = timezone.now()
-                user.save()
-                user_profile = user.profiles.first()
-                response = {
-                    'success': True,
-                    'token': token.key,
-                    'username': user.username,
-                    'email': token.user.email,
-                    'user_profile_id': user_profile.id,
-                    'email_confirmed': user_profile.email_confirmed,
-                    'language': user_profile.language.code
-                }
-                resp_status = status.HTTP_200_OK
+                error_code = 'user_deactivated'
         else:
             error_code = 'wrong_credentials'
     except User.DoesNotExist:
