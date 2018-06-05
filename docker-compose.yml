@@ -16,7 +16,7 @@ services:
         stdin_open: true
         tty: true
         entrypoint: '/entrypoint.sh'
-        command: supervisord --nodaemon
+        command: supervisord -c ./supervisord.conf --nodaemon
         depends_on:
           - postgres
           - redis
