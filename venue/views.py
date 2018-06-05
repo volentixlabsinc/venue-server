@@ -9,6 +9,7 @@ import re
 import pyotp
 import coreschema
 import coreapi
+from django.shortcuts import redirect
 from hashids import Hashids
 from constance import config
 from django.utils import timezone
