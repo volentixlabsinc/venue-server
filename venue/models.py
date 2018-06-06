@@ -147,6 +147,16 @@ class UserProfile(models.Model):
         rank = None
         if rankings.last():
             rank = rankings.last().rank
+        else:
+            # Trigger ranking task if ranking does not exist
+            job = celery.current_app.send_task(
+                'venue.tasks.compute_ranking',
+                queue='compute'
+            )
+            job.get()
+            rankings = query_db(date)
+            if rankings.last():
+                rank = rankings.last().rank
         return rank
 
     @property
