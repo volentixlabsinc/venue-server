@@ -299,16 +299,18 @@ def confirm_email(request):
 CHECK_PROFILE_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
-            'forum_profile_id',
+            'forum_id',
             required=True,
             location='query',
-            schema=coreschema.String(description='Forum profile ID')
+            schema=coreschema.String(description='Forum site ID')
         ),
         coreapi.Field(
-            'signature_id',
+            'profile_url',
             required=True,
             location='query',
-            schema=coreschema.String(description='Signature ID')
+            schema=coreschema.String(
+                description='Profile URL or forum user ID'
+            )
         )
     ]
 )
@@ -318,7 +320,30 @@ CHECK_PROFILE_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(CHECK_PROFILE_SCHEMA)
 def check_profile(request):
-    """ Checks forum profile existence """
+    """ Checks forum profile existence
+
+    ### Responses
+
+    Status code 200 (when profile is found)
+
+    `{
+        "found": <boolean: true>,
+        "forum_id": <string>,
+        "position": <string>,
+        "position_allowed": <boolean>,
+        "forum_user_id": <string>,
+        "exists": <boolean>,
+        "status_code": <int>
+    }`
+
+    Status code 404 (when profile is not found)
+
+    `{
+        "found": <boolean: false>,
+        "forum_id": <int>,
+        "status_code": <int>
+    }`
+    """
     data = request.query_params
     user = request.user
     forum = ForumSite.objects.get(id=data.get('forum'))
@@ -326,8 +351,10 @@ def check_profile(request):
         'found': False,
         'forum_id': data.get('forum')
     }
+    resp_status = status.HTTP_404_NOT_FOUND
     info = get_user_position(forum.id, data.get('profile_url'), user.id)
     if info['status_code'] == 200 and info['position']:
+        resp_status = status.HTTP_200_OK
         response['position'] = info['position']
         forum_rank = ForumUserRank.objects.get(
             forum_site=forum,
@@ -344,7 +371,7 @@ def check_profile(request):
             response['with_signature'] = info['with_signature']
             response['forum_profile_id'] = info['forum_profile_id']
     response['status_code'] = info['status_code']
-    return Response(response)
+    return Response(response, status=resp_status)
 
 
 # -----------------------
@@ -1096,17 +1123,30 @@ CREATE_FORUM_PROFILE_SCHEMA = AutoSchema(
 )
 
 
-class SignatureAlreadyExists(APIException):
-    status_code = 503
-    default_detail = 'Your profile already contains our signature.'
-    default_code = 'signature_already_exists'
-
-
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 @schema(CREATE_FORUM_PROFILE_SCHEMA)
 def create_forum_profile(request):
-    """ Creates a forum profile """
+    """ Creates a forum profile
+
+    ### Responses
+
+    Status code 201 (When forum profile is created)
+
+    `{
+        "success": <boolean: true>,
+        "id": <int>
+    }`
+
+    Status code 200 (When forum profile already exists)
+
+    `{
+        "success": <boolean: true>,
+        "exists": <boolean: true>,
+        "verified": <boolean>,
+        "id": <int>
+    }`
+    """
     data = request.data
     response = {'success': False}
     forum = ForumSite.objects.get(id=data['forum_id'])
@@ -1120,16 +1160,21 @@ def create_forum_profile(request):
         forum=forum
     )
     if profile_check.exists():
+        resp_status = status.HTTP_200_OK
+        response['exists'] = True
+        response['verified'] = False
+        response['id'] = profile_check.last().id
         fps = profile_check.filter(active=True, verified=True)
         fp = fps.last()
         if fp and fp.signature:
-            raise SignatureAlreadyExists()
+            response['verified'] = True
     else:
         rank, created = ForumUserRank.objects.get_or_create(
             name=info['position'],
             forum_site=forum
         )
         del created
+        resp_status = status.HTTP_201_CREATED
         user_profile = UserProfile.objects.get(user=request.user)
         fp_object = ForumProfile(
             user_profile=user_profile,
@@ -1144,7 +1189,7 @@ def create_forum_profile(request):
         response['success'] = True
         # Trigger the task to adjust the scraping rate
         set_scraping_rate.delay()
-    return Response(response)
+    return Response(response, status=resp_status)
 
 
 # ---------------------------
@@ -1228,13 +1273,13 @@ GET_SIGNATURES_SCHEMA = AutoSchema(
         coreapi.Field(
             'forum_site_id',
             required=False,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Forum site ID')
         ),
         coreapi.Field(
             'forum_user_rank',
             required=False,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Forum user rank')
         ),
         coreapi.Field(
@@ -1257,7 +1302,32 @@ GET_SIGNATURES_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(GET_SIGNATURES_SCHEMA)
 def get_signatures(request):
-    """ Retrives list of signatures """
+    """ Retrives list of signatures 
+
+    ### Responses
+
+    Status code 200
+
+    `{
+        "success": <boolean: true>,
+        "signatures": <list: Signature>
+    }`
+
+    Each `Signature` array contains the following info
+
+    `{
+        "id": <int>,
+        "name": <string>,
+        "image": <string>,
+        "code": <string>,
+        "verification_code": <string>,
+        "usage_count": <int>,
+        "forum_site_name": <string>,
+        "forum_user_name": <string>,
+        "forum_userid": <string>
+    }`
+
+    """
     data = request.query_params
     response = {'success': False}
     if data.get('own_sigs') == '1':

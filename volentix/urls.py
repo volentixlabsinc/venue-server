@@ -23,12 +23,9 @@ from venue.views import (
     get_notifications, dismiss_notification, create_forum_profile,
     get_forum_sites, get_forum_profiles, get_signatures
 )
-from venue.api import (
-    ForumSiteViewSet, ForumProfileViewSet, SignatureViewSet, UserProfileViewSet
-)
 from rest_framework.documentation import include_docs_urls
 from django.views.static import serve
-from django.conf.urls import url, include
+from django.conf.urls import url
 from django.conf import settings
 from django.contrib import admin
 
