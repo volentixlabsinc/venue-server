@@ -49,11 +49,8 @@ class BitcoinTalk(object):
         self.expected_links = expected_links
 
     def get_profile(self, user_id):
-        if user_id.startswith('http'):
-            profile_url = user_id
-        else:
-            profile_url = self.base_url + '/index.php?action=profile;u='
-            profile_url += str(user_id)
+        profile_url = self.base_url + '/index.php?action=profile;u='
+        profile_url += str(user_id)
         response = requests.get(profile_url, headers=self.headers)
         self.status_code = response.status_code
         self.soup = BeautifulSoup(response.content, 'html.parser')
