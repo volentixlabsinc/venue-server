@@ -353,7 +353,7 @@ def check_profile(request):
     """
     data = request.query_params
     user = request.user
-    forum = ForumSite.objects.get(id=data.get('forum'))
+    forum = ForumSite.objects.get(id=data.get('forum_id'))
     response = {
         'found': False,
         'forum_id': data.get('forum')
@@ -1231,7 +1231,16 @@ GET_FORUM_PROFILES_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(GET_FORUM_PROFILES_SCHEMA)
 def get_forum_profiles(request):
-    """ Retrieves forum profiles """
+    """ Retrieves forum profiles
+
+    ### Responses
+
+    * Status code 200
+
+            {
+                "": 0,
+            }
+    """
     data = request.query_params
     response = {'success': False}
     forum_profiles = ForumProfile.objects.filter(
