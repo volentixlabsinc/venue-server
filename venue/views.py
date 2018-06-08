@@ -89,7 +89,39 @@ AUTHENTICATE_SCHEMA = AutoSchema(
 @api_view(['POST'])
 @schema(AUTHENTICATE_SCHEMA)
 def authenticate(request):
-    """ Authenticates a user """
+    """ Authenticates a user
+    
+    ### Responses
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "token": <string>,
+                "username": <string>,
+                "email": <string>,
+                "user_profile_id": <string>,
+                "email_confirmed": <boolean>,
+                "language": <string>
+            }
+
+        * `success` - Whether authentication was successful or not
+        * `token` - Authentication token string
+        * `username` - User's username
+        * `email` - User's email
+        * `user_profile_id` - Profile ID of the user in the DB
+        * `email_confirmed` - Whether user's email is confirmed or not
+        * `language` - User's selected language code or system's default
+
+    * Status code 400
+
+            {
+                "success": <boolean: false>,
+                "error_code": <string>
+            }
+
+        * `error_code` - Code of the error
+    """
     data = request.data
     response = {'success': False}
     error_code = 'unknown_error'
@@ -304,7 +336,7 @@ CHECK_PROFILE_SCHEMA = AutoSchema(
             schema=coreschema.String(description='Forum site ID')
         ),
         coreapi.Field(
-            'profile_url',
+            'forum_user_id',
             required=True,
             location='query',
             schema=coreschema.String(
@@ -359,7 +391,7 @@ def check_profile(request):
         'forum_id': data.get('forum')
     }
     resp_status = status.HTTP_404_NOT_FOUND
-    info = get_user_position(forum.id, data.get('profile_url'), user.id)
+    info = get_user_position(forum.id, data.get('forum_user_id'), user.id)
     if info['status_code'] == 200 and info['position']:
         resp_status = status.HTTP_200_OK
         response['position'] = info['position']
@@ -1115,7 +1147,7 @@ def get_forum_sites(request):
 CREATE_FORUM_PROFILE_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
-            'profile_url',
+            'forum_user_id',
             required=True,
             location='form',
             schema=coreschema.String(description='Profile URL')
@@ -1159,7 +1191,7 @@ def create_forum_profile(request):
     forum = ForumSite.objects.get(id=data['forum_id'])
     info = get_user_position(
         data['forum_id'],
-        data['profile_url'],
+        data['forum_user_id'],
         request.user.id
     )
     profile_check = ForumProfile.objects.filter(
