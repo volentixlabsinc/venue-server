@@ -13,7 +13,7 @@ from celery.result import AsyncResult, ResultSet
 
 import rollbar
 from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
-                          Ranking, ForumPost)
+                          Ranking, ForumPost, ForumUserRank)
 
 
 @task_failure.connect
@@ -53,11 +53,16 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         forum_profile.signature.expected_links.splitlines(),
         test_mode=test_mode,
         test_signature=forum_profile.signature.test_signature)
-    status_code, signature_found, total_posts, username = results
+    status_code, signature_found, total_posts, username, position = results
     del username
     # Update the signature_found flag in forum profile
     forum_profile.signature_found = signature_found
     forum_profile.save()
+    # Update the forum user rank, if it changed
+    forum_rank = ForumUserRank.objects.get(name=position)
+    if forum_profile.forum_rank != forum_rank:
+        forum_profile.forum_rank = forum_rank
+        forum_profile.save()
     # Get the current last scrape timestamp
     last_scrape = forum_profile.get_last_scrape()
     # Check posts that haven't reached maturatation
@@ -119,8 +124,8 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
         expected_links,
         test_mode=config.TEST_MODE,
         test_signature=signature.test_signature)
-    status_code, verified, posts, username = results
-    del status_code, posts
+    status_code, verified, posts, username, position = results
+    del status_code, posts, position
     if verified:
         # Save the forum username
         forum_profile.forum_username = username

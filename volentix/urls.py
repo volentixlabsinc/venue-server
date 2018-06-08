@@ -21,7 +21,7 @@ from venue.views import (
     change_language, check_email_exists, check_username_exists,
     get_languages, generate_2fa_uri, verify_2fa_code, disable_2fa,
     get_notifications, dismiss_notification, create_forum_profile,
-    get_forum_sites, get_forum_profiles, get_signatures
+    get_forum_sites, get_forum_profiles, get_signatures, get_points_breakdown
 )
 from rest_framework.documentation import include_docs_urls
 from django.views.static import serve
@@ -59,6 +59,7 @@ urlpatterns = [
     url(r'^api/retrieve/forum-sites/', get_forum_sites),
     url(r'^api/retrieve/forum-profiles/', get_forum_profiles),
     url(r'^api/retrieve/signatures/', get_signatures),
+    url(r'^api/retrieve/points-breakdown/', get_points_breakdown),
 
     url(r'^api/manage/confirm-email', confirm_email),
     url(r'^api/manage/change-email/', change_email),

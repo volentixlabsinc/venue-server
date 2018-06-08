@@ -231,9 +231,10 @@ def verify_and_scrape(forum_profile_id,
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
     scraper.get_profile(forum_user_id)
     username = scraper.get_username()
+    position = scraper.get_user_position()
     verified = scraper.check_signature()
     posts = scraper.get_total_posts()
-    data = (scraper.status_code, verified, posts, username)
+    data = (scraper.status_code, verified, posts, username, position)
     return data
 
 

@@ -20,7 +20,6 @@ from django.conf import settings
 from venue.utils import encrypt_data, decrypt_data
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, schema
 from rest_framework import serializers
@@ -324,25 +323,33 @@ def check_profile(request):
 
     ### Responses
 
-    Status code 200 (when profile is found)
+    * Status code 200 (when profile is found)
 
-    `{
-        "found": <boolean: true>,
-        "forum_id": <string>,
-        "position": <string>,
-        "position_allowed": <boolean>,
-        "forum_user_id": <string>,
-        "exists": <boolean>,
-        "status_code": <int>
-    }`
+            {
+                "found": <boolean: true>,
+                "forum_id": <string>,
+                "position": <string>,
+                "position_allowed": <boolean>,
+                "forum_user_id": <string>,
+                "exists": <boolean>,
+                "status_code": <int>
+            }
 
-    Status code 404 (when profile is not found)
+        * `found` - Whether the forum user ID is found in the forum site or not
+        * `forum_id` - ID of the forum in the DB
+        * `position` - Forum position or rank of the user
+        * `position_allowed` - Whether the position is allowed to participate or not
+        * `forum_user_id` - User's user ID in the forum
+        * `exists` - Whether the profile exists in DB or not
+        * `status_code` - Status code of the forum profile scraping request
 
-    `{
-        "found": <boolean: false>,
-        "forum_id": <int>,
-        "status_code": <int>
-    }`
+    * Status code 404 (when profile is not found)
+
+            {
+                "found": <boolean: false>,
+                "forum_id": <int>,
+                "status_code": <int>
+            }
     """
     data = request.query_params
     user = request.user
@@ -1131,21 +1138,21 @@ def create_forum_profile(request):
 
     ### Responses
 
-    Status code 201 (When forum profile is created)
+    * Status code 201 (When forum profile is created)
 
-    `{
-        "success": <boolean: true>,
-        "id": <int>
-    }`
+            {
+                "success": <boolean: true>,
+                "id": <int>
+            }
 
-    Status code 200 (When forum profile already exists)
+    * Status code 200 (When forum profile already exists)
 
-    `{
-        "success": <boolean: true>,
-        "exists": <boolean: true>,
-        "verified": <boolean>,
-        "id": <int>
-    }`
+            {
+                "success": <boolean: true>,
+                "exists": <boolean: true>,
+                "verified": <boolean>,
+                "id": <int>
+            }
     """
     data = request.data
     response = {'success': False}
@@ -1302,30 +1309,30 @@ GET_SIGNATURES_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(GET_SIGNATURES_SCHEMA)
 def get_signatures(request):
-    """ Retrives list of signatures 
+    """ Retrives list of signatures
 
     ### Responses
 
-    Status code 200
+    * Status code 200
 
-    `{
-        "success": <boolean: true>,
-        "signatures": <list: Signature>
-    }`
+            {
+                "success": <boolean: true>,
+                "signatures": <list: Signature>
+            }
 
-    Each `Signature` array contains the following info
+        Each `Signature` array contains the following info
 
-    `{
-        "id": <int>,
-        "name": <string>,
-        "image": <string>,
-        "code": <string>,
-        "verification_code": <string>,
-        "usage_count": <int>,
-        "forum_site_name": <string>,
-        "forum_user_name": <string>,
-        "forum_userid": <string>
-    }`
+            {
+                "id": <int>,
+                "name": <string>,
+                "image": <string>,
+                "code": <string>,
+                "verification_code": <string>,
+                "usage_count": <int>,
+                "forum_site_name": <string>,
+                "forum_user_name": <string>,
+                "forum_userid": <string>
+            }
 
     """
     data = request.query_params
@@ -1372,3 +1379,63 @@ def get_signatures(request):
     serializer = SignatureSerializer(signatures, many=True)
     response['signatures'] = serializer.data
     return Response(response)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_points_breakdown(request):
+    """ Retrives points/rewards breakdown
+
+    ### Responses
+
+    * Status code 200
+
+            {
+                "sitewide_stats": {
+                    "total_posts": <int>,
+                    "total_post_points": <int>,
+                    "total_bonus_points": <int>,
+                },
+                "settings": {
+                    "post_points_multiplier": <int>,
+                    "maturation_period": <int>
+                },
+                "user_stats": {
+                    "current_forum_position": <string>,
+                    "total_posts": <int>,
+                    "total_post_points": <int>,
+                    "total_bonus_points": <int>,
+                    "bonus_points": <list: PostBonus>,
+                    "upcoming_posts": <int>,
+                    "upcoming_post_points": <int>,
+                    "upcoming_bonus_poitns": <int>
+                }
+            }
+
+        Each `PostBonus` array contains the following info
+
+            {
+                "position": <string>,
+                "num_posts": <int>,
+                "bonus_percentage": <int>,
+                "total_bonus_points": <int>
+            }
+
+        * `sitewide_stats` - Stats for the whole site
+        * `total_posts` - Total number of posts
+        * `total_post_points` - Sum of all points
+        * `total_bonus_points` - Sum of all bonus points
+        * `settings` - Global settings of the point system
+        * `post_points_multiplier` - Number of points per post
+        * `maturation_period` - Waiting period before points are credited
+        * `user_stats` - Stats for the requesting user
+        * `current_forum_position` - Current forum position/rank
+        * `upcoming_posts` - Posts that might get credited upon maturation
+        * `upcoming_post_points` - Anticipated post points of upcoming posts
+        * `upcoming_bonus_points` - Anticipated bonus points of upcoming posts
+        * `position` - Forum user position/rank
+        * `num_posts` - Number of posts
+        * `bonus_percentage` - Percentage of post points to give as bonus
+        * `total_bonus_points` - Sum of bonus points of the num_posts
+    """
+    pass
