@@ -91,7 +91,7 @@ AUTHENTICATE_SCHEMA = AutoSchema(
 def authenticate(request):
     """ Authenticates a user
     
-    ### Responses
+    ### Response
 
     * Status code 200
 
@@ -191,7 +191,28 @@ def authenticate(request):
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_user(request):
-    """ Retrieves user details """
+    """ Retrieves user details
+    
+    ### Response
+
+    * Status code 200
+
+            {
+                'found': <boolean>,
+                'username': <string>,
+                'email': <string>,
+                'language': <string>,
+                'email_confirmed': <boolean>,
+                'enabled_2fa': <boolean>
+            }
+
+        * `found` - Whether a user and user profile are found or not
+        * `username` - User's username
+        * `email` - User's email
+        * `language` - Code of the user's selected language
+        * `email_confirmed` - Whether the user's email is confirmed or not
+        * `enabled_2fa` - Whether the user has enabled 2FA or not
+    """
     data = {'found': False}
     user_profile = request.user.profiles.first()
     if user_profile:
@@ -250,7 +271,36 @@ CREATE_USER_SCHEMA = AutoSchema(
 @api_view(['POST'])
 @schema(CREATE_USER_SCHEMA)
 def create_user(request):
-    """ Creates new user """
+    """ Creates new user
+
+    ### Response
+
+    * Status code 201
+
+            {
+                "status": <string: "success">,
+                "user": {
+                    "username": <string>,
+                    "email": <string>,
+                    "token": <string>
+                }
+            }
+
+        * `status` - Status of creating the user: `success` or `error`
+        * `user` - An array containing user details
+        * `username` - User's username
+        * `email` - User's email
+        * `token` - Authentication token
+
+    * Status code 400
+
+            {
+                "status": <string: "error">,
+                "message": <string>
+            }
+
+        * `message` - Error message
+    """
     data = request.data
     data['email'] = data['email'].lower()
     user_check = User.objects.filter(email=data['email'])
@@ -313,10 +363,31 @@ CONFIRM_EMAIL_SCHEMA = AutoSchema(
 @api_view(['GET'])
 @schema(CONFIRM_EMAIL_SCHEMA)
 def confirm_email(request):
-    """ Confirms email address """
+    """ Confirms email address
+
+    ### Response
+
+    * Status code 302 (When email is confirmed)
+
+        Redirects to `<domain>/#/?email_confirmed=1`
+
+    * Status code 404
+            {
+                "message": <string: "not_found">
+            }
+    
+        * `message` - Error message
+
+    """
     code = request.query_params.get('code')
-    user_id, = hashids.decode(code)
-    user_profile = UserProfile.objects.get(user_id=user_id)
+    try:
+        user_id, = hashids.decode(code)
+        user_profile = UserProfile.objects.get(user_id=user_id)
+    except (ValueError, UserProfile.DoesNotExist):
+        return Response(
+            {'message': 'not_found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
     user_profile.email_confirmed = True
     user_profile.save()
     return redirect('%s/#/?email_confirmed=1' % settings.VENUE_FRONTEND)
@@ -353,7 +424,7 @@ CHECK_PROFILE_SCHEMA = AutoSchema(
 def check_profile(request):
     """ Checks forum profile existence
 
-    ### Responses
+    ### Response
 
     * Status code 200 (when profile is found)
 
@@ -440,7 +511,29 @@ SAVE_SIGNATURE_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(SAVE_SIGNATURE_SCHEMA)
 def save_signature(request):
-    """ Saves signature """
+    """ Saves signature
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "task_id": <string>
+            }
+
+        * `success` - Whether saving the signature succeeded or not
+        * `task_id` - ID of background task that scraped the profile
+
+    * Status code 404
+
+            {
+                "success": <boolean: false>,
+                "message": <string>
+            }
+
+        * `message` - Error message
+    """
     data = request.data
     forum_profile = ForumProfile.objects.get(id=data['forum_profile_id'])
     signature = Signature.objects.get(id=data['signature_id'])
@@ -462,7 +555,7 @@ def save_signature(request):
         resp_status = status.HTTP_200_OK
     else:
         response['success'] = False
-        response['message'] = 'The signature could not be found in the profile page.'
+        response['message'] = 'signature_not_found'
         resp_status = status.HTTP_404_NOT_FOUND
     return Response(response, status=resp_status)
 
@@ -474,7 +567,19 @@ def save_signature(request):
 
 @api_view(['GET'])
 def get_site_configs(request):
-    """ Retrieves some global site configs """
+    """ Retrieves some global site configs
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "disable_sign_up": <boolean>
+            }
+
+        * `disable_sign_up` - Whether the sign up is disabled or not
+
+    """
     configs = {
         'disable_sign_up': config.DISABLE_SIGN_UP
     }
@@ -489,7 +594,86 @@ def get_site_configs(request):
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_stats(request):
-    """ Retrieves the stats of the user """
+    """ Retrieves the stats of the user
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "stats": {
+                    "fresh": <boolean>,
+                    "sitewide": {
+                        "total_users": <int>,
+                        "total_posts": <int>,
+                        "available_tokens": <int>
+                    }
+                    "user_level": {
+                        "daily_stats": <list: DailyStats>,
+                        "total_posts": <int>,
+                        "total_points": <int>,
+                        "total_points_pct": <int>,
+                        "total_tokens": <int>,
+                        "overall_rank": <int>
+                    },
+                    "profile_level": <list: ProfileStats>
+                }
+            }
+
+        * `success` - Whether the request succeeded or not
+        * `stats` - Stats array
+        * `fresh` - Whether this account is fresh (no stats) or not
+        * `sitewide` - Sitewide stats array
+        * `total_users` - Total users sitewide
+        * `total_posts` - Total posts sitewide
+        * `available_tokens` - Available tokens sitewide
+        * `user_level` - User-level stats array
+        * `daily_stats` - Post and rank stats for the last seven days
+        * `total_posts` - Total number of posts
+        * `total_points` - Total points earned
+        * `total_points_pct` - Percentage of points compared to all users
+        * `total_tokens` - Total tokens earned by the user
+        * `profile_level` - Profile level stats array
+
+        <br>Each `ProfileStats` array contains the following info
+
+            {
+                "User_ID": <string>,
+                "forumSite": <string>,
+                "forumUserId": <string>,
+                "forumUserRank": <string>,
+                "numPosts": <int>,
+                "totalPoints": <int>,
+                "VTX_Tokens": <int>
+            }
+
+        * `forumSite` - Name of the forum site
+        * `forumUserId` - User's forum user ID
+        * `forumUserRank` - User's forum rank/position
+        * `numPosts` - User's total forum posts
+        * `totalPoints` - User's total points earned
+        * `VTX_Tokens` - User's total VTX tokens earned
+
+        <br>Each `DailyStats` array contains the following info
+
+            {
+                "posts": {
+                    "credited": <int>,
+                    "pending": <int>,
+                    "total": <int>
+                },
+                "rank": <int> or <null>,
+                "date": <string>
+            }
+
+        * `posts` - Post stats array
+        * `credited` - Posts that have been credited with points
+        * `pending` - Posts that are not yet credited with points
+        * `total` - Total number of posts
+        * `rank` - User's rank
+        * `date` - Date string
+    """
     response = {'success': False}
     # Initialize empty stats container dictionary
     stats = {'fresh': False}
@@ -505,7 +689,6 @@ def get_stats(request):
     if fps.count():
         for fp in fps:
             fp_data = {
-                'User_ID': fp.forum_user_id,
                 'forumSite': fp.forum.name,
                 'forumUserId': fp.forum_user_id,
                 'forumUserRank': fp.forum_rank.name,
@@ -570,7 +753,81 @@ def get_stats(request):
 
 @api_view(['GET'])
 def get_leaderboard_data(request):
-    """ Retrieves leaderboard stats data """
+    """ Retrieves leaderboard stats data
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "rankings": <list: Ranking>,
+                "sitewide": {
+                    "available_tokens": <int>,
+                    "total_users": <int>,
+                    "total_posts": <int>
+                },
+                "userstats": {
+                    "overall_rank": <int> or <null>,
+                    "total_tokens": <int>
+                },
+                "forumstats": {
+                    "posts": <list: ForumPostStat>,
+                    "users": <list: ForumUserStats>
+                }
+            }
+
+        * `success` - Whether the request was successful or not
+        * `rankings` - Ordered ranking list
+        * `sitewide` - Stats sitewide
+        * `available_tokens` - Total available tokens
+        * `total_users` - Total number of users
+        * `total_posts` - Total number of posts sitewide
+        * `userstats` - Stats of the user
+        * `overall_rank` - User's overall rank
+        * `total_tokens` - Total tokens that the user earned
+        * `forumstats` - Stats per forum
+        * `posts` - List of forum post stats
+        * `users` - List of forum user stats
+
+        <br>Each `Ranking` array contains the following info
+
+            {
+                "username": <string>,
+                "rank": <int> or <null>,
+                "total_posts": <int>,
+                "total_points": <int>,
+                "total_tokens": <int>
+            }
+
+        * `username` - User's username
+        * `rank` - User's rank
+        * `total_posts` - User's total posts
+        * `total_points` - User's total earned points
+        * `total_tokens` - User's total earned tokens
+
+        <br>Each `ForumPostStats` array contains the following info
+
+            {
+                "forumSite": <string>,
+                "value": <int>,
+                "color": <string>
+            }
+
+        * `forumSite` - Name of the forum site
+        * `value` - Number of posts for the forum
+        * `color` - Server-generated color for use with graphs
+
+        <br>Each `ForumUserStats` array contains the following info
+
+            {
+                "forumSite": <string>,
+                "value": <int>,
+                "color": <string>
+            }
+
+        * `value` - Number of users for the forum
+    """
     response = {}
     user_profiles = UserProfile.objects.all()
     leaderboard_data = []
@@ -593,7 +850,6 @@ def get_leaderboard_data(request):
         users_with_fp = [x.id for x in users if x.with_forum_profile]
         # Get site-wide stats
         response['sitewide'] = {
-            'available_points': '10,000',
             'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
             'total_users': len(users_with_fp),
             'total_posts': int(sum([x.total_posts for x in users]))
@@ -643,7 +899,40 @@ def get_leaderboard_data(request):
 @api_view(['GET', 'POST'])
 @permission_classes((IsAuthenticated,))
 def delete_account(request):
-    """ Deletes account """
+    """ Deletes account
+
+    ### Response
+
+    **For the `POST` Request**
+
+    This is the deletion request and this does not require any payload
+
+    * Status code 202 (When deletion request is accepted for processing)
+
+            {
+                "success": <boolean: true>
+            }
+
+        * `success` - Whether the request succeeded or not
+
+    **For the `GET` Request**
+
+    This request occurs when the user clicks on the link in the confirmation email.
+
+    * Status code 301 (When the code is correct)
+
+        Redirects to `<hostname>/#/settings/?account_deleted=1`
+
+    * Status code 400 (When the code is not correct)
+
+            {
+                "success": <boolean: false>,
+                "message": <string: "wrong_code">
+            }
+
+        * `message` - Error message
+    """
+    response = {'success': False}
     if request.method == 'POST':
         user = request.user
         code = hashids.encode(int(user.id))
@@ -652,14 +941,18 @@ def delete_account(request):
             user.username,
             code
         )
+        response['success'] = True
+        return Response(response, status=status.HTTP_202_ACCEPTED)
     elif request.method == 'GET':
         code = request.query_params.get('code')
         if code:
-            user_id, = hashids.decode(code)
-            User.objects.filter(id=user_id).delete()
-            return redirect('%s/#/?account_deleted=1' % settings.VENUE_FRONTEND)
-        else:
-            return Response({'success': False})
+            try:
+                user_id, = hashids.decode(code)
+                User.objects.filter(id=user_id).delete()
+                return redirect('%s/#/?account_deleted=1' % settings.VENUE_FRONTEND)
+            except (ValueError, User.DoesNotExist):
+                response['message'] = 'wrong_code'
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ---------------------
@@ -689,7 +982,49 @@ CHANGE_EMAIL_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(CHANGE_EMAIL_SCHEMA)
 def change_email(request):
-    """ Changes user's email """
+    """ Changes user's email
+
+    ### Response
+
+    **For `POST` Request**
+
+    This request is sent when requesting for email change.
+    Refer to the `Request Body` table below for the request payload.
+
+    When the change is processed, an confirmation email is sent to the user.
+
+    * Status code 202 (When email change is accepted for processing)
+
+            {
+                "success": <boolean: true>
+            }
+
+        * `success` - Whether the request has succeeded or not
+
+    * Status code 302 (When new email submitted already exists)
+
+            {
+                "success": <boolean: false>,
+                "message": <string: "email_exists">
+            }
+        
+        * `message` - Error message
+
+    **For `GET` Request**
+
+    This request happens when the user clicks on the link sent in the confirmation email.
+    Refer to the `Query Parameters` table below for the request parameters.
+
+    * Status code 301 (When the `code` is correct)
+
+        Redirects to `<hostname>/#/settings/?updated_email=1`
+
+    * Status code 400 (When the `code` is not correct)
+
+            {
+                "success": <boolean: false>
+            }
+    """
     rtemp = RedisTemp('new_email')
     if request.method == 'POST':
         data = request.data
@@ -697,7 +1032,8 @@ def change_email(request):
         response = {'success': False}
         email_check = User.objects.filter(email=data['email'])
         if email_check.exists():
-            response['message'] = 'Email already exists'
+            response['message'] = 'email_exists'
+            resp_status = status.HTTP_302_FOUND
         else:
             code = hashids.encode(int(user.id))
             rtemp.store(code, data['email'])
@@ -707,14 +1043,18 @@ def change_email(request):
                 code
             )
             response['success'] = True
-        return Response(response)
+            resp_status = status.HTTP_202_ACCEPTED
+        return Response(response, status=resp_status)
     elif request.method == 'GET':
         code = request.query_params.get('code')
         if code:
-            user_id, = hashids.decode(code)
-            new_email = rtemp.retrieve(code)
-            User.objects.filter(id=user_id).update(email=new_email)
-            rtemp.remove(code)
+            try:
+                user_id, = hashids.decode(code)
+                new_email = rtemp.retrieve(code)
+                User.objects.filter(id=user_id).update(email=new_email)
+                rtemp.remove(code)
+            except (ValueError, User.DoesNotExist):
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
         return redirect('%s/#/settings/?updated_email=1' % settings.VENUE_FRONTEND)
 
 
@@ -739,19 +1079,45 @@ CHANGE_USERNAME_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(CHANGE_USERNAME_SCHEMA)
 def change_username(request):
-    """ Changes user's username """
+    """ Changes user's username
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "username": <string>,
+                "email": <string>
+            }
+
+        * `success` - Whether the change request succeeded or not
+        * `username` - User's username
+        * `email` - User's email
+
+    * Status code 302
+
+            {
+                "success": <boolean: false>,
+                "message": <string>
+            }
+
+        * `message` - Error message
+    """
     data = request.data
     user = request.user
     response = {'success': False}
     username_check = User.objects.filter(username=data['username'])
     if username_check.exists():
-        response['message'] = 'Username already exists'
+        response['message'] = 'username_exists'
+        resp_status = status.HTTP_302_FOUND
     else:
         User.objects.filter(id=user.id).update(username=data['username'])
         response['success'] = True
         response['username'] = user.username
         response['email'] = user.email
-    return Response(response)
+        resp_status = status.HTTP_200_OK
+    return Response(response, status=resp_status)
 
 
 # ------------------------
@@ -771,11 +1137,22 @@ CHANGE_PASSWORD_SCHEMA = AutoSchema(
 )
 
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes((IsAuthenticated,))
 @schema(CHANGE_PASSWORD_SCHEMA)
 def change_password(request):
-    """ Changes user's password """
+    """ Changes user's password
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean>
+            }
+
+        * `success` - Whether the change request succeeded or not
+    """
     data = request.data
     response = {}
     user = User.objects.get(id=request.user.id)
@@ -806,7 +1183,18 @@ CHANGE_LANGUAGE_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(CHANGE_LANGUAGE_SCHEMA)
 def change_language(request):
-    """ Changes language preference """
+    """ Changes language preference
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean>
+            }
+
+        * `success` - Whether the change request succeeded or not
+    """
     response = {'success': False}
     data = request.data
     user = request.user
@@ -828,17 +1216,13 @@ RESET_PASSWORD_SCHEMA = AutoSchema(
             'action',
             required=True,
             location='form',
-            schema=coreschema.String(description='Action')
-        ),
-        coreapi.Field(
-            'email',
-            required=False,
-            location='form',
-            schema=coreschema.String(description='Email')
+            schema=coreschema.String(
+                description='Action can either be `trigger` or `set_password`'
+            )
         ),
         coreapi.Field(
             'code',
-            required=False,
+            required=True,
             location='form',
             schema=coreschema.String(description='Code')
         )
@@ -846,25 +1230,65 @@ RESET_PASSWORD_SCHEMA = AutoSchema(
 )
 
 
-@api_view(['PUT'])
+@api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 @schema(RESET_PASSWORD_SCHEMA)
 def reset_password(request):
-    """ Resets user's password """
+    """ Resets user's password
+
+    ### Response
+
+    **For `POST` Request with `action == "trigger"`**
+
+    The request for this only requires `action` in the payload.
+
+    * Status code 202 (When password reset is accepted for processing)
+
+            {
+                "success": <boolean>
+            }
+
+        * `success` - Whether the change request succeeded or not
+
+    **For `POST` Request with `action == "set_password"`**
+
+    The request for this requires both `action` and `password` in the payload.
+
+    * Status code 200 (When password is changed successfully)
+
+            {
+                "success": <boolean: true>
+            }
+
+    * Status code 400 (When password not changed due to wrong confirmation code)
+
+            {
+                "success": <boolean: false>,
+                "message": <string: "wrong_code">
+            }
+
+        * `message` - Error message
+    """
     response = {'success': False}
     data = request.data
+    user = request.user
     if data['action'] == 'trigger':
-        user = User.objects.get(email=data['email'])
         code = hashids.encode(int(user.id))
         send_reset_password.delay(user.email, user.username, code)
         response['success'] = True
+        resp_status = status.HTTP_202_ACCEPTED
     elif data['action'] == 'set_password':
-        user_id, = hashids.decode(data['code'])
-        user = User.objects.get(id=user_id)
-        user.set_password(data['password'])
-        user.save()
-        response['success'] = True
-    return Response(response)
+        try:
+            user_id, = hashids.decode(data['code'])
+            user = User.objects.get(id=user_id)
+            user.set_password(data['password'])
+            user.save()
+            response['success'] = True
+            resp_status = status.HTTP_200_OK
+        except (ValueError, User.DoesNotExist):
+            response['message'] = 'wrong_code'
+            resp_status = status.HTTP_400_BAD_REQUEST
+    return Response(response, status=resp_status)
 
 
 # ---------------------------
@@ -888,11 +1312,31 @@ GET_SIGCODE_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(GET_SIGCODE_SCHEMA)
 def get_signature_code(request):
-    """ Retrieves signature code """
+    """ Retrieves signature code
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "signature_code": <string>
+            }
+
+        * `success` - Whether the retrieve request succeeded or not
+        * `signature_code` - The signature's BBCode
+
+    * Status code 404
+
+            {
+                "success": <boolean: false>
+            }
+
+    """
     response = {'success': False}
     data = request.query_params
-    if data.get('verificationCode'):
-        vcode = data.get('verificationCode')
+    vcode = data.get('verificationCode')
+    try:
         forum_profile = ForumProfile.objects.get(verification_code=vcode)
         if config.TEST_MODE:
             sig_code = forum_profile.signature.test_signature
@@ -900,7 +1344,10 @@ def get_signature_code(request):
             sig_code = forum_profile.signature.code
         response['signature_code'] = inject_verification_code(sig_code, vcode)
         response['success'] = True
-    return Response(response)
+        resp_status = status.HTTP_200_OK
+    except ForumProfile.DoesNotExist:
+        resp_status = status.HTTP_404_NOT_FOUND
+    return Response(response, status=resp_status)
 
 
 # --------------------
@@ -923,7 +1370,20 @@ CHECK_EMAIL_SCHEMA = AutoSchema(
 @api_view(['GET'])
 @schema(CHECK_EMAIL_SCHEMA)
 def check_email_exists(request):
-    """ Checks if email exists """
+    """ Checks if email exists
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean>,
+                "email_exists": <boolean>
+            }
+
+        * `success` - Whether the request has succeeded or not
+        * `email_exists` - Whether the email exists in the DB or not
+    """
     data = request.query_params
     response = {'success': True, 'email_exists': False}
     if data.get('email'):
@@ -953,7 +1413,20 @@ CHECK_USERNAME_SCHEMA = AutoSchema(
 @api_view(['GET'])
 @schema(CHECK_USERNAME_SCHEMA)
 def check_username_exists(request):
-    """ Checks if username exists """
+    """ Checks if username exists
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean>,
+                "username_exists": <boolean>
+            }
+
+        * `success` - Whether the request has succeeded or not
+        * `username_exists` - Whether the username exists in DB or not
+    """
     data = request.query_params
     response = {'success': True, 'username_exists': False}
     if data.get('username'):
@@ -970,7 +1443,24 @@ def check_username_exists(request):
 
 @api_view(['GET'])
 def get_languages(request):
-    """ Retrieves available languages """
+    """ Retrieves available languages
+
+    ### Response
+
+    * Status code 200
+
+            [<array: Language>, <array: Language>, ...]
+
+        <br>Each `Language` array contains the following info
+
+            {
+                "value": <string>,
+                "text": <string>
+            }
+
+        * `value` - Language code (e.g. en, jp, fr)
+        * `text` - Full language name (e.g. English, Japanese, French)
+    """
     languages = Language.objects.filter(active=True)
     languages = [{'value': x.code, 'text': x.name} for x in languages]
     return Response(languages)
@@ -984,7 +1474,26 @@ def get_languages(request):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def generate_2fa_uri(request):
-    """ Generates two-factor authentication URI """
+    """ Generates two-factor authentication URI
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "service": <string>,
+                "account": <string>,
+                "key": <string>,
+                "uri": <string>
+            }
+
+        * `success` - Whether the request has succeeded or not
+        * `service` - Name of the service (i.e. Volentix Venue)
+        * `account` - User's email address
+        * `key` - OTP key
+        * `uri` - Complete OTP key details in URI format
+    """
     response = {}
     user = request.user
     profile = user.profiles.first()
@@ -1032,20 +1541,44 @@ VERIFY_2FA_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(VERIFY_2FA_SCHEMA)
 def verify_2fa_code(request):
-    """ Verifies two-factor auth OTP code """
-    response = {}
+    """ Verifies two-factor auth OTP code
+    
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "verified": <boolean>
+            }
+
+        * `success` - Whether the request succeeded or not
+        * `verified` - Whether the submitted OTP code is correct or not
+
+    * Status code 400
+
+            {
+                "success": <boolean: false>
+            }
+    """
+    response = {'success': False}
+    resp_status = status.HTTP_400_BAD_REQUEST
     data = request.data
     profile = request.user.profiles.first()
-    otp_secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
-    totp = pyotp.totp.TOTP(otp_secret)
-    verified = totp.verify(data['otpCode'])
-    if verified:
-        if 'enable_2fa' in data.keys() and data['enable_2fa']:
-            profile.enabled_2fa = True
-            profile.save()
-    response['verified'] = verified
-    response['success'] = True
-    return Response(response)
+    if profile:
+        otp_secret = decrypt_data(profile.otp_secret, settings.SECRET_KEY)
+        totp = pyotp.totp.TOTP(otp_secret)
+        verified = totp.verify(data['otpCode'])
+        if verified:
+            if 'enable_2fa' in data.keys() and data['enable_2fa']:
+                profile.enabled_2fa = True
+                profile.save()
+            response['verified'] = verified
+            response['success'] = True
+        else:
+            response['verified'] = False
+        resp_status = status.HTTP_200_OK
+    return Response(response, status=resp_status)
 
 
 # --------------------
@@ -1056,7 +1589,16 @@ def verify_2fa_code(request):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def disable_2fa(request):
-    """ Disables two-factor authentication """
+    """ Disables two-factor authentication
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>
+            }
+    """
     response = {}
     profile = request.user.profiles.first()
     profile.enabled_2fa = False
@@ -1071,10 +1613,54 @@ def disable_2fa(request):
 # --------------------------
 
 
+class NotificationSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    action_link = serializers.CharField(max_length=100)
+    action_text = serializers.CharField(max_length=100)
+    code = serializers.CharField(max_length=30)
+    dismissible = serializers.BooleanField()
+    text = serializers.CharField(max_length=200)
+    variant = serializers.CharField(max_length=50)
+
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_notifications(request):
-    """ Retrieves notifications """
+    """ Retrieves notifications
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "notifications": <list: Notification>
+            }
+
+        * `success` - Whethere the request has succeeded or not
+        * `notifications` - List of notifications
+
+        Each `Notification` array contains the following info
+
+            {
+                "id": <int>,
+                "action_link": <string>,
+                "action_text": <string>,
+                "code": <string>,
+                "dismissibale": <boolean>,
+                "text": <string>,
+                "variant": <string>
+            }
+
+        * `id` - ID of the notification in the database
+        * `action_link` - The action link notification button, if any
+        * `action_text` - The text of the notification button, if any
+        * `code` - Short code that identifies the kind of notification
+        * `dismissible` - Whether the notification can be dismissed or not
+        * `text` - The notification message text
+        * `variant` - The variant of the notification alert
+          (`primary`, `info`, `success`, `warning`, `danger`)
+    """
     response = {}
     profile = request.user.profiles.first()
     notifs = Notification.objects.filter(active=True).exclude(
@@ -1082,7 +1668,8 @@ def get_notifications(request):
     )
     if profile.enabled_2fa:
         notifs = notifs.exclude(code='2fA_notification')
-    response['notifications'] = notifs.values()
+    serializer = NotificationSerializer(notifs, many=True)
+    response['notifications'] = serializer.data
     response['success'] = True
     return Response(response)
 
@@ -1108,13 +1695,34 @@ DISMISS_NOTIFICATION_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(DISMISS_NOTIFICATION_SCHEMA)
 def dismiss_notification(request):
-    """ Dismisses a notification """
-    response = {}
+    """ Dismisses a notification
+
+    ### Response
+
+    * Status code 200 (When the notification is successsfully dismissed)
+
+            {
+                "success": <boolean: true>
+            }
+
+        * `success` - Whether the dismissal request succeeded or not
+
+    * Status code 400 (When the notification ID cannot be found)
+
+            {
+                "success": <boolean: false>
+            }
+    """
+    response = {'success': False}
     data = request.data
-    notif = Notification.objects.get(id=data['notificationId'])
-    notif.dismissed_by.add(request.user)
-    response['success'] = True
-    return Response(response)
+    try:
+        notif = Notification.objects.get(id=data['notificationId'])
+        notif.dismissed_by.add(request.user)
+        response['success'] = True
+        resp_status = status.HTTP_200_OK
+    except Notification.DoesNotExist:
+        resp_status = status.HTTP_404_NOT_FOUND
+    return Response(response, status=resp_status)
 
 
 # ------------------------
@@ -1130,13 +1738,46 @@ class ForumSiteSerializer(serializers.Serializer):
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_forum_sites(request):
-    """ Retrieves list of forum sites """
-    response = {'status': False}
+    """ Retrieves list of forum sites
+
+    ### Response
+
+    * Status code 200
+
+            {
+                "success": <boolean: true>,
+                "forum_sites": <list: ForumSite>
+            }
+
+        * `success` - Whether the request succeeded or not
+        * `forum_sites` - List of forum sites
+
+        Each `ForumSite` array contains the following info
+
+            {
+                "id": <int>,
+                "name": <string>
+            }
+
+        * `id` - ID of the forum site in the database
+        * `name` - Name of the forum site
+
+    * Status code 404 (When no forum sites were found)
+
+            {
+                "success": <boolean: false>
+            }
+    """
+    response = {'success': False}
     sites = ForumSite.objects.all()
     if sites.count():
         serializer = ForumSiteSerializer(sites, many=True)
         response['forum_sites'] = serializer.data
-    return Response(response)
+        response['success'] = True
+        resp_status = status.HTTP_200_OK
+    else:
+        resp_status = status.HTTP_404_NOT_FOUND
+    return Response(response, status=resp_status)
 
 
 # -----------------------------
@@ -1168,7 +1809,7 @@ CREATE_FORUM_PROFILE_SCHEMA = AutoSchema(
 def create_forum_profile(request):
     """ Creates a forum profile
 
-    ### Responses
+    ### Response
 
     * Status code 201 (When forum profile is created)
 
@@ -1265,12 +1906,31 @@ GET_FORUM_PROFILES_SCHEMA = AutoSchema(
 def get_forum_profiles(request):
     """ Retrieves forum profiles
 
-    ### Responses
+    ### Response
 
     * Status code 200
 
             {
-                "": 0,
+                "success": <boolean: true>,
+                "forum_profiles": <list: ForumProfile>
+            }
+
+        * `success` - Whether the retrieve request succeeded or not
+
+        Each `ForumProfile` array contains the following info
+
+            {
+                "id": <int>,
+                "forum_user_id": <int>
+            }
+
+        * `id` - ID of the forum profile in the database
+        * `forum_user_id` - ID of the user in the forum site
+
+    * Status code 404
+
+            {
+                "success": <boolean: false>
             }
     """
     data = request.query_params
@@ -1283,7 +1943,10 @@ def get_forum_profiles(request):
         response['success'] = True
         serializer = ForumProfileSerializer(forum_profiles, many=True)
         response['forum_profiles'] = serializer.data
-    return Response(response)
+        resp_status = status.HTTP_200_OK
+    else:
+        resp_status = status.HTTP_404_NOT_FOUND
+    return Response(response, status=resp_status)
 
 
 # -----------------------
@@ -1352,7 +2015,7 @@ GET_SIGNATURES_SCHEMA = AutoSchema(
 def get_signatures(request):
     """ Retrives list of signatures
 
-    ### Responses
+    ### Response
 
     * Status code 200
 
@@ -1361,7 +2024,7 @@ def get_signatures(request):
                 "signatures": <list: Signature>
             }
 
-        Each `Signature` array contains the following info
+        <br>Each `Signature` array contains the following info
 
             {
                 "id": <int>,
@@ -1427,7 +2090,7 @@ def get_signatures(request):
 def get_points_breakdown(request):
     """ Retrives points/rewards breakdown
 
-    ### Responses
+    ### Response
 
     * Status code 200
 
@@ -1453,15 +2116,6 @@ def get_points_breakdown(request):
                 }
             }
 
-        Each `PostBonus` array contains the following info
-
-            {
-                "position": <string>,
-                "num_posts": <int>,
-                "bonus_percentage": <int>,
-                "total_bonus_points": <int>
-            }
-
         * `sitewide_stats` - Stats for the whole site
         * `total_posts` - Total number of posts
         * `total_post_points` - Sum of all points
@@ -1474,6 +2128,16 @@ def get_points_breakdown(request):
         * `upcoming_posts` - Posts that might get credited upon maturation
         * `upcoming_post_points` - Anticipated post points of upcoming posts
         * `upcoming_bonus_points` - Anticipated bonus points of upcoming posts
+
+        <br>Each `PostBonus` array contains the following info
+
+            {
+                "position": <string>,
+                "num_posts": <int>,
+                "bonus_percentage": <int>,
+                "total_bonus_points": <int>
+            }
+
         * `position` - Forum user position/rank
         * `num_posts` - Number of posts
         * `bonus_percentage` - Percentage of post points to give as bonus
