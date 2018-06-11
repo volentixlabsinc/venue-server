@@ -1301,7 +1301,7 @@ GET_SIGCODE_SCHEMA = AutoSchema(
         coreapi.Field(
             'verificationCode',
             required=True,
-            location='form',
+            location='query',
             schema=coreschema.String(description='Verification code')
         )
     ]
@@ -1892,7 +1892,7 @@ GET_FORUM_PROFILES_SCHEMA = AutoSchema(
         ),
         coreapi.Field(
             'forum_user_id',
-            required=True,
+            required=False,
             location='query',
             schema=coreschema.String(description='Forum user ID')
         )
@@ -1936,9 +1936,12 @@ def get_forum_profiles(request):
     data = request.query_params
     response = {'success': False}
     forum_profiles = ForumProfile.objects.filter(
-        forum_id=data.get('forum_id'),
-        forum_user_id=data.get('forum_user_id')
+        forum_id=data.get('forum_id')
     )
+    if data.get('forum_user_id'):
+        forum_profiles = forum_profiles.filter(
+            forum_user_id=data.get('forum_user_id')
+        )
     if forum_profiles.count():
         response['success'] = True
         serializer = ForumProfileSerializer(forum_profiles, many=True)
