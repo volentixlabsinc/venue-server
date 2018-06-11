@@ -2056,8 +2056,11 @@ def get_signatures(request):
     else:
         signatures = Signature.objects.filter(
             forum_site_id=data.get('forum_site_id'),
-            user_ranks__name=data.get('forum_user_rank')
         )
+        if not config.TEST_MODE:
+            signatures = signatures.filter(
+                user_ranks__name=data.get('forum_user_rank')
+            )
     if signatures.count():
         for sig in signatures:
             if config.TEST_MODE:
@@ -2077,6 +2080,7 @@ def get_signatures(request):
                 sig_code,
                 verification_code
             )
+            sig.image = '%s/media/%s' % (settings.VENUE_DOMAIN, sig.image)
             sig.usage_count = sig.users.count()
             sig.verification_code = verification_code
             sig.forum_site_name = forum_profile.forum.name

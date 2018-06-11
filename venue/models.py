@@ -7,6 +7,7 @@ from hashids import Hashids
 from constance import config
 from dateutil import parser
 import celery
+import uuid
 
 
 def compute_total_points():
@@ -43,12 +44,13 @@ class ForumUserRank(models.Model):
 
 def image_file_name(instance, filename):
     ext = filename.split('.')[-1]
-    filename = "signature_%s.%s" % (instance.id, ext)
+    filename = "sig_%s.%s" % (str(uuid.uuid4()), ext)
     return os.path.join('uploads', filename)
 
 
 DEFAULT_SIGNATURE_IMAGE = os.path.join(
-    'static',
+    'media',
+    'uploads',
     'img',
     'signature_img.png'
 )
