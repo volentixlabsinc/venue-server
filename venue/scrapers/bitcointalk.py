@@ -74,22 +74,29 @@ class BitcoinTalk(object):
 
     def get_user_position(self):
         try:
-            row = self.soup.select('div#bodyarea tr')[7]
-            if 'Position' in row.text:
-                pos_td = row.find_all('td')[1]
-                return pos_td.text.strip()
-            else:
+            rows = self.soup.select('div#bodyarea tr')
+            found = False
+            for row in rows:
+                if 'Position' in row.text.strip()[0:10]:
+                    found = True
+                    pos_td = row.find_all('td')[1]
+                    return pos_td.text.strip()
+            if not found:
                 raise ScraperError('Cannot get user position')
         except IndexError:
             return ''
 
     def get_username(self):
         try:
-            row = self.soup.select('div#bodyarea tr')[3]
-            if 'Name' in row.text:
-                pos_td = row.find_all('td')[1]
-                return pos_td.text.strip()
-            else:
+            rows = self.soup.select('div#bodyarea tr')
+            found = False
+            for row in rows:
+                if 'Name' in row.text.strip()[0:10]:
+                    found = True
+                    text_list = row.text.split()
+                    name_index = text_list.index('Name:')
+                    return text_list[name_index + 1]
+            if not found:
                 raise ScraperError('Cannot get username')
         except IndexError:
             return ''
