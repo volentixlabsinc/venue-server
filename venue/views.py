@@ -90,7 +90,7 @@ AUTHENTICATE_SCHEMA = AutoSchema(
 @schema(AUTHENTICATE_SCHEMA)
 def authenticate(request):
     """ Authenticates a user
-    
+
     ### Response
 
     * Status code 200
@@ -140,22 +140,26 @@ def authenticate(request):
             if user.is_active:
                 profile = user.profiles.first()
                 proceed = False
-                if profile.enabled_2fa:
-                    if data['otpCode']:
-                        secret = decrypt_data(
-                            profile.otp_secret,
-                            settings.SECRET_KEY
-                        )
-                        totp = pyotp.TOTP(secret)
-                        verified = totp.verify(data['otpCode'])
-                        if verified:
-                            proceed = True
+                if profile.email_confirmed:
+                    if profile.enabled_2fa:
+                        if data['otpCode']:
+                            secret = decrypt_data(
+                                profile.otp_secret,
+                                settings.SECRET_KEY
+                            )
+                            totp = pyotp.TOTP(secret)
+                            verified = totp.verify(data['otpCode'])
+                            if verified:
+                                proceed = True
+                            else:
+                                error_code = 'wrong_otp'
                         else:
-                            error_code = 'wrong_otp'
+                            error_code = 'otp_required'
                     else:
-                        error_code = 'otp_required'
+                        proceed = True
                 else:
-                    proceed = True
+                    error_code = 'email_verification_required'
+                    resp_status = status.HTTP_403_FORBIDDEN
                 if proceed:
                     token, created = Token.objects.get_or_create(user=user)
                     del created
@@ -174,6 +178,7 @@ def authenticate(request):
                     resp_status = status.HTTP_200_OK
             else:
                 error_code = 'user_deactivated'
+                resp_status = status.HTTP_403_FORBIDDEN
         else:
             error_code = 'wrong_credentials'
     except User.DoesNotExist:
@@ -281,8 +286,7 @@ def create_user(request):
                 "status": <string: "success">,
                 "user": {
                     "username": <string>,
-                    "email": <string>,
-                    "token": <string>
+                    "email": <string>
                 }
             }
 
@@ -318,11 +322,9 @@ def create_user(request):
         else:
             user = User.objects.create_user(**data)
             response['status'] = 'created'
-        token = Token.objects.create(user=user)
         user_data = {
             'username': user.username,
-            'email': user.email,
-            'token': token.key
+            'email': user.email
         }
         response['user'] = user_data
         user_profile = UserProfile(
