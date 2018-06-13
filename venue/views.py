@@ -2006,7 +2006,7 @@ GET_SIGNATURES_SCHEMA = AutoSchema(
             'own_sigs',
             required=False,
             location='query',
-            schema=coreschema.String(description='Get own signatures')
+            schema=coreschema.Boolean(description='Get own signatures')
         )
     ]
 )
@@ -2044,7 +2044,7 @@ def get_signatures(request):
     """
     data = request.query_params
     response = {'success': False}
-    if data.get('own_sigs') == '1':
+    if data.get('own_sigs') == '1' or data.get('own_sigs') == 'true':
         forum_profiles = ForumProfile.objects.filter(
             user_profile__user=request.user,
             verified=True
