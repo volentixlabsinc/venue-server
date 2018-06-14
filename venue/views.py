@@ -17,6 +17,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.db.models import Sum
 from venue.utils import encrypt_data, decrypt_data
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -30,7 +31,7 @@ from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
                     send_email_change_confirmation, send_reset_password,
                     set_scraping_rate)
-from .models import (UserProfile, ForumSite, ForumProfile, Notification,
+from .models import (UserProfile, ForumSite, ForumProfile, Notification, ForumPost,
                      Language, Signature, ForumUserRank, compute_total_points)
 from .utils import RedisTemp
 
@@ -197,7 +198,7 @@ def authenticate(request):
 @permission_classes((IsAuthenticated,))
 def get_user(request):
     """ Retrieves user details
-    
+
     ### Response
 
     * Status code 200
@@ -2094,8 +2095,26 @@ def get_signatures(request):
     return Response(response)
 
 
+# -------------------------
+# Points breakdown endpoint
+# -------------------------
+
+
+POINTS_BREAKDOWN_SCHEMA = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'forum_id',
+            required=False,
+            location='query',
+            schema=coreschema.String(description='Forum ID')
+        )
+    ]
+)
+
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
+@schema(POINTS_BREAKDOWN_SCHEMA)
 def get_points_breakdown(request):
     """ Retrives points/rewards breakdown
 
@@ -2152,4 +2171,82 @@ def get_points_breakdown(request):
         * `bonus_percentage` - Percentage of post points to give as bonus
         * `total_bonus_points` - Sum of bonus points of the num_posts
     """
-    pass
+    stats = {}
+    # Get the forum site
+    forum_id = request.query_params.get('forum_id')
+    if not forum_id:
+        forum_id = 1
+    try:
+        forum = ForumSite.objects.get(id=forum_id)
+        # Get global settings
+        stats['settings'] = {
+            'post_points_multiplier': config.POST_POINTS_MULTIPLIER,
+            'maturation_period': config.MATURATION_PERIOD
+        }
+        # Get sum of all post points
+        sum_base_points = ForumPost.objects.aggregate(Sum('base_points'))
+        sum_base_points = sum_base_points['base_points__sum']
+        # Get sum of all bonus points
+        sum_bonus_points = ForumPost.objects.aggregate(Sum('influence_bonus_pts'))
+        sum_bonus_points = sum_bonus_points['influence_bonus_pts__sum']
+        stats['sitewide_stats'] = {
+            'total_posts': ForumPost.objects.count(),
+            'total_post_points': sum_base_points,
+            'total_bonus_points': sum_bonus_points
+        }
+        # Get user posts
+        user_profile = UserProfile.objects.get(user=request.user)
+        user_posts = ForumPost.objects.filter(user_profile=user_profile)
+        # Get user's credited posts
+        credited = user_posts.filter(credited=True)
+        credited_post_pts = credited.aggregate(Sum('base_points'))
+        credited_post_pts = credited_post_pts['base_points__sum']
+        credited_bonus_pts = credited.aggregate(Sum('influence_bonus_pts'))
+        credited_bonus_pts = credited_bonus_pts['influence_bonus_pts__sum']
+        # Get user's uncredited posts
+        uncredited = user_posts.filter(credited=False)
+        uncredited_post_pts = uncredited.aggregate(Sum('base_points'))
+        uncredited_post_pts = uncredited_post_pts['base_points__sum']
+        uncredited_bonus_pts = uncredited.aggregate(Sum('influence_bonus_pts'))
+        uncredited_bonus_pts = uncredited_bonus_pts['influence_bonus_pts__sum']
+        # Get user-level stats
+        forum_profile = ForumProfile.objects.filter(
+            user_profile=user_profile,
+            forum=forum
+        )
+        forum_position = forum_profile.first().forum_rank.name
+        stats['user_stats'] = {
+            'current_forum_position': forum_position,
+            'total_posts': credited.count(),
+            'total_post_points': credited_post_pts or 0,
+            'total_bonus_points': credited_bonus_pts or 0,
+            'upcoming_posts': uncredited.count(),
+            'upcoming_post_points': uncredited_post_pts or 0,
+            'upcoming_bonus_poitns': uncredited_bonus_pts or 0,
+        }
+        # Get the details of the bonus points
+        bonus_points = []
+        ranks = ForumUserRank.objects.filter(
+            forum_site=forum
+        )
+        for rank in ranks:
+            posts = ForumPost.objects.filter(
+                forum_rank=rank,
+                credited=True
+            )
+            if posts.count():
+                bonus_pct = posts.last().influence_bonus_pct
+                bonus_pts = posts.aggregate(Sum('influence_bonus_pts'))
+                bonus_pts = bonus_pts['influence_bonus_pts__sum']
+                data = {
+                    'position': rank.name,
+                    'num_posts': posts.count(),
+                    'bonus_percentage': bonus_pct,
+                    'total_bonus_points': bonus_pts
+                }
+                bonus_points.append(data)
+        stats['bonus_points'] = bonus_points
+        return Response(stats)
+    except ForumSite.DoesNotExist:
+        response = {'error_code': 'forum_site_not_found'}
+        return Response(response, status.HTTP_400_BAD_REQUEST)

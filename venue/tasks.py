@@ -93,6 +93,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             forum_post = ForumPost(
                 user_profile=forum_profile.user_profile,
                 forum_profile=forum_profile,
+                forum_rank=forum_profile.forum_rank,
                 topic_id=post['topic_id'],
                 message_id=post['message_id'],
                 unique_content_length=post['content_length'],

@@ -277,6 +277,11 @@ class ForumPost(models.Model):
         decimal_places=2,
         default=0
     )
+    forum_rank = models.ForeignKey(
+        ForumUserRank,
+        related_name='posts',
+        on_delete=models.PROTECT
+    )
     influence_bonus_pct = models.DecimalField(
         max_digits=4,
         decimal_places=2,
