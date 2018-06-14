@@ -462,7 +462,7 @@ def check_profile(request):
     forum = ForumSite.objects.get(id=data.get('forum_id'))
     response = {
         'found': False,
-        'forum_id': data.get('forum')
+        'forum_id': data.get('forum_id')
     }
     resp_status = status.HTTP_404_NOT_FOUND
     info = get_user_position(forum.id, data.get('forum_user_id'), user.id)
@@ -646,6 +646,7 @@ def get_stats(request):
                 "forumSite": <string>,
                 "forumUserId": <string>,
                 "forumUserRank": <string>,
+                "rankBonusPercentage": <int>,
                 "numPosts": <int>,
                 "totalPoints": <int>,
                 "VTX_Tokens": <int>
@@ -695,6 +696,7 @@ def get_stats(request):
                 'forumSite': fp.forum.name,
                 'forumUserId': fp.forum_user_id,
                 'forumUserRank': fp.forum_rank.name,
+                'rankBonusPercentage': fp.forum_rank.bonus_percentage,
                 'numPosts': fp.total_posts,
                 'totalPoints': fp.total_points
             }
