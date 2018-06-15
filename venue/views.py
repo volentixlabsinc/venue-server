@@ -972,26 +972,18 @@ CHANGE_EMAIL_SCHEMA = AutoSchema(
             required=False,
             location='form',
             schema=coreschema.String(description='New email')
-        ),
-        coreapi.Field(
-            'code',
-            required=False,
-            location='query',
-            schema=coreschema.String(description='Confirmation code')
         )
     ]
 )
 
 
-@api_view(['GET', 'POST'])
+@api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 @schema(CHANGE_EMAIL_SCHEMA)
 def change_email(request):
     """ Changes user's email
 
     ### Response
-
-    **For `POST` Request**
 
     This request is sent when requesting for email change.
     Refer to the `Request Body` table below for the request payload.
@@ -1014,8 +1006,51 @@ def change_email(request):
             }
         
         * `message` - Error message
+    """
+    rtemp = RedisTemp('new_email')
+    data = request.data
+    user = request.user
+    response = {'success': False}
+    email_check = User.objects.filter(email=data['email'])
+    if email_check.exists():
+        response['message'] = 'email_exists'
+        resp_status = status.HTTP_302_FOUND
+    else:
+        code = hashids.encode(int(user.id))
+        rtemp.store(code, data['email'])
+        send_email_change_confirmation.delay(
+            data['email'],
+            user.username,
+            code
+        )
+        response['success'] = True
+        resp_status = status.HTTP_202_ACCEPTED
+    return Response(response, status=resp_status)
 
-    **For `GET` Request**
+
+# -----------------------------
+# Confirm email change endpoint
+# -----------------------------
+
+
+CONFIRM_EMAIL_CHANGE_SCHEMA = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'code',
+            required=False,
+            location='query',
+            schema=coreschema.String(description='Confirmation code')
+        )
+    ]
+)
+
+
+@api_view(['GET'])
+@schema(CONFIRM_EMAIL_CHANGE_SCHEMA)
+def confirm_email_change(request):
+    """ Confirms email change
+
+    ### Response
 
     This request happens when the user clicks on the link sent in the confirmation email.
     Refer to the `Query Parameters` table below for the request parameters.
@@ -1031,36 +1066,23 @@ def change_email(request):
             }
     """
     rtemp = RedisTemp('new_email')
-    if request.method == 'POST':
-        data = request.data
-        user = request.user
-        response = {'success': False}
-        email_check = User.objects.filter(email=data['email'])
-        if email_check.exists():
-            response['message'] = 'email_exists'
-            resp_status = status.HTTP_302_FOUND
-        else:
-            code = hashids.encode(int(user.id))
-            rtemp.store(code, data['email'])
-            send_email_change_confirmation.delay(
-                data['email'],
-                user.username,
-                code
-            )
-            response['success'] = True
-            resp_status = status.HTTP_202_ACCEPTED
-        return Response(response, status=resp_status)
-    elif request.method == 'GET':
-        code = request.query_params.get('code')
-        if code:
+    code = request.query_params.get('code')
+    response = {'success': False}
+    try:
+        user_id, = hashids.decode(code)
+        new_email = rtemp.retrieve(code)
+        if code and new_email:
             try:
-                user_id, = hashids.decode(code)
-                new_email = rtemp.retrieve(code)
                 User.objects.filter(id=user_id).update(email=new_email)
                 rtemp.remove(code)
-            except (ValueError, User.DoesNotExist):
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
-        return redirect('%s/#/settings/?updated_email=1' % settings.VENUE_FRONTEND)
+                return redirect('%s/#/settings/?updated_email=1' % settings.VENUE_FRONTEND)
+            except User.DoesNotExist:
+                response['error_code'] = 'user_not_found'
+        else:
+            response['error_code'] = 'expired_code'
+    except ValueError:
+        response['error_code'] = 'wrong_code'
+    return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ------------------------
