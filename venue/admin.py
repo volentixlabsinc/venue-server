@@ -61,17 +61,11 @@ admin.site.register(ForumUserRank, ForumUserRankAdmin)
 class ForumProfileAdmin(admin.ModelAdmin):
     list_display = [
         'user_profile', 'forum', 'forum_user_id', 'forum_username',
-        'forum_rank', 'verified'
+        'forum_rank', 'verified', 'total_posts'
     ]
 
     def total_posts(self, obj):
-        return obj.get_total_posts(actual=True)
-
-    def total_posts_with_sig(self, obj):
-        return obj.get_total_posts_with_sig()
-
-    def total_days(self, obj):
-        return obj.get_total_days()
+        return obj.posts.count()
 
 
 admin.site.register(ForumProfile, ForumProfileAdmin)
@@ -86,11 +80,14 @@ admin.site.register(Notification, NotificationAdmin)
 
 class ForumPostAdmin(admin.ModelAdmin):
     list_display = [
-        'forum_profile', 'message_id', 'timestamp',
+        'user', 'forum_profile', 'message_id', 'timestamp',
         'unique_content_length', 'valid_sig_minutes', 'invalid_sig_minutes',
         'base_points', 'influence_bonus_pts', 'total_points',
         'credited', 'matured'
     ]
+
+    def user(self, obj):
+        return obj.user_profile.user.username
 
 
 admin.site.register(ForumPost, ForumPostAdmin)

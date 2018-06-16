@@ -95,7 +95,6 @@ class UserProfile(models.Model):
     enabled_2fa = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
     receive_emails = models.BooleanField(default=False)
-    rank = models.IntegerField(default=0)
 
     def __str__(self):
         return self.user.username
@@ -213,6 +212,8 @@ class ForumProfile(models.Model):
     date_verified = models.DateTimeField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
     date_updated = models.DateTimeField(default=timezone.now)
+    # Dummy account flag
+    dummy = models.BooleanField(default=False)
     # The flag below is overwritten every scrape
     signature_found = models.BooleanField(default=False)
     last_scrape = models.DateTimeField(null=True, blank=True)

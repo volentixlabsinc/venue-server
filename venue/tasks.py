@@ -43,73 +43,75 @@ def load_scraper(name):
 @shared_task(queue='scrapers')
 def scrape_forum_profile(forum_profile_id, test_mode=None):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
-    test_mode = test_mode
     if test_mode is None:
         test_mode = config.TEST_MODE
-    scraper = load_scraper(forum_profile.forum.scraper_name)
-    results = scraper.verify_and_scrape(
-        forum_profile.id,
-        forum_profile.forum_user_id,
-        forum_profile.signature.expected_links.splitlines(),
-        test_mode=test_mode,
-        test_signature=forum_profile.signature.test_signature)
-    status_code, signature_found, total_posts, username, position = results
-    del username
-    # Update the signature_found flag in forum profile
-    forum_profile.signature_found = signature_found
-    forum_profile.save()
-    # Update the forum user rank, if it changed
-    forum_rank = ForumUserRank.objects.get(name=position)
-    if forum_profile.forum_rank != forum_rank:
-        forum_profile.forum_rank = forum_rank
+    if forum_profile.dummy:
+        pass
+    else:
+        scraper = load_scraper(forum_profile.forum.scraper_name)
+        results = scraper.verify_and_scrape(
+            forum_profile.id,
+            forum_profile.forum_user_id,
+            forum_profile.signature.expected_links.splitlines(),
+            test_mode=test_mode,
+            test_signature=forum_profile.signature.test_signature)
+        status_code, signature_found, total_posts, username, position = results
+        del username
+        # Update the signature_found flag in forum profile
+        forum_profile.signature_found = signature_found
         forum_profile.save()
-    # Get the current last scrape timestamp
-    last_scrape = forum_profile.get_last_scrape()
-    # Check posts that haven't reached maturatation
-    tracked_posts = []
-    for post in forum_profile.posts.filter(matured=False):
-        # Check if it's not due to mature yet
-        post_timestamp = post.timestamp.replace(tzinfo=None)
-        tdiff = timezone.now().replace(tzinfo=None) - post_timestamp
-        tdiff_hours = tdiff.total_seconds() / 3600
-        if tdiff_hours > config.MATURATION_PERIOD:
-            post.matured = True
-            post.save()
-        else:
-            tracked_posts.append(post.message_id)
-    # Get the latest posts from this forum profile
-    posts = scraper.scrape_posts(
-        forum_profile.forum_user_id,
-        last_scrape=last_scrape.replace(tzinfo=None)
-    )
-    # Save each new post
-    for post in posts:
-        post_check = ForumPost.objects.filter(
-            forum_profile=forum_profile,
-            topic_id=post['topic_id'],
-            message_id=post['message_id'],
+        # Update the forum user rank, if it changed
+        forum_rank = ForumUserRank.objects.get(name=position)
+        if forum_profile.forum_rank != forum_rank:
+            forum_profile.forum_rank = forum_rank
+            forum_profile.save()
+        # Get the current last scrape timestamp
+        last_scrape = forum_profile.get_last_scrape()
+        # Check posts that haven't reached maturatation
+        tracked_posts = []
+        for post in forum_profile.posts.filter(matured=False):
+            # Check if it's not due to mature yet
+            post_timestamp = post.timestamp.replace(tzinfo=None)
+            tdiff = timezone.now().replace(tzinfo=None) - post_timestamp
+            tdiff_hours = tdiff.total_seconds() / 3600
+            if tdiff_hours > config.MATURATION_PERIOD:
+                post.matured = True
+                post.save()
+            else:
+                tracked_posts.append(post.message_id)
+        # Get the latest posts from this forum profile
+        posts = scraper.scrape_posts(
+            forum_profile.forum_user_id,
+            last_scrape=last_scrape.replace(tzinfo=None)
         )
-        if not post_check.exists():
-            forum_post = ForumPost(
-                user_profile=forum_profile.user_profile,
+        # Save each new post
+        for post in posts:
+            post_check = ForumPost.objects.filter(
                 forum_profile=forum_profile,
-                forum_rank=forum_profile.forum_rank,
                 topic_id=post['topic_id'],
                 message_id=post['message_id'],
-                unique_content_length=post['content_length'],
-                timestamp=post['timestamp']
+            )
+            if not post_check.exists():
+                forum_post = ForumPost(
+                    user_profile=forum_profile.user_profile,
+                    forum_profile=forum_profile,
+                    forum_rank=forum_profile.forum_rank,
+                    topic_id=post['topic_id'],
+                    message_id=post['message_id'],
+                    unique_content_length=post['content_length'],
+                    timestamp=post['timestamp']
+                )
+                forum_post.save()
+        # Update tracked posts
+        for post in tracked_posts:
+            forum_post = ForumPost.objects.get(
+                message_id=post,
+                forum_profile=forum_profile
             )
             forum_post.save()
-    # Update tracked posts
-    for post in tracked_posts:
-        forum_post = ForumPost.objects.get(
-            message_id=post,
-            forum_profile=forum_profile
-        )
-        forum_post.save()
-    # Update the forum_profile's last scrape timestamp
-    forum_profile.last_scrape = timezone.now()
-    forum_profile.save()
+        # Update the forum_profile's last scrape timestamp
+        forum_profile.last_scrape = timezone.now()
+        forum_profile.save()
 
 
 @shared_task(queue='scrapers')
