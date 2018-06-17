@@ -73,6 +73,10 @@ REST_FRAMEWORK = {
     }
 }
 
+CONSTANCE_ADDITIONAL_FIELDS = {
+    'textfield': ['django.forms.CharField', {'widget': 'django.forms.Textarea'}]
+}
+
 CONSTANCE_CONFIG = {
     'DISABLE_SIGN_UP': (False, 'Disable user sign up'),
     'VTX_AVAILABLE': (120000, 'Total VTX tokens available'),
@@ -80,7 +84,9 @@ CONSTANCE_CONFIG = {
         Signatures are always marked as found under test mode.'),
     'POST_POINTS_MULTIPLIER': (100, 'Points for each new post'),
     'MATURATION_PERIOD': (24, 'Maturation period'),
-    'UPTIME_PERCENTAGE_THRESHOLD': (90, 'Percentage of uptime required')
+    'UPTIME_PERCENTAGE_THRESHOLD': (90, 'Percentage of uptime required'),
+    'CLOSED_BETA_MODE': (True, 'Enable closed beta mode'),
+    'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield')
 }
 
 REDIS_PASSWORD = '4e7a84d5'

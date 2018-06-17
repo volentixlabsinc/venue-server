@@ -310,39 +310,46 @@ def create_user(request):
     data['email'] = data['email'].lower()
     user_check = User.objects.filter(email=data['email'])
     response = {}
-    try:
-        language = data['language']
-        del data['language']
-        receive_emails = False
-        if 'receive_emails' in data.keys():
-            receive_emails = data['receive_emails']
-            del data['receive_emails']
-        if user_check.exists():
-            response['status'] = 'exists'
-            user = user_check.first()
-        else:
-            user = User.objects.create_user(**data)
-            response['status'] = 'created'
-        user_data = {
-            'username': user.username,
-            'email': user.email
-        }
-        response['user'] = user_data
-        user_profile = UserProfile(
-            user=user,
-            receive_emails=receive_emails
-        )
-        user_profile.language = Language.objects.get(code=language)
-        user_profile.save()
-        # Send confirmation email
-        code = hashids.encode(int(user.id))
-        send_email_confirmation.delay(user.email, user.username, code)
-        response['status'] = 'success'
-        resp_status = status.HTTP_200_OK
-    except Exception as exc:
-        response['status'] = 'error'
-        response['message'] = str(exc)
-        resp_status = status.HTTP_400_BAD_REQUEST
+    proceed = True
+    if config.CLOSED_BETA_MODE:
+        if not data['email'] in config.SIGN_UP_WHITELIST.splitlines():
+            proceed = False
+            response['error_code'] = 'not_whitelisted'
+            resp_status = status.HTTP_403_FORBIDDEN
+    if proceed:
+        try:
+            language = data['language']
+            del data['language']
+            receive_emails = False
+            if 'receive_emails' in data.keys():
+                receive_emails = data['receive_emails']
+                del data['receive_emails']
+            if user_check.exists():
+                response['status'] = 'exists'
+                user = user_check.first()
+            else:
+                user = User.objects.create_user(**data)
+                response['status'] = 'created'
+            user_data = {
+                'username': user.username,
+                'email': user.email
+            }
+            response['user'] = user_data
+            user_profile = UserProfile(
+                user=user,
+                receive_emails=receive_emails
+            )
+            user_profile.language = Language.objects.get(code=language)
+            user_profile.save()
+            # Send confirmation email
+            code = hashids.encode(int(user.id))
+            send_email_confirmation.delay(user.email, user.username, code)
+            response['status'] = 'success'
+            resp_status = status.HTTP_200_OK
+        except Exception as exc:
+            response['status'] = 'error'
+            response['message'] = str(exc)
+            resp_status = status.HTTP_400_BAD_REQUEST
     return Response(response, status=resp_status)
 
 
