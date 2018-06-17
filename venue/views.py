@@ -1881,21 +1881,25 @@ def create_forum_profile(request):
             forum_site=forum
         )
         del created
-        resp_status = status.HTTP_201_CREATED
-        user_profile = UserProfile.objects.get(user=request.user)
-        fp_object = ForumProfile(
-            user_profile=user_profile,
-            forum_user_id=info['forum_user_id'],
-            forum_username=info['forum_user_name'],
-            forum=forum,
-            forum_rank=rank,
-            active=True
-        )
-        fp_object.save()
-        response['id'] = fp_object.id
-        response['success'] = True
-        # Trigger the task to adjust the scraping rate
-        set_scraping_rate.delay()
+        if rank.allowed or config.TEST_MODE:
+            resp_status = status.HTTP_201_CREATED
+            user_profile = UserProfile.objects.get(user=request.user)
+            fp_object = ForumProfile(
+                user_profile=user_profile,
+                forum_user_id=info['forum_user_id'],
+                forum_username=info['forum_user_name'],
+                forum=forum,
+                forum_rank=rank,
+                active=True
+            )
+            fp_object.save()
+            response['id'] = fp_object.id
+            response['success'] = True
+            # Trigger the task to adjust the scraping rate
+            set_scraping_rate.delay()
+        else:
+            resp_status = status.HTTP_403_FORBIDDEN
+            response['error_code'] = 'insufficient_forum_position'
     return Response(response, status=resp_status)
 
 
