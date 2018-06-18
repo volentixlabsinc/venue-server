@@ -184,12 +184,13 @@ def compute_ranking():
     users = UserProfile.objects.all()
     user_points = []
     for user in users:
-        total_points = user.total_points
-        info = {
-            'user_profile_id': int(user.id),
-            'total_points': total_points
-        }
-        user_points.append(info)
+        if user.with_forum_profile:
+            total_points = user.total_points
+            info = {
+                'user_profile_id': int(user.id),
+                'total_points': total_points
+            }
+            user_points.append(info)
     # Sort the points based on the total
     user_points = sorted(
         user_points,
