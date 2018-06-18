@@ -74,7 +74,10 @@ REST_FRAMEWORK = {
 }
 
 CONSTANCE_ADDITIONAL_FIELDS = {
-    'textfield': ['django.forms.CharField', {'widget': 'django.forms.Textarea'}]
+    'textfield': [
+        'django.forms.CharField', 
+        {'widget': 'django.forms.Textarea', 'required': False}
+    ]
 }
 
 CONSTANCE_CONFIG = {
@@ -85,7 +88,7 @@ CONSTANCE_CONFIG = {
     'POST_POINTS_MULTIPLIER': (100, 'Points for each new post'),
     'MATURATION_PERIOD': (24, 'Maturation period'),
     'UPTIME_PERCENTAGE_THRESHOLD': (90, 'Percentage of uptime required'),
-    'CLOSED_BETA_MODE': (True, 'Enable closed beta mode'),
+    'CLOSED_BETA_MODE': (False, 'Enable closed beta mode'),
     'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield')
 }
 
