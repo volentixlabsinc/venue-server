@@ -777,7 +777,8 @@ def get_leaderboard_data(request):
                 "sitewide": {
                     "available_tokens": <int>,
                     "total_users": <int>,
-                    "total_posts": <int>
+                    "total_posts": <int>,
+                    "total_points": <int>
                 },
                 "userstats": {
                     "overall_rank": <int> or <null>,
@@ -795,6 +796,7 @@ def get_leaderboard_data(request):
         * `available_tokens` - Total available tokens
         * `total_users` - Total number of users
         * `total_posts` - Total number of posts sitewide
+        * `total_points` - Total number of points sitewide
         * `userstats` - Stats of the user
         * `overall_rank` - User's overall rank
         * `total_tokens` - Total tokens that the user earned
@@ -864,7 +866,8 @@ def get_leaderboard_data(request):
         response['sitewide'] = {
             'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
             'total_users': len(users_with_fp),
-            'total_posts': int(sum([x.total_posts for x in users]))
+            'total_posts': int(sum([x.total_posts for x in users])),
+            'total_points': int(sum([x.total_points for x in users]))
         }
         if request.user.is_anonymous():
             response['userstats'] = {}
