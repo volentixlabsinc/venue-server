@@ -82,7 +82,7 @@ class ForumPostAdmin(admin.ModelAdmin):
     list_display = [
         'user', 'forum_profile', 'message_id', 'timestamp',
         'unique_content_length', 'valid_sig_minutes', 'invalid_sig_minutes',
-        'base_points', 'influence_bonus_pts', 'total_points',
+        'base_points', 'forum_rank', 'influence_bonus_pts', 'total_points',
         'credited', 'matured'
     ]
 

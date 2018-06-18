@@ -2138,6 +2138,19 @@ def get_signatures(request):
 # -------------------------
 
 
+def build_bonus_points_data(rank, posts):
+    bonus_pct = posts.last().influence_bonus_pct
+    bonus_pts = posts.aggregate(Sum('influence_bonus_pts'))
+    bonus_pts = bonus_pts['influence_bonus_pts__sum']
+    data = {
+        'position': rank.name,
+        'num_posts': posts.count(),
+        'bonus_percentage': bonus_pct,
+        'total_bonus_points': bonus_pts
+    }
+    return data
+
+
 POINTS_BREAKDOWN_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
@@ -2165,6 +2178,7 @@ def get_points_breakdown(request):
                     "total_posts": <int>,
                     "total_post_points": <int>,
                     "total_bonus_points": <int>,
+                    "bonus_points": <list: PostBonus>
                 },
                 "settings": {
                     "post_points_multiplier": <int>,
@@ -2186,6 +2200,7 @@ def get_points_breakdown(request):
         * `total_posts` - Total number of posts
         * `total_post_points` - Sum of all points
         * `total_bonus_points` - Sum of all bonus points
+        * `bonus_points` - List of bonuses per forum rank/position
         * `settings` - Global settings of the point system
         * `post_points_multiplier` - Number of points per post
         * `maturation_period` - Waiting period before points are credited
@@ -2263,27 +2278,31 @@ def get_points_breakdown(request):
             'upcoming_bonus_poitns': uncredited_bonus_pts or 0,
         }
         # Get the details of the bonus points
-        bonus_points = []
+        sitewide_bonus_points = []
+        user_bonus_points = []
         ranks = ForumUserRank.objects.filter(
             forum_site=forum
         )
         for rank in ranks:
+            # Sitewide bonus points
             posts = ForumPost.objects.filter(
                 forum_rank=rank,
                 credited=True
             )
             if posts.count():
-                bonus_pct = posts.last().influence_bonus_pct
-                bonus_pts = posts.aggregate(Sum('influence_bonus_pts'))
-                bonus_pts = bonus_pts['influence_bonus_pts__sum']
-                data = {
-                    'position': rank.name,
-                    'num_posts': posts.count(),
-                    'bonus_percentage': bonus_pct,
-                    'total_bonus_points': bonus_pts
-                }
-                bonus_points.append(data)
-        stats['bonus_points'] = bonus_points
+                data = data = build_bonus_points_data(rank, posts)
+                sitewide_bonus_points.append(data)
+            # User's bonus points
+            posts = ForumPost.objects.filter(
+                user_profile=user_profile,
+                forum_rank=rank,
+                credited=True
+            )
+            if posts.count():
+                data = build_bonus_points_data(rank, posts)
+                user_bonus_points.append(data)
+        stats['sitewide_stats']['bonus_points'] = sitewide_bonus_points
+        stats['user_stats']['bonus_points'] = user_bonus_points
         return Response(stats)
     except ForumSite.DoesNotExist:
         response = {'error_code': 'forum_site_not_found'}
