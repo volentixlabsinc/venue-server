@@ -1428,7 +1428,14 @@ def check_email_exists(request):
             email__iexact=data.get('email').strip()
         )
         if user_check.exists():
-            response['email_exists'] = True
+            try:
+                user_profile = UserProfile.objects.get(
+                    user=user_check.last()
+                )
+                if user_profile.email_confirmed:
+                    response['email_exists'] = True
+            except UserProfile.DoesNotExist:
+                pass
     return Response(response)
 
 
