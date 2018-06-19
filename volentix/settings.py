@@ -265,3 +265,6 @@ REDIS_DB = redis.StrictRedis(
     password=REDIS_PASSWORD,
     decode_responses=True
 )
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'

@@ -210,7 +210,7 @@ class ForumProfile(models.Model):
         ForumUserRank, null=True, blank=True, related_name='users')
     forum_username = models.CharField(max_length=50, blank=True)
     forum_user_id = models.CharField(max_length=50, blank=True)
-    profile_url = models.CharField(max_length=200)
+    profile_url = models.CharField(max_length=200, blank=True)
     signature = models.ForeignKey(
         Signature, null=True, blank=True, related_name='users')
     verification_code = models.CharField(max_length=20, blank=True)
