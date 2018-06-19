@@ -1,0 +1,46 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -c
+    kompose.version: 1.13.0 (84fa826)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: web
+  name: web
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: web
+    spec:
+      containers:
+      - args:
+        - supervisord
+        - -c
+        - ./supervisord.conf
+        - --nodaemon
+        command:
+        - /entrypoint.sh
+        image: volentixlabs/venueserver:v0.1.0-beta
+        name: web
+        ports:
+        - containerPort: 8000
+        - containerPort: 9000
+        - containerPort: 5555
+        resources: {}
+        stdin: true
+        tty: true
+        volumeMounts:
+        - mountPath: /code
+          name: web-claim0
+      restartPolicy: Always
+      volumes:
+      - name: web-claim0
+        persistentVolumeClaim:
+          claimName: web-claim0
+status: {}
