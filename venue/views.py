@@ -1424,7 +1424,9 @@ def check_email_exists(request):
     data = request.query_params
     response = {'success': True, 'email_exists': False}
     if data.get('email'):
-        user_check = User.objects.filter(email=data.get('email').lower())
+        user_check = User.objects.filter(
+            email__iexact=data.get('email').strip()
+        )
         if user_check.exists():
             response['email_exists'] = True
     return Response(response)
