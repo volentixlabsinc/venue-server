@@ -17,7 +17,7 @@ LANGUAGES = [
     {
         'id': '7fe3056f-6924-4c4a-8a89-395f7f23419c',
         'name': 'French',
-        'code': 'en'
+        'code': 'fr'
     },
     {
         'id': '22ac9a32-d572-4c20-b174-bf642a5e82ce',

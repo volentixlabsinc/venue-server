@@ -1878,7 +1878,7 @@ def create_forum_profile(request):
         forum_id = str(forum_site.id)
     forum = ForumSite.objects.get(id=forum_id)
     info = get_user_position(
-        data['forum_id'],
+        forum_id,
         data['forum_user_id'],
         request.user.id
     )
