@@ -400,7 +400,7 @@ def confirm_email(request):
         )
     user_profile.email_confirmed = True
     user_profile.save()
-    return redirect('%s/#/?email_confirmed=1' % settings.VENUE_FRONTEND)
+    return redirect('%s/login?email_confirmed=1' % settings.VENUE_FRONTEND)
 
 
 # ----------------------
