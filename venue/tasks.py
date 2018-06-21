@@ -187,7 +187,7 @@ def compute_ranking():
         if user.with_forum_profile:
             total_points = user.total_points
             info = {
-                'user_profile_id': int(user.id),
+                'user_profile_id': str(user.id),
                 'total_points': total_points
             }
             user_points.append(info)

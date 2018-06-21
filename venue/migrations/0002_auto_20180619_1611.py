@@ -148,7 +148,9 @@ def add_user_profiles(apps, schema_editor):
             profile_details = {
                 'id': uuid.uuid4(),
                 'user': user,
-                'language_id': '390887e3-ff01-424e-a3a0-6f3c2fb9dfce'
+                'language_id': '390887e3-ff01-424e-a3a0-6f3c2fb9dfce',
+                'email_confirmed': True,
+                'receive_emails': True
             }
             user_profile = UserProfile(**profile_details)
             user_profile.save()

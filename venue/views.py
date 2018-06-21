@@ -466,7 +466,11 @@ def check_profile(request):
     """
     data = request.query_params
     user = request.user
-    forum = ForumSite.objects.get(id=data.get('forum_id'))
+    forum_id = data.get('forum_id')
+    if str(forum_id) == '1':
+        forum_site = ForumSite.objects.get(name='bitcointalk.org')
+        forum_id = str(forum_site.id)
+    forum = ForumSite.objects.get(id=forum_id)
     response = {
         'found': False,
         'forum_id': data.get('forum_id')
@@ -1868,7 +1872,11 @@ def create_forum_profile(request):
     """
     data = request.data
     response = {'success': False}
-    forum = ForumSite.objects.get(id=data['forum_id'])
+    forum_id = data.get('forum_id')
+    if str(forum_id) == '1':
+        forum_site = ForumSite.objects.get(name='bitcointalk.org')
+        forum_id = str(forum_site.id)
+    forum = ForumSite.objects.get(id=forum_id)
     info = get_user_position(
         data['forum_id'],
         data['forum_user_id'],
@@ -1921,8 +1929,8 @@ def create_forum_profile(request):
 
 
 class ForumProfileSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    forum_user_id = serializers.IntegerField()
+    id = serializers.CharField()
+    forum_user_id = serializers.CharField()
 
 
 GET_FORUM_PROFILES_SCHEMA = AutoSchema(
@@ -1978,8 +1986,12 @@ def get_forum_profiles(request):
     """
     data = request.query_params
     response = {'success': False}
+    forum_id = data.get('forum_id')
+    if str(forum_id) == '1':
+        forum_site = ForumSite.objects.get(name='bitcointalk.org')
+        forum_id = str(forum_site.id)
     forum_profiles = ForumProfile.objects.filter(
-        forum_id=data.get('forum_id')
+        forum_id=forum_id
     )
     if data.get('forum_user_id'):
         forum_profiles = forum_profiles.filter(
@@ -2014,7 +2026,7 @@ def inject_verification_code(sig_code, verification_code):
 
 
 class SignatureSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.CharField()
     name = serializers.CharField(max_length=100)
     image = serializers.CharField(max_length=200)
     code = serializers.CharField(max_length=200)
@@ -2097,8 +2109,12 @@ def get_signatures(request):
         )
         fp_map = {x.signature.id: x.id for x in forum_profiles}
     else:
+        forum_id = data.get('forum_site_id')
+        if str(forum_id) == '1':
+            forum_site = ForumSite.objects.get(name='bitcointalk.org')
+            forum_id = str(forum_site.id)
         signatures = Signature.objects.filter(
-            forum_site_id=data.get('forum_site_id'),
+            forum_site_id=forum_id,
         )
         if not config.TEST_MODE:
             signatures = signatures.filter(
@@ -2230,7 +2246,8 @@ def get_points_breakdown(request):
     # Get the forum site
     forum_id = request.query_params.get('forum_id')
     if not forum_id:
-        forum_id = 1
+        forum_site = ForumSite.objects.get(name='bitcointalk.org')
+        forum_id = str(forum_site.id)
     try:
         forum = ForumSite.objects.get(id=forum_id)
         # Get global settings
