@@ -27,7 +27,7 @@ SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'venue.volentix.com']
+ALLOWED_HOSTS = ['localhost', 'venue.volentix.com', '.ca-central-1.elb.amazonaws.com']
 
 
 # Application definition
@@ -95,7 +95,7 @@ CONSTANCE_CONFIG = {
 REDIS_PASSWORD = '4e7a84d5'
 CONSTANCE_REDIS_CONNECTION = {
     'password': REDIS_PASSWORD,
-    'host': 'redis',
+    'host': 'redis-master',
     'port': 6379,
     'db': 0,
 }
@@ -139,10 +139,10 @@ WSGI_APPLICATION = 'volentix.wsgi_django.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'volentix_v2',
-        'USER': 'volentix',
-        'PASSWORD': 'BxKkpaihl67B',
-        'HOST': 'postgres'
+        'NAME': 'venuepostgress',
+        'USER': os.getenv('POSTGRES_USER', 'volentix'), 
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'BxKkpaihl67B'),
+        'HOST': os.getenv('POSTGRES_HOST', 'postgres')
     }
 }
 

@@ -1,0 +1,4 @@
+apiVersion: v1
+name: venueweb
+version: 0.1.0
+description: This is the helm chart deployment files for Venue.

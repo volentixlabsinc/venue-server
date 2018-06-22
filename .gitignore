@@ -16,3 +16,5 @@ node_modules/
 .vscode/
 .pytest_cache/
 *.backup
+notes
+secret.yml
