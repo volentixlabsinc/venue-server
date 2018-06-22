@@ -92,10 +92,10 @@ CONSTANCE_CONFIG = {
     'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield')
 }
 
-REDIS_PASSWORD = '4e7a84d5'
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '4e7a84d5'),
 CONSTANCE_REDIS_CONNECTION = {
     'password': REDIS_PASSWORD,
-    'host': 'redis-master',
+    'host': os.getenv('REDIS_HOST', 'redis'),
     'port': 6379,
     'db': 0,
 }
@@ -139,7 +139,7 @@ WSGI_APPLICATION = 'volentix.wsgi_django.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'venuepostgress',
+        'NAME': os.getenv('POSTGRES_NAME', 'venuepostgress'),
         'USER': os.getenv('POSTGRES_USER', 'volentix'), 
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'BxKkpaihl67B'),
         'HOST': os.getenv('POSTGRES_HOST', 'postgres')
@@ -188,8 +188,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
-CELERY_BROKER_URL = 'redis://:4e7a84d5@redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://:4e7a84d5@redis:6379/1'
+CELERY_BROKER_URL = 'redis://:'     + REDIS_PASSWORD + '@redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://:' + REDIS_PASSWORD + '@redis:6379/1'
 CELERY_TIMEZONE = 'UTC'
 
 USER_SCRAPE_INTERVAL = 300  # seconds

@@ -17,4 +17,4 @@ node_modules/
 .pytest_cache/
 *.backup
 notes
-secret.yml
+*-secret.yml

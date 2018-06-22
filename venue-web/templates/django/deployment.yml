@@ -23,7 +23,7 @@ spec:
         command:
         - /entrypoint.sh
         name: django
-        image: volentixlabs/venueserver:v0.0.7-beta
+        image: volentixlabs/venueserver:v0.0.8-beta
         ports:
           - containerPort: 8000
           - containerPort: 9000
@@ -40,9 +40,24 @@ spec:
               secretKeyRef:
                 name: postgres-credentials
                 key: password
-
+          
+          - name: POSTGRES_NAME
+            valueFrom:
+              secretKeyRef:
+                name: postgres-credentials
+                key: databasename
+          
           - name: POSTGRES_HOST
             value: postgres-service
 
           - name: REDIS_HOST
-            value: redis-service
+            valueFrom:
+              secretKeyRef:
+                name: redis-credentials
+                key: host
+
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-credentials
+                key: password
