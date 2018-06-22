@@ -19,6 +19,7 @@ def compute_total_points():
 
 class ForumSite(models.Model):
     """ Forum site names and addresses """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=30)
     address = models.CharField(max_length=50)
     scraper_name = models.CharField(max_length=30)
@@ -29,6 +30,7 @@ class ForumSite(models.Model):
 
 class ForumUserRank(models.Model):
     """ Names of forum user ranks/positions """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     forum_site = models.ForeignKey(ForumSite, related_name='ranks')
     name = models.CharField(max_length=30)
     bonus_percentage = models.DecimalField(
@@ -58,6 +60,7 @@ DEFAULT_SIGNATURE_IMAGE = os.path.join(
 
 class Signature(models.Model):
     """ Signature types per forum site """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=30)
     forum_site = models.ForeignKey(ForumSite, related_name='signature_types')
     user_ranks = models.ManyToManyField(
@@ -78,6 +81,7 @@ class Signature(models.Model):
 
 class Language(models.Model):
     """ Site-wide language selection options """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=30)
     code = models.CharField(max_length=5)
     active = models.BooleanField(default=True)
@@ -88,6 +92,7 @@ class Language(models.Model):
 
 class UserProfile(models.Model):
     """ Custom internal user profiles """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, related_name='profiles')
     language = models.ForeignKey(
         Language, null=True, blank=True, related_name='profiles')
@@ -185,6 +190,7 @@ class UserProfile(models.Model):
 
 
 class Ranking(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_profile = models.ForeignKey(
         UserProfile,
         related_name='rankings'
@@ -195,6 +201,7 @@ class Ranking(models.Model):
 
 class ForumProfile(models.Model):
     """ Record of forum profile details per user """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_profile = models.ForeignKey(
         UserProfile, related_name='forum_profiles')
     forum = models.ForeignKey(ForumSite, null=True,
@@ -203,7 +210,7 @@ class ForumProfile(models.Model):
         ForumUserRank, null=True, blank=True, related_name='users')
     forum_username = models.CharField(max_length=50, blank=True)
     forum_user_id = models.CharField(max_length=50, blank=True)
-    profile_url = models.CharField(max_length=200)
+    profile_url = models.CharField(max_length=200, blank=True)
     signature = models.ForeignKey(
         Signature, null=True, blank=True, related_name='users')
     verification_code = models.CharField(max_length=20, blank=True)
@@ -255,6 +262,7 @@ class ForumProfile(models.Model):
 
 
 class ForumPost(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_profile = models.ForeignKey(
         UserProfile,
         related_name='posts',
@@ -328,6 +336,7 @@ class ForumPost(models.Model):
 
 
 class Notification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     code = models.CharField(max_length=20, blank=True)
     text = models.CharField(max_length=100)
     action_text = models.CharField(max_length=30, blank=True)
