@@ -335,10 +335,11 @@ def create_user(request):
                 'email': user.email
             }
             response['user'] = user_data
-            user_profile = UserProfile(
-                user=user,
-                receive_emails=receive_emails
+            user_profile, created = UserProfile.objects.get_or_create(
+                user=user
             )
+            del created
+            user_profile.receive_emails = receive_emails
             user_profile.language = Language.objects.get(code=language)
             user_profile.save()
             # Send confirmation email
