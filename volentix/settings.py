@@ -188,8 +188,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
-CELERY_BROKER_URL = 'redis://:'     + REDIS_PASSWORD + '@redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://:' + REDIS_PASSWORD + '@redis:6379/1'
+CELERY_BROKER_URL = 'redis://:4e7a84d5@redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://:4e7a84d5@redis:6379/1'
 CELERY_TIMEZONE = 'UTC'
 
 USER_SCRAPE_INTERVAL = 300  # seconds
