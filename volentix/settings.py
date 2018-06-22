@@ -92,7 +92,8 @@ CONSTANCE_CONFIG = {
     'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield')
 }
 
-REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '4e7a84d5'),
+REDIS_PASSWORD = '4e7a84d5' 
+# os.getenv('REDIS_PASSWORD', '4e7a84d5'),
 CONSTANCE_REDIS_CONNECTION = {
     'password': REDIS_PASSWORD,
     'host': os.getenv('REDIS_HOST', 'redis'),
