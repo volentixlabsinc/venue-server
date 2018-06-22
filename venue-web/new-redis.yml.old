@@ -14,18 +14,18 @@ spec:
       containers:
       - name: redis
         image: redis:3.2-alpine
-        ports:
-          - name: redis-server
-            containerPort: 6379
-        volumeMounts:
-        - name: redis-storage
-          mountPath: /data
         env:
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: redis-credentials
                 key: password
+        ports:
+          - name: redis-server
+            containerPort: 6379
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
   volumeClaimTemplates:
   - metadata:
       name: redis-storage

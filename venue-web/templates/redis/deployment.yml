@@ -17,10 +17,10 @@ spec:
       containers:
       - env:
         - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: redis-credentials
-                key: password
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
         image: bitnami/redis:latest
         name: redis
         resources:
