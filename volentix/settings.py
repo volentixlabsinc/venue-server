@@ -25,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', 'venue.volentix.com', 'server.venue.ninja']
 

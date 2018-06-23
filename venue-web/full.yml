@@ -1,0 +1,64 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: echo-service
+  labels:
+    application: echo-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: echo-service
+  template:
+    metadata:
+      labels:
+        application: echo-service
+    spec:
+      containers:
+      - name: echo-service
+        image: brndnmtthws/nginx-echo-headers:latest
+        ports:
+        - containerPort: 8080
+          # This name will be used in the Service.
+          name: backend-http
+---
+# Service definition for a http/https service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-service
+  annotations:
+    # Note that the backend talks over HTTP.
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    # TODO: Fill in with the ARN of your certificate.
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert:  arn:aws:acm:ca-central-1:854376586701:certificate/380d528a-555f-4673-904b-0c2cdc6758d9
+    # Only run SSL on the port named "https" below.
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+spec:
+  type: LoadBalancer
+  loadBalancerIP:
+  ports:
+  - port: 80
+    name: http
+    # Use named container port.
+    targetPort: backend-http
+  - port: 443
+    name: https
+    # Use named container port.
+    targetPort: backend-http
+  selector:
+    application: echo-service
+
+
+
+
+
+    spec:
+  selector:
+    pod: django
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: LoadBalancer
+

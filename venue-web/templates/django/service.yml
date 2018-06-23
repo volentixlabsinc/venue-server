@@ -2,11 +2,24 @@ kind: Service
 apiVersion: v1
 metadata:
   name: django-service
+  annotations:
+    # Note that the backend talks over HTTP.
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    # TODO: Fill in with the ARN of your certificate.
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert:  arn:aws:acm:ca-central-1:854376586701:certificate/380d528a-555f-4673-904b-0c2cdc6758d9
+    # Only run SSL on the port named "https" below.
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
 spec:
+  type: LoadBalancer
+  loadBalancerIP:
+  ports:
+  - port: 80
+    name: http
+    # Use named container port.
+    targetPort: backend-http
+  - port: 443
+    name: https
+    # Use named container port.
+    targetPort: backend-http
   selector:
     pod: django
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8000
-  type: LoadBalancer

@@ -26,6 +26,7 @@ spec:
         image: volentixlabs/venueserver:v0.0.14-beta
         ports:
           - containerPort: 8000
+            name: backend-http
           - containerPort: 9000
           - containerPort: 5555
         env:
