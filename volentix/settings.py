@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 import redis
 import rollbar
+from decouple import config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,9 +26,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', 'venue.volentix.com']
+ALLOWED_HOSTS = ['localhost', 'venue.volentix.io']
 
 
 # Application definition
@@ -194,9 +195,13 @@ CELERY_TIMEZONE = 'UTC'
 
 USER_SCRAPE_INTERVAL = 300  # seconds
 CELERY_BEAT_SCHEDULE = {
-    'update-data-every-2-minutes': {
+    'periodic-data-update': {
         'task': 'venue.tasks.update_data',
         'schedule': USER_SCRAPE_INTERVAL
+    },
+    'periodic-spam-detection': {
+        'task': 'venue.tasks.detect_spammers',
+        'schedule': 3600 * 6  # Every 6 hours
     }
 }
 
@@ -238,8 +243,8 @@ if DEBUG:
     VENUE_DOMAIN = 'http://localhost:8000'
     VENUE_FRONTEND = 'http://localhost:3000'
 else:
-    VENUE_DOMAIN = 'https://venue.volentix.com'
-    VENUE_FRONTEND = 'https://venue.volentix.com'
+    VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.volentix.io')
+    VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.volentix.io')
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -265,6 +270,3 @@ REDIS_DB = redis.StrictRedis(
     password=REDIS_PASSWORD,
     decode_responses=True
 )
-
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
-SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
