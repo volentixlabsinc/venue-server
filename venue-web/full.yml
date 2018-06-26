@@ -8,7 +8,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      pod: echo-service
+      application: echo-service
   template:
     metadata:
       labels:
@@ -48,17 +48,4 @@ spec:
     targetPort: backend-http
   selector:
     application: echo-service
-
-
-
-
-
-    spec:
-  selector:
-    pod: django
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8000
-  type: LoadBalancer
 
