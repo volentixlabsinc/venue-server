@@ -204,7 +204,7 @@ CELERY_BEAT_SCHEDULE = {
 POSTMARK_TOKEN = '53ac5b12-1edc-43bc-9581-561c143f7352'
 POSTMARK_SENDER_EMAIL = 'venue@volentix.com'
 
-CORS_ORIGIN_WHITELIST = ('localhost:8080', 'localhost:8000')
+CORS_ORIGIN_WHITELIST = ('localhost:8080', 'localhost:8000', 'venue.volentix.io')
 CORS_ORIGIN_ALLOW_ALL = True
 CSRF_COOKIE_NAME = "csrftoken"
 
@@ -236,11 +236,11 @@ if not os.path.exists(log_folder):
 
 
 if DEBUG:
-    VENUE_DOMAIN = 'https://venue-server.volentix.io/'
-    VENUE_FRONTEND = 'https://venue.volentix.com'
+    VENUE_DOMAIN = 'https://venue.volentix.io'
+    VENUE_FRONTEND = 'https://venue.volentix.io'
 else:
-    VENUE_DOMAIN = 'https://venue.volentix.com'
-    VENUE_FRONTEND = 'https://venue.volentix.com'
+    VENUE_DOMAIN = 'https://venue.volentix.io'
+    VENUE_FRONTEND = 'https://venue.volentix.io'
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
