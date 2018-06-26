@@ -1,0 +1,18 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: venue-ui-service
+  namespace: venue-prod
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        application: venue-ui
+        version: v1
+    spec:
+      containers:
+      - name: venue-ui-service
+        image: volentixlabs/venueui:v0.0.1-beta
+        ports:
+        - containerPort: 3000

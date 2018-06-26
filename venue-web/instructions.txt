@@ -1,0 +1,49 @@
+
+HERE FOR THE PATCH NEEDED IF THE CLUSTER EXISTS: https://github.com/zalando-incubator/kube-ingress-aws-controller/blob/master/deploy/kops.md
+
+IF NOT GO HERE: https://github.com/kubernetes/kops/tree/master/addons/kube-ingress-aws-controller
+
+export KOPS_STATE_STORE=s3://clusters.venue.ninja
+
+export NAME=venue.ninja
+export AWS_AVAILABILITY_ZONES=ca-central-1a
+
+kops create cluster --zones ca-central-1a $NAME
+
+ssh -i ~/.ssh/id_rsa admin@api.venue.ninja
+
+
+KUBE INGRESS CONTROLLER!!!!!
+
+HERE FOR THE PATCH NEEDED IF THE CLUSTER EXISTS: https://github.com/zalando-incubator/kube-ingress-aws-controller/blob/master/deploy/kops.md
+
+IF NOT GO HERE: https://github.com/kubernetes/kops/tree/master/addons/kube-ingress-aws-controller
+
+
+export KOPS_CLUSTER_NAME=venue.ninja
+
+Cluster EXISTS
+=========================
+
+VPC_ID=$(aws ec2 describe-security-groups --filters Name=group-name,Values=nodes.$KOPS_CLUSTER_NAME | jq '.["SecurityGroups"][0].VpcId' -r)
+aws ec2 create-security-group --description ingress.$KOPS_CLUSTER_NAME --group-name ingress.$KOPS_CLUSTER_NAME --vpc-id $VPC_ID
+aws ec2 describe-security-groups --filter Name=vpc-id,Values=$VPC_ID  Name=group-name,Values=ingress.$KOPS_CLUSTER_NAME
+export sgidingress=$(aws ec2 describe-security-groups --filter Name=vpc-id,Values=$VPC_ID  Name=group-name,Values=ingress.$KOPS_CLUSTER_NAME | jq '.["SecurityGroups"][0]["GroupId"]' -r)
+export sgidnode=$(aws ec2 describe-security-groups --filter Name=vpc-id,Values=$VPC_ID  Name=group-name,Values=nodes.$KOPS_CLUSTER_NAME | jq '.["SecurityGroups"][0]["GroupId"]' -r)
+aws ec2 authorize-security-group-ingress --group-id $sgidingress --protocol tcp --port 443 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id $sgidingress --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+aws ec2 authorize-security-group-ingress --group-id $sgidnode --protocol all --port -1 --source-group $sgidingress
+aws ec2 create-tags --resources $sgidingress --tags Key="kubernetes.io/cluster/${KOPS_CLUSTER_NAME}",Value="owned" Key="kubernetes:application",Value="kube-ingress-aws-controller"
+
+New Cluster
+===========================
+
+aws ec2 describe-security-groups --group-names ingress.$KOPS_CLUSTER_NAME
+sgidingress=$(aws ec2 describe-security-groups --filters Name=group-name,Values=ingress.$KOPS_CLUSTER_NAME | jq '.["SecurityGroups"][0]["GroupId"]' -r)
+sgidnode=   $(aws ec2 describe-security-groups --filters Name=group-name,Values=nodes.$KOPS_CLUSTER_NAME | jq '.["SecurityGroups"][0]["GroupId"]' -r)
+aws ec2 authorize-security-group-ingress --group-id $sgidingress --protocol tcp --port 443 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id $sgidingress --protocol tcp --port 80 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-egress --group-id $sgidingress --protocol all --port -1 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id $sgidnode --protocol all --port -1 --source-group $sgidingress
+aws ec2 create-tags --resources $sgidingress --tags '[{"Key": "kubernetes.io/cluster/id", "Value": "owned"}, {"Key": "kubernetes:application", "Value": "kube-ingress-aws-controller"}]'

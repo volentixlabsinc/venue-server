@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: nginx-default-backend
-  namespace: venue-{{namespace}}
+  namespace: venue-prod
   labels:
     k8s-addon: ingress-nginx.addons.k8s.io
 spec:
@@ -18,7 +18,7 @@ kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
   name: nginx-default-backend
-  namespace: venue-{{namespace}}
+  namespace: venue-prod
   labels:
     k8s-addon: ingress-nginx.addons.k8s.io
 spec:
@@ -59,7 +59,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: ingress-nginx
-  namespace: venue-{{namespace}}
+  namespace: venue-prod
   labels:
     k8s-addon: ingress-nginx.addons.k8s.io
 data:
@@ -71,7 +71,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: ingress-nginx
-  namespace: venue-{{namespace}}
+  namespace: venue-prod
   labels:
     k8s-addon: ingress-nginx.addons.k8s.io
   annotations:
@@ -94,7 +94,7 @@ kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
   name: ingress-nginx
-  namespace: venue-{{namespace}}
+  namespace: venue-prod
   labels:
     k8s-addon: ingress-nginx.addons.k8s.io
 spec:

@@ -1,13 +1,13 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: "venue-service-ing"
-  namespace: venue-{{namespace}}
+  name: "venue-service-io-ing"
+  namespace: venue-prod
   labels:
     application: venue
 spec:
   rules:
-  - host: "service.{{namespace}}.venue.ninja"
+  - host: "venue-server.volentix.io"
     http:
       paths:
       - backend:

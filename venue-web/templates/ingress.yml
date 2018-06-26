@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: django-app
+  annotations:
+    zalando.org/aws-load-balancer-ssl-cert: arn:aws:acm:ca-central-1:854376586701:certificate/380d528a-555f-4673-904b-0c2cdc6758d9
+spec:
+  rules:
+  - host: backend.venue.ninja
+    http:
+      paths:
+      - backend:
+          serviceName: django-service
+          servicePort: django-port
