@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kubernetes-grafana-ingress
+  namespace: kube-system
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-allow-headers: Authorization, origin, accept
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, OPTIONS
+    nginx.ingress.kubernetes.io/cors-allow-origin: kube-example.com/monitor
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+  labels:
+    application: demo
+spec:
+  rules:
+  - host: "server-demo.venue.ninja"
+    http:
+      paths:
+      - path: /monitor
+        backend:
+          port: 80
+          serviceName: "monitoring-grafana"
+  tls:
+  - hosts:
+    - server.venue.ninja

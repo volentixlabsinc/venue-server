@@ -8,11 +8,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      application: django-service
+      pod: django-service
   template:
     metadata:
       labels:
-        application: django-service
+        pod: django-service
     spec:
       containers:
       - args:
@@ -25,10 +25,9 @@ spec:
         name: django-service
         image: volentixlabs/venueserver:v0.0.16-beta
         ports:
-        - containerPort: 8000
-          name: backend-http
-        #- containerPort: 9000
-        #- containerPort: 5555
+          - containerPort: 8000
+          - containerPort: 9000
+          - containerPort: 5555
         env:
           - name: POSTGRES_USER
             valueFrom:

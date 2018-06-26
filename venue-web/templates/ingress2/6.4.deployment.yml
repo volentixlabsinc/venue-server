@@ -1,18 +1,15 @@
-apiVersion: apps/v1beta2
+apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: django-service
-  labels:
-    deployment: django-service
+  name: venue-service
+  namespace: venue-prod
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      application: django-service
   template:
     metadata:
       labels:
-        application: django-service
+        application: venue
+        version: v1
     spec:
       containers:
       - args:
@@ -26,7 +23,6 @@ spec:
         image: volentixlabs/venueserver:v0.0.16-beta
         ports:
         - containerPort: 8000
-          name: backend-http
         #- containerPort: 9000
         #- containerPort: 5555
         env:
