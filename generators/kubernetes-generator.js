@@ -25,6 +25,11 @@ module.exports = plop => {
         type: 'add',
         path: '../generated/{{namespace}}/0.1.serviceaccount.yml',
         templateFile: 'templates/0.1.serviceaccount.template'
+      },
+      {
+        type: 'add',
+        path: '../generated/{{namespace}}/0.2.configmap.yml',
+        templateFile: 'templates/0.2.configmap.template'
       },{
         type: 'add',
         path: '../generated/{{namespace}}/1.0.default-backend.yml',

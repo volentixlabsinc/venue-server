@@ -5,6 +5,12 @@ metadata:
   namespace: venue-{{namespace}}
   labels:
     application: venue
+  annotations:
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-allow-headers: Authorization, origin, accept
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, OPTIONS
+    nginx.ingress.kubernetes.io/cors-allow-origin: ui.{{namespace}}.venue.ninja
+    nginx.ingress.kubernetes.io/enable-cors: "true"
 spec:
   rules:
   - host: "service.{{namespace}}.venue.ninja"
