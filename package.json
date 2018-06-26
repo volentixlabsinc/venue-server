@@ -1,20 +1,20 @@
 {
-    "name": "volentix-venue-deployment-template",
-    "version": "0.0.1",
-    "description": "Volentix Operations templates for creating deployments.",
-    "author": "realrhys",
-    "license": "MIT",
-    "scripts": {
-      "generate": "plop --plopfile ./generators/plopfile.js"
-    },
-    "dependencies": {},
-    "devDependencies": {
-      "plop": "^2.0.0"
-    },
-    "keywords": [
-      "volentix",
-      "operations",
-      "venue",
-      "kubernetes"
-    ]
-  }
+  "name": "volentix-venue-deployment-template",
+  "version": "0.0.1",
+  "description": "Volentix Operations templates for creating deployments.",
+  "author": "realrhys",
+  "license": "MIT",
+  "scripts": {
+    "generate": "plop --plopfile ./generators/plopfile.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "plop": "^2.0.0"
+  },
+  "keywords": [
+    "volentix",
+    "operations",
+    "venue",
+    "kubernetes"
+  ]
+}
