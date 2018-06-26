@@ -1,0 +1,15 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "venue-ui-v2"
+  namespace: venue-prod
+  labels:
+    application: venue-ui
+spec:
+  rules:
+  - host: "venue.volentix.io"
+    http:
+      paths:
+      - backend:
+          serviceName: "venue-ui-service"
+          servicePort: 80

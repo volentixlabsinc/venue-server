@@ -13,6 +13,6 @@ spec:
     spec:
       containers:
       - name: venue-ui-service
-        image: volentixlabs/venueui:v0.0.1-beta
+        image: volentixlabs/venueui:v0.0.2-beta
         ports:
         - containerPort: 3000

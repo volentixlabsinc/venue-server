@@ -236,8 +236,8 @@ if not os.path.exists(log_folder):
 
 
 if DEBUG:
-    VENUE_DOMAIN = 'http://localhost:8000'
-    VENUE_FRONTEND = 'http://localhost:3000'
+    VENUE_DOMAIN = 'https://venue-server.volentix.io/'
+    VENUE_FRONTEND = 'https://venue.volentix.com'
 else:
     VENUE_DOMAIN = 'https://venue.volentix.com'
     VENUE_FRONTEND = 'https://venue.volentix.com'

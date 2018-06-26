@@ -1,0 +1,15 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "venue-service-ing"
+  namespace: venue-prod
+  labels:
+    application: venue
+spec:
+  rules:
+  - host: "service.venue.ninja"
+    http:
+      paths:
+      - backend:
+          serviceName: "venue-service"
+          servicePort: 80
