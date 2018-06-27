@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 import redis
 import rollbar
+from decouple import config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,10 +26,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '.volentix.com', '.volentix.io', '.venue.ninja', 'venue-service']
-
 
 # Application definition
 
@@ -92,11 +92,11 @@ CONSTANCE_CONFIG = {
     'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield')
 }
 
-REDIS_PASSWORD = '4e7a84d5' 
-# os.getenv('REDIS_PASSWORD', '4e7a84d5'),
+REDIS_PASSWORD = config('REDIS_PASSWORD', default='4e7a84d5')
+
 CONSTANCE_REDIS_CONNECTION = {
     'password': REDIS_PASSWORD,
-    'host': os.getenv('REDIS_HOST', 'redis'),
+    'host': config('REDIS_HOST', default='redis'),
     'port': 6379,
     'db': 0,
 }
@@ -140,10 +140,10 @@ WSGI_APPLICATION = 'volentix.wsgi_django.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.getenv('POSTGRES_NAME', 'venuepostgress'),
-        'USER': os.getenv('POSTGRES_USER', 'volentix'), 
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'BxKkpaihl67B'),
-        'HOST': os.getenv('POSTGRES_HOST', 'postgres')
+        'NAME': config('POSTGRES_NAME', default='venuepostgress'),
+        'USER': config('POSTGRES_USER', default='volentix'), 
+        'PASSWORD': config('POSTGRES_PASSWORD', default='BxKkpaihl67B'),
+        'HOST': config('POSTGRES_HOST', default='postgres')
     }
 }
 
@@ -195,9 +195,13 @@ CELERY_TIMEZONE = 'UTC'
 
 USER_SCRAPE_INTERVAL = 300  # seconds
 CELERY_BEAT_SCHEDULE = {
-    'update-data-every-2-minutes': {
+    'periodic-data-update': {
         'task': 'venue.tasks.update_data',
         'schedule': USER_SCRAPE_INTERVAL
+    },
+    'periodic-spam-detection': {
+        'task': 'venue.tasks.detect_spammers',
+        'schedule': 3600 * 6  # Every 6 hours
     }
 }
 
@@ -239,8 +243,8 @@ if DEBUG:
     VENUE_DOMAIN = 'https://venue.volentix.io'
     VENUE_FRONTEND = 'https://venue.volentix.io'
 else:
-    VENUE_DOMAIN = 'https://venue.volentix.io'
-    VENUE_FRONTEND = 'https://venue.volentix.io'
+    VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.volentix.io')
+    VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.volentix.io')
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
