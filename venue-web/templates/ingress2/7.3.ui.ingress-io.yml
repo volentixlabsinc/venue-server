@@ -18,6 +18,10 @@ spec:
         backend:
           serviceName: "venue-service"
           servicePort: 80
+      - path: /docs
+        backend:
+          serviceName: "venue-service"
+          servicePort: 80
       - path: /media/uploads
         backend:
           serviceName: "venue-service"
