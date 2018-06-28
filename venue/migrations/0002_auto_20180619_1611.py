@@ -60,74 +60,7 @@ def add_languages(apps, schema_editor):
 
 
 USERS = [
-    {
-        'password': 'default2018',
-        'is_superuser': True,
-        'username': 'admin',
-        'email': 'joemar.ct+admin@gmail.com',
-        'is_staff': True,
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'stingray',
-        'email': 'joemar.ct+stingray@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'spiderman',
-        'email': 'joemar.ct+spiderman@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'thor',
-        'email': 'joemar.ct+thor@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'ironman',
-        'email': 'joemar.ct+ironman@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'antman',
-        'email': 'joemar.ct+antman@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'silverclaw',
-        'email': 'joemar.ct+silverclaw@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'hulk',
-        'email': 'joemar.ct+hulk@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'nomad',
-        'email': 'joemar.ct+nomad@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'hawkeye',
-        'email': 'joemar.ct+hawkeye@gmail.com',
-        'is_active': True
-    },
-    {
-        'password': 'default2018',
-        'username': 'wolverine',
-        'email': 'joemar.ct+wolverine@gmail.com',
-        'is_active': True
-    },
+    
 ]
 
 
