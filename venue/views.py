@@ -865,7 +865,7 @@ def get_leaderboard_data(request):
     users_with_fp = [x for x in user_profiles if x.with_forum_profile]
     response['sitewide'] = {
         'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
-        'total_users': users_with_fp.count(),
+        'total_users': len(users_with_fp),
         'total_posts': int(sum([x.total_posts for x in users_with_fp])),
         'total_points': int(sum([x.total_points for x in users_with_fp]))
     }
