@@ -5,4 +5,4 @@ metadata:
   namespace: venue-prod
 spec:
   type: ExternalName
-  externalName: venuepostgressprod.cksjgpgfbsbd.ca-central-1.rds.amazonaws.com
+  externalName: venuepostgress.cksjgpgfbsbd.ca-central-1.rds.amazonaws.com
