@@ -26,6 +26,10 @@ spec:
         backend:
           serviceName: "venue-service"
           servicePort: 80
+      - path: /static
+        backend:
+          serviceName: "venue-service"
+          servicePort: 80
       - path: /
         backend:
           serviceName: "venue-ui-service"
