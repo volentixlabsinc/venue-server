@@ -20,10 +20,10 @@ spec:
         command:
         - /entrypoint.sh
         name: django-service
-        image: volentixlabs/venueserver:v0.0.27-beta
+        image: volentixlabs/venueserver:v0.0.32-beta
         ports:
         - containerPort: 8000
-        #- containerPort: 9000
+        #- containerPort: 9000 volentixlabs/venueserver:v0.0.27-beta
         #- containerPort: 5555 volentixlabs/venueserver:v0.0.26-beta
         env:
           - name: POSTGRES_USER
