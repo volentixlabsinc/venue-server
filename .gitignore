@@ -15,4 +15,5 @@ celerybeat-schedule
 node_modules/
 .vscode/
 .pytest_cache/
+.coverage
 *.backup
