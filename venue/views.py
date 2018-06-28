@@ -848,7 +848,7 @@ def get_leaderboard_data(request):
         * `value` - Number of users for the forum
     """
     response = {}
-    user_profiles = UserProfile.objects.all()
+    user_profiles = UserProfile.objects.filter(email_confirmed=True)
     leaderboard_data = []
     for user_profile in user_profiles:
         fps = user_profile.forum_profiles.filter(active=True)
@@ -861,19 +861,18 @@ def get_leaderboard_data(request):
                 'total_tokens': user_profile.total_tokens
             }
             leaderboard_data.append(user_data)
+    # Get site-wide stats
+    users_with_fp = [x for x in user_profiles if x.with_forum_profile]
+    response['sitewide'] = {
+        'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
+        'total_users': len(users_with_fp),
+        'total_posts': int(sum([x.total_posts for x in users_with_fp])),
+        'total_points': int(sum([x.total_points for x in users_with_fp]))
+    }
     # Order according to amount of tokens
     if leaderboard_data:
         leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
         response['rankings'] = leaderboard_data
-        users = UserProfile.objects.filter(email_confirmed=True)
-        users_with_fp = [x.id for x in users if x.with_forum_profile]
-        # Get site-wide stats
-        response['sitewide'] = {
-            'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
-            'total_users': len(users_with_fp),
-            'total_posts': int(sum([x.total_posts for x in users])),
-            'total_points': int(sum([x.total_points for x in users]))
-        }
         if request.user.is_anonymous():
             response['userstats'] = {}
         else:
@@ -883,7 +882,6 @@ def get_leaderboard_data(request):
                 'overall_rank': user_profile.get_ranking(),
                 'total_tokens': int(round(total_tokens, 0))
             }
-
     # Generate forum stats
     forum_stats = {
         'posts': [],
