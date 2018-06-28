@@ -19,3 +19,4 @@ node_modules/
 notes
 *-secret.yml
 generated
+.coverage

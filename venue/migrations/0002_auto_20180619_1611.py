@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 from django.utils import timezone
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 import uuid
 
@@ -60,8 +61,79 @@ def add_languages(apps, schema_editor):
 
 
 USERS = [
-    
+    {
+        'password': 'default2018',
+        'is_superuser': True,
+        'username': 'admin',
+        'email': 'joemar.ct+admin@gmail.com',
+        'is_staff': True,
+        'is_active': True
+    }
 ]
+
+if settings.DEBUG:
+    USERS += [
+        {
+            'password': 'default2018',
+            'username': 'stingray',
+            'email': 'joemar.ct+stingray@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'spiderman',
+            'email': 'joemar.ct+spiderman@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'thor',
+            'email': 'joemar.ct+thor@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'ironman',
+            'email': 'joemar.ct+ironman@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'antman',
+            'email': 'joemar.ct+antman@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'silverclaw',
+            'email': 'joemar.ct+silverclaw@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'hulk',
+            'email': 'joemar.ct+hulk@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'nomad',
+            'email': 'joemar.ct+nomad@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'hawkeye',
+            'email': 'joemar.ct+hawkeye@gmail.com',
+            'is_active': True
+        },
+        {
+            'password': 'default2018',
+            'username': 'wolverine',
+            'email': 'joemar.ct+wolverine@gmail.com',
+            'is_active': True
+        },
+    ]
 
 
 def add_users(apps, schema_editor):
@@ -556,9 +628,13 @@ class Migration(migrations.Migration):
         migrations.RunPython(add_users),
         migrations.RunPython(add_languages),
         migrations.RunPython(add_forum_sites),
-        migrations.RunPython(add_user_profiles),
         migrations.RunPython(add_forum_user_ranks),
-        migrations.RunPython(add_signatures),
-        migrations.RunPython(add_forum_profiles),
-        migrations.RunPython(add_forum_posts)
+        migrations.RunPython(add_signatures)
     ]
+
+    if settings.DEBUG:
+        operations += [
+            migrations.RunPython(add_user_profiles),
+            migrations.RunPython(add_forum_profiles),
+            migrations.RunPython(add_forum_posts)
+        ]

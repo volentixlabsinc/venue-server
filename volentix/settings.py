@@ -26,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '.volentix.com', '.volentix.io', '.venue.ninja', 'venue-service']
 
@@ -246,11 +246,11 @@ else:
     VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.volentix.io')
     VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.volentix.io')
 
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+# if not DEBUG:
+#     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#     SECURE_SSL_REDIRECT = True
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
 
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
