@@ -53,6 +53,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             forum_profile.id,
             forum_profile.forum_user_id,
             forum_profile.signature.expected_links.splitlines(),
+            vcode=forum_profile.verification_code,
             test_mode=test_mode,
             test_signature=forum_profile.signature.test_signature)
         status_code, signature_found, total_posts, username, position = results
