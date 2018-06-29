@@ -157,7 +157,7 @@ def get_user_position(forum_site_id, profile_url, user_id):
     result['with_signature'] = False
     result['exists'] = fp_check.exists()
     if fp_check.exists():
-        fp = fp_check.last()
+        fp = fp_check.latest()
         result['forum_profile_id'] = fp.id   
         result['own'] = False
         if fp.user_profile.user.id == user_id:
@@ -198,10 +198,13 @@ def compute_ranking():
         key=itemgetter('total_points'),
         reverse=True
     )
+    # Ranking batch
+    last_ranking = Ranking.objects.all().latest()
     for rank, user in enumerate(user_points, 1):
         # Update user's ranking
         user_points[rank-1]['rank'] = rank
         ranking = Ranking(
+            batch=last_ranking.batch + 1,
             user_profile_id=user['user_profile_id'],
             rank=rank
         )

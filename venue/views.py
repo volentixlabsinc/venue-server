@@ -1900,9 +1900,9 @@ def create_forum_profile(request):
         resp_status = status.HTTP_200_OK
         response['exists'] = True
         response['verified'] = False
-        response['id'] = profile_check.last().id
+        response['id'] = profile_check.latest().id
         fps = profile_check.filter(active=True, verified=True)
-        fp = fps.last()
+        fp = fps.latest()
         if fp and fp.signature:
             response['verified'] = True
     else:
@@ -2171,7 +2171,7 @@ def get_signatures(request):
 
 
 def build_bonus_points_data(rank, posts):
-    bonus_pct = posts.last().influence_bonus_pct
+    bonus_pct = posts.latest().influence_bonus_pct
     bonus_pts = posts.aggregate(Sum('influence_bonus_pts'))
     bonus_pts = bonus_pts['influence_bonus_pts__sum']
     data = {
