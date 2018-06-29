@@ -1,7 +1,8 @@
 version: '3'
 services:
     web:
-        image: volentixlabs/venueserver:v0.0.15-beta 
+        image: volentixlabs/venueserver:v0.0.15-beta
+        build: .
         restart: 'always'
         expose:
             - '8000'

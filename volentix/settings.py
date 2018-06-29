@@ -26,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '.volentix.com', '.volentix.io', '.venue.ninja', 'venue-service']
 
@@ -89,7 +89,8 @@ CONSTANCE_CONFIG = {
     'MATURATION_PERIOD': (24, 'Maturation period'),
     'UPTIME_PERCENTAGE_THRESHOLD': (90, 'Percentage of uptime required'),
     'CLOSED_BETA_MODE': (False, 'Enable closed beta mode'),
-    'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield')
+    'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield'),
+    'ENABLE_CLICK_TRACKING': (False, 'Enable tracking of clicks in signature links')
 }
 
 REDIS_PASSWORD = config('REDIS_PASSWORD', default='4e7a84d5')
@@ -141,7 +142,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': config('POSTGRES_NAME', default='venuepostgress'),
-        'USER': config('POSTGRES_USER', default='volentix'), 
+        'USER': config('POSTGRES_USER', default='venueadmin'), 
         'PASSWORD': config('POSTGRES_PASSWORD', default='BxKkpaihl67B'),
         'HOST': config('POSTGRES_HOST', default='postgres')
     }

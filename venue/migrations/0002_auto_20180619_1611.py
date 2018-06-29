@@ -184,28 +184,28 @@ FORUM_USER_RANKS = [
         'forum_site_id': '4b8b11d1-14bb-46a7-ac8b-397587235b28',
         'name': 'Brand new',
         'bonus_percentage': 0,
-        'allowed': True
+        'allowed': False
     },
     {
         'id': 'bc8bb1b2-e056-47ab-bcf1-7967a27dd6b4',
         'forum_site_id': '4b8b11d1-14bb-46a7-ac8b-397587235b28',
         'name': 'Newbie',
         'bonus_percentage': 0,
-        'allowed': True
+        'allowed': False
     },
     {
         'id': '80ab6f32-774a-4043-884c-203ac6b6e218',
         'forum_site_id': '4b8b11d1-14bb-46a7-ac8b-397587235b28',
         'name': 'Jr. Member',
         'bonus_percentage': 0,
-        'allowed': True
+        'allowed': False
     },
     {
         'id': '09a7ad5e-1da4-4e7b-8799-93cf70ceb6f0',
         'forum_site_id': '4b8b11d1-14bb-46a7-ac8b-397587235b28',
         'name': 'Member',
         'bonus_percentage': 0,
-        'allowed': True
+        'allowed': False
     },
     {
         'id': '99c3f7d6-8adf-4594-a7d3-b64d47488c5a',

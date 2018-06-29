@@ -34,6 +34,7 @@ from .tasks import (verify_profile_signature, get_user_position, update_data,
 from .models import (UserProfile, ForumSite, ForumProfile, Notification, ForumPost,
                      Language, Signature, ForumUserRank, compute_total_points)
 from .utils import RedisTemp
+import shortuuid
 
 
 # Instantiate a Hashids instance to be used later
@@ -1382,7 +1383,10 @@ def get_signature_code(request):
             sig_code = forum_profile.signature.test_signature
         else:
             sig_code = forum_profile.signature.code
-        response['signature_code'] = inject_verification_code(sig_code, vcode)
+        if config.ENABLE_CLICK_TRACKING:
+            response['signature_code'] = inject_verification_code(sig_code, vcode)
+        else:
+            response['signature_code'] = sig_code
         response['success'] = True
         resp_status = status.HTTP_200_OK
     except ForumProfile.DoesNotExist:
@@ -1896,9 +1900,9 @@ def create_forum_profile(request):
         resp_status = status.HTTP_200_OK
         response['exists'] = True
         response['verified'] = False
-        response['id'] = profile_check.last().id
+        response['id'] = profile_check.latest().id
         fps = profile_check.filter(active=True, verified=True)
-        fp = fps.last()
+        fp = fps.latest()
         if fp and fp.signature:
             response['verified'] = True
     else:
@@ -1916,7 +1920,8 @@ def create_forum_profile(request):
                 forum_username=info['forum_user_name'],
                 forum=forum,
                 forum_rank=rank,
-                active=True
+                active=True,
+                verification_code=shortuuid.ShortUUID().random(length=8)
             )
             fp_object.save()
             response['id'] = fp_object.id
@@ -2023,7 +2028,7 @@ def inject_verification_code(sig_code, verification_code):
     def repl(m):
         return '%s?vcode=%s' % (m.group(), verification_code)
     if 'http' in sig_code:
-        pattern = r'http[s]?://([a-z./-?=&])+'
+        pattern = r'http[s]?://([a-z.])*volentix([a-z./-?=&])+'
         return re.sub(pattern, repl, sig_code)
     elif 'link' in sig_code:
         return sig_code + '?vcode=' + verification_code
@@ -2141,10 +2146,13 @@ def get_signatures(request):
                     id=fp_map[sig.id]
                 )
             verification_code = forum_profile.verification_code
-            sig.code = inject_verification_code(
-                sig_code,
-                verification_code
-            )
+            if config.ENABLE_CLICK_TRACKING:
+                sig.code = inject_verification_code(
+                    sig_code,
+                    verification_code
+                )
+            else:
+                sig.code = sig_code
             sig.image = '%s/media/%s' % (settings.VENUE_DOMAIN, sig.image)
             sig.usage_count = sig.users.count()
             sig.verification_code = verification_code
@@ -2163,7 +2171,7 @@ def get_signatures(request):
 
 
 def build_bonus_points_data(rank, posts):
-    bonus_pct = posts.last().influence_bonus_pct
+    bonus_pct = posts.latest().influence_bonus_pct
     bonus_pts = posts.aggregate(Sum('influence_bonus_pts'))
     bonus_pts = bonus_pts['influence_bonus_pts__sum']
     data = {

@@ -1,5 +1,6 @@
 import os
 from django.contrib.auth.models import User
+from django.dispatch import receiver
 from django.utils import timezone
 from django.conf import settings
 from django.db import models
@@ -151,8 +152,8 @@ class UserProfile(models.Model):
 
         rankings = query_db(date)
         rank = None
-        if rankings.last():
-            rank = rankings.last().rank
+        if rankings.latest():
+            rank = rankings.latest().rank
         else:
             # Trigger ranking task if ranking does not exist
             job = celery.current_app.send_task(
@@ -161,8 +162,8 @@ class UserProfile(models.Model):
             )
             job.get()
             rankings = query_db(date)
-            if rankings.last():
-                rank = rankings.last().rank
+            if rankings.latest():
+                rank = rankings.latest().rank
         return rank
 
     @property
@@ -191,19 +192,27 @@ class UserProfile(models.Model):
 
 class Ranking(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    batch = models.IntegerField(default=1)
     user_profile = models.ForeignKey(
         UserProfile,
-        related_name='rankings'
+        related_name='rankings',
+        on_delete=models.CASCADE
     )
     rank = models.IntegerField(default=0)
     timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        get_latest_by = 'timestamp'
 
 
 class ForumProfile(models.Model):
     """ Record of forum profile details per user """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_profile = models.ForeignKey(
-        UserProfile, related_name='forum_profiles')
+        UserProfile,
+        related_name='forum_profiles',
+        on_delete=models.PROTECT
+    )
     forum = models.ForeignKey(ForumSite, null=True,
                               blank=True, related_name='forum_profiles')
     forum_rank = models.ForeignKey(
@@ -227,6 +236,7 @@ class ForumProfile(models.Model):
 
     class Meta:
         unique_together = ('forum', 'forum_user_id', 'verified')
+        get_latest_by = 'date_updated'
 
     def __str__(self):
         return '%s @ %s' % (self.forum_user_id, self.forum.name)
@@ -309,13 +319,16 @@ class ForumPost(models.Model):
     valid_sig_minutes = models.IntegerField(default=0)
     invalid_sig_minutes = models.IntegerField(default=0)
 
+    class Meta:
+        get_latest_by = 'timestamp'
+
     def __str__(self):
         return str(self.id)
 
     def save(self, *args, **kwargs):
         if not self.matured:
             current = ForumPost.objects.filter(
-                message_id=self.message_id).last()
+                message_id=self.message_id).latest()
             if current:
                 last_scrape = self.forum_profile.get_last_scrape()
                 last_scrape = last_scrape.replace(tzinfo=None)
@@ -362,3 +375,19 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.text
+
+
+# --------------------
+# Model change signals
+# --------------------
+
+
+@receiver(models.signals.post_delete, sender=UserProfile)
+@receiver(models.signals.post_delete, sender=ForumProfile)
+@receiver(models.signals.post_delete, sender=ForumPost)
+def trigger_compute_ranking(*args, **kwargs):
+    job = celery.current_app.send_task(
+        'venue.tasks.compute_ranking',
+        queue='compute'
+    )
+    job.get()

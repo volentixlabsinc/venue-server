@@ -94,7 +94,7 @@ admin.site.register(ForumPost, ForumPostAdmin)
 
 
 class RankingAdmin(admin.ModelAdmin):
-    list_display = ['user_profile', 'rank', 'timestamp']
+    list_display = ['user_profile', 'rank', 'batch', 'timestamp']
 
 
 admin.site.register(Ranking, RankingAdmin)
