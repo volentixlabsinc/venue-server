@@ -7,10 +7,22 @@ metadata:
     application: venue-ui
 spec:
   rules:
-  - host: "venue.volentix.io"
+  - host: "demo.venue.ninja"
     http:
       paths:
       - path: /api
+        backend:
+          serviceName: "venue-service"
+          servicePort: 80
+      - path: /static
+        backend:
+          serviceName: "venue-service"
+          servicePort: 80
+      - path: /admin
+        backend:
+          serviceName: "venue-service"
+          servicePort: 80
+      - path: /docs
         backend:
           serviceName: "venue-service"
           servicePort: 80
