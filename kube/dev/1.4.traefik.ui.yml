@@ -19,7 +19,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: dev.traefik.vlabs.ninja
+  - host: traefik.dev.vlabs.ninja
     http:
       paths:
       - backend:

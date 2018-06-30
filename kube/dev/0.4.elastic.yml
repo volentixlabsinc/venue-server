@@ -507,7 +507,7 @@ metadata:
       kubernetes.io/ingress.class: "traefik"
 spec:
   rules:
-    - host: dev.kibana.vlabs.ninja
+    - host: kibana.dev.vlabs.ninja
       http:
         paths:
           - backend:
