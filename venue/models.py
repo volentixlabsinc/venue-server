@@ -67,7 +67,6 @@ class Signature(models.Model):
     user_ranks = models.ManyToManyField(
         ForumUserRank, related_name='signatures')
     code = models.TextField()
-    expected_links = models.TextField(blank=True)
     test_signature = models.TextField(blank=True)
     image = models.ImageField(
         upload_to=image_file_name,

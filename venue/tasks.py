@@ -10,6 +10,7 @@ from operator import itemgetter
 from constance import config
 from django.utils import timezone
 from celery.result import AsyncResult, ResultSet
+import re
 
 import rollbar
 from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
@@ -40,6 +41,17 @@ def load_scraper(name):
     return scraper
 
 
+def get_expected_links(code):
+    terms = re.split('[\[\]]', code)
+    links = []
+    for term in terms:
+        if 'url=' in term:
+            link = term.split('url=')[1]
+            if link:
+                links.append(link)
+    return set(links)
+
+
 @shared_task(queue='scrapers')
 def scrape_forum_profile(forum_profile_id, test_mode=None):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
@@ -49,10 +61,11 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         pass
     else:
         scraper = load_scraper(forum_profile.forum.scraper_name)
+        expected_links = get_expected_links(forum_profile.signature.code)
         results = scraper.verify_and_scrape(
             forum_profile.id,
             forum_profile.forum_user_id,
-            forum_profile.signature.expected_links.splitlines(),
+            expected_links,
             vcode=forum_profile.verification_code,
             test_mode=test_mode,
             test_signature=forum_profile.signature.test_signature)

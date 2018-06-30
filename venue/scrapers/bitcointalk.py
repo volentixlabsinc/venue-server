@@ -126,8 +126,11 @@ class BitcoinTalk(object):
                 links = []
                 for link in scraped_links:
                     try:
-                        clean_link, vcode = link.split('vcode=')
-                        vcode = vcode.split('&')[0]
+                        if 'vcode=' in link: 
+                            clean_link, vcode = link.split('vcode=')
+                            vcode = vcode.split('&')[0]
+                        else:
+                            clean_link = link
                         links.append(clean_link.replace('?', ''))
                     except ValueError:
                         pass
@@ -136,26 +139,44 @@ class BitcoinTalk(object):
         return (verified, vcode)
 
     def check_signature(self, vcode=None):
-        sig = self.soup.select('div#bodyarea tr')[26]
-        # Find links and check their integrity
-        links = sig.find_all('a')
-        if links:
-            links = [x.attrs['href'] for x in links]
-        else:
-            links = sig.text.strip().splitlines()
-        links_verified, scraped_vcode = self.verify_links(
-            links,
-            self.expected_links,
-            scraped_signature=sig.text
-        )
-        if vcode and scraped_vcode:
-            if vcode == scraped_vcode:
-                code_verified = True
-        else:
+        sig = None
+        try:
+            rows = self.soup.select('div#bodyarea tr')
+            found = False
+            for row in rows:
+                if 'Signature' in row.text.strip()[0:10]:
+                    found = True
+                    text_list = row.text.split()
+                    name_index = text_list.index('Signature:')
+                    sig = row
+                    break
+            if not found:
+                raise ScraperError('Cannot find signature')
+        except IndexError:
+            pass
+        if sig:
+            # Find links and check their integrity
+            links = sig.find_all('a')
+            if links:
+                links = [x.attrs['href'] for x in links]
+            else:
+                links = sig.text.strip().splitlines()
+            links_verified, scraped_vcode = self.verify_links(
+                links,
+                self.expected_links,
+                scraped_signature=sig.text
+            )
             code_verified = False
-        sig_found = False
-        if links_verified and code_verified:
-            sig_found = True
+            if vcode and scraped_vcode:
+                if vcode == scraped_vcode:
+                    code_verified = True
+            else:
+                code_verified = True
+            sig_found = False
+            if links_verified and code_verified:
+                sig_found = True
+        else:
+            sig_found = False
         return sig_found
 
     def _scrape_posts_page(self, soup, last_scrape=None):
