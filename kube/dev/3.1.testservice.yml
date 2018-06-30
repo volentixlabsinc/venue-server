@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: demo-app-v2
+  namespace: venue-dev
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        application: demo
+        version: v2
+    spec:
+      containers:
+      - name: skipper-demo
+        image: registry.opensource.zalan.do/pathfinder/skipper:latest
+        args:
+          - "skipper"
+          - "-inline-routes"
+          - "* -> inlineContent(\"<body style='color: green; background-color: white;'><h1>Hello 2!</h1>\") -> <shunt>"
+        ports:
+        - containerPort: 9090
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app-v2
+  namespace: venue-dev
+  labels:
+    application: demo
+    version: v2
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 9090
+      name: external
+  selector:
+    application: demo
+    version: v2
