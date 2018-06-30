@@ -479,24 +479,25 @@ def check_profile(request):
     }
     resp_status = status.HTTP_404_NOT_FOUND
     info = get_user_position(forum.id, data.get('forum_user_id'), user.id)
-    if info['status_code'] == 200 and info['position']:
-        resp_status = status.HTTP_200_OK
-        response['position'] = info['position']
-        forum_rank = ForumUserRank.objects.get(
-            forum_site=forum,
-            name__iexact=info['position'].strip()
-        )
-        response['position_allowed'] = forum_rank.allowed
-        response['forum_user_id'] = info['forum_user_id']
-        response['found'] = True
-        response['exists'] = info['exists']
-        if info['exists']:
-            response['verified'] = info['verified']
-            response['own'] = info['own']
-            response['active'] = info['active']
-            response['with_signature'] = info['with_signature']
-            response['forum_profile_id'] = info['forum_profile_id']
-    response['status_code'] = info['status_code']
+    if info['found']:
+        if info['status_code'] == 200 and info['position']:
+            resp_status = status.HTTP_200_OK
+            response['position'] = info['position']
+            forum_rank = ForumUserRank.objects.get(
+                forum_site=forum,
+                name__iexact=info['position'].strip()
+            )
+            response['position_allowed'] = forum_rank.allowed
+            response['forum_user_id'] = info['forum_user_id']
+            response['found'] = True
+            response['exists'] = info['exists']
+            if info['exists']:
+                response['verified'] = info['verified']
+                response['own'] = info['own']
+                response['active'] = info['active']
+                response['with_signature'] = info['with_signature']
+                response['forum_profile_id'] = info['forum_profile_id']
+        response['status_code'] = info['status_code']
     return Response(response, status=resp_status)
 
 
@@ -1879,6 +1880,12 @@ def create_forum_profile(request):
                 "verified": <boolean>,
                 "id": <int>
             }
+
+    * Status code 400 (When the forum profile cannot be created)
+
+            {
+                "success": <boolean: false>,
+            }
     """
     data = request.data
     response = {'success': False}
@@ -1892,46 +1899,50 @@ def create_forum_profile(request):
         data['forum_user_id'],
         request.user.id
     )
-    profile_check = ForumProfile.objects.filter(
-        forum_user_id=info['forum_user_id'],
-        forum=forum
-    )
-    if profile_check.exists():
-        resp_status = status.HTTP_200_OK
-        response['exists'] = True
-        response['verified'] = False
-        response['id'] = profile_check.latest().id
-        fps = profile_check.filter(active=True, verified=True)
-        if fps.count():
-            fp = fps.latest()
-            if fp.signature:
-                response['verified'] = True
-    else:
-        rank, created = ForumUserRank.objects.get_or_create(
-            name=info['position'],
-            forum_site=forum
+    if info['found']:
+        profile_check = ForumProfile.objects.filter(
+            forum_user_id=info['forum_user_id'],
+            forum=forum
         )
-        del created
-        if rank.allowed or config.TEST_MODE:
-            resp_status = status.HTTP_201_CREATED
-            user_profile = UserProfile.objects.get(user=request.user)
-            fp_object = ForumProfile(
-                user_profile=user_profile,
-                forum_user_id=info['forum_user_id'],
-                forum_username=info['forum_user_name'],
-                forum=forum,
-                forum_rank=rank,
-                active=True,
-                verification_code=shortuuid.ShortUUID().random(length=8)
-            )
-            fp_object.save()
-            response['id'] = fp_object.id
-            response['success'] = True
-            # Trigger the task to adjust the scraping rate
-            set_scraping_rate.delay()
+        if profile_check.exists():
+            resp_status = status.HTTP_200_OK
+            response['exists'] = True
+            response['verified'] = False
+            response['id'] = profile_check.latest().id
+            fps = profile_check.filter(active=True, verified=True)
+            if fps.count():
+                fp = fps.latest()
+                if fp.signature:
+                    response['verified'] = True
         else:
-            resp_status = status.HTTP_403_FORBIDDEN
-            response['error_code'] = 'insufficient_forum_position'
+            rank, created = ForumUserRank.objects.get_or_create(
+                name=info['position'],
+                forum_site=forum
+            )
+            del created
+            if rank.allowed or config.TEST_MODE:
+                resp_status = status.HTTP_201_CREATED
+                user_profile = UserProfile.objects.get(user=request.user)
+                fp_object = ForumProfile(
+                    user_profile=user_profile,
+                    forum_user_id=info['forum_user_id'],
+                    forum_username=info['forum_user_name'],
+                    forum=forum,
+                    forum_rank=rank,
+                    active=True,
+                    verification_code=shortuuid.ShortUUID().random(length=8)
+                )
+                fp_object.save()
+                response['id'] = fp_object.id
+                response['success'] = True
+                # Trigger the task to adjust the scraping rate
+                set_scraping_rate.delay()
+            else:
+                resp_status = status.HTTP_403_FORBIDDEN
+                response['error_code'] = 'insufficient_forum_position'
+    else:
+        response['error_code'] = 'user_not_found_in_forum_site'
+        resp_status = status.HTTP_400_BAD_REQUEST
     return Response(response, status=resp_status)
 
 

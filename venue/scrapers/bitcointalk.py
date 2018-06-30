@@ -10,6 +10,10 @@ from dateutil import parser
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
+class ProfileDoesNotExist(Exception):
+    pass
+
+
 class ScraperError(Exception):
     pass
 
@@ -67,6 +71,12 @@ class BitcoinTalk(object):
                 self.status_code = 200
             driver.close()
             driver.quit()
+        # Check if profile exists
+        body_area = self.soup.find('div', {'id': 'bodyarea'})
+        if body_area:
+            body_text = body_area.text
+            if 'The user whose profile you are trying to view does not exist.' in body_text:
+                raise ProfileDoesNotExist()
 
     def get_total_posts(self):
         row = self.soup.select('div#bodyarea tr')[4]

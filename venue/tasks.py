@@ -142,31 +142,35 @@ def get_user_position(forum_site_id, profile_url, user_id):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
     forum_user_id = scraper.extract_user_id(profile_url)
-    status_code, position, username = scraper.get_user_position(forum_user_id)
-    result = {
-        'status_code': status_code,
-        'position': position,
-        'forum_user_id': forum_user_id,
-        'forum_user_name': username
-    }
-    fp_check = ForumProfile.objects.filter(
-        forum=forum,
-        forum_user_id=forum_user_id
-    )
-    result['active'] = False
-    result['with_signature'] = False
-    result['exists'] = fp_check.exists()
-    if fp_check.exists():
-        fp = fp_check.latest()
-        result['forum_profile_id'] = fp.id   
-        result['own'] = False
-        if fp.user_profile.user.id == user_id:
-            result['own'] = True
-            if fp.posts.count():
-                result['active'] = True
-        result['verified'] = fp.verified
-        if fp.signature and fp.verified:
-            result['with_signature'] = True
+    try:
+        status_code, position, username = scraper.get_user_position(forum_user_id)
+        result = {
+            'status_code': status_code,
+            'found': True,
+            'position': position,
+            'forum_user_id': forum_user_id,
+            'forum_user_name': username
+        }
+        fp_check = ForumProfile.objects.filter(
+            forum=forum,
+            forum_user_id=forum_user_id
+        )
+        result['active'] = False
+        result['with_signature'] = False
+        result['exists'] = fp_check.exists()
+        if fp_check.exists():
+            fp = fp_check.latest()
+            result['forum_profile_id'] = fp.id   
+            result['own'] = False
+            if fp.user_profile.user.id == user_id:
+                result['own'] = True
+                if fp.posts.count():
+                    result['active'] = True
+            result['verified'] = fp.verified
+            if fp.signature and fp.verified:
+                result['with_signature'] = True
+    except scraper.ProfileDoesNotExist:
+        result = {'found': False}
     return result
 
 
