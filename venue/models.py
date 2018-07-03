@@ -329,9 +329,9 @@ class ForumPost(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.matured:
-            current = ForumPost.objects.filter(
-                message_id=self.message_id).latest()
-            if current:
+            try:
+                current = ForumPost.objects.filter(
+                    message_id=self.message_id).latest()
                 last_scrape = self.forum_profile.get_last_scrape()
                 last_scrape = last_scrape.replace(tzinfo=None)
                 post_timestamp = self.timestamp.replace(tzinfo=None)
@@ -347,6 +347,8 @@ class ForumPost(models.Model):
                 else:
                     self.invalid_sig_minutes = current.invalid_sig_minutes
                     self.invalid_sig_minutes += tdiff_minutes
+            except ForumPost.DoesNotExist:
+                pass
         super(ForumPost, self).save(*args, **kwargs)
 
 

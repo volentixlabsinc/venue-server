@@ -20,8 +20,8 @@ spec:
         command:
         - /entrypoint.sh
         name: django-service
-        #- image: volentixlabs/venueserver:v0.0.41-beta
-        image: joemarct/venueserver:v0.0.41-beta
+        #- image: volentixlabs/venueserver:v0.0.43-beta
+        image: joemarct/venueserver:v0.0.43-beta
         ports:
         - containerPort: 8000
         #- containerPort: 9000 volentixlabs/venueserver:v0.0.27-beta

@@ -12,6 +12,7 @@ import coreapi
 from django.shortcuts import redirect
 from hashids import Hashids
 from constance import config
+from celery.result import AsyncResult
 from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -30,7 +31,7 @@ from rest_framework.schemas import AutoSchema
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
                     send_email_change_confirmation, send_reset_password,
-                    set_scraping_rate)
+                    set_scraping_rate, update_data)
 from .models import (UserProfile, ForumSite, ForumProfile, Notification, ForumPost,
                      Language, Signature, ForumUserRank, compute_total_points)
 from .utils import RedisTemp
@@ -2357,3 +2358,18 @@ def get_points_breakdown(request):
     except ForumSite.DoesNotExist:
         response = {'error_code': 'forum_site_not_found'}
         return Response(response, status.HTTP_400_BAD_REQUEST)
+
+
+# ------------------------
+# Debugging view functions
+# ------------------------
+
+
+def trigger_data_update(request):
+    update_data.delay()
+    return Response({'success': True})
+
+
+def check_task_status(request, task_id):
+    task = AsyncResult(task_id)
+    return Response({'status': task.status})
