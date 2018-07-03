@@ -2145,9 +2145,19 @@ def get_signatures(request):
         signatures = Signature.objects.filter(
             forum_site_id=forum_id,
         )
-        if not config.TEST_MODE:
+        if not config.TEST_MODE and data.get('forum_user_rank'):
             signatures = signatures.filter(
                 user_ranks__name=data.get('forum_user_rank')
+            )
+    forum_profile = None
+    if data.get('forum_profile_id'):
+        forum_profile = ForumProfile.objects.get(
+            id=data.get('forum_profile_id')
+        )
+    if not data.get('forum_user_rank') and forum_profile:
+        if forum_profile.forum_rank:
+            signatures = signatures.filter(
+                user_ranks__in=[forum_profile.forum_rank]
             )
     if signatures.count():
         for sig in signatures:
@@ -2155,11 +2165,7 @@ def get_signatures(request):
                 sig_code = sig.test_signature
             else:
                 sig_code = sig.code
-            if data.get('forum_profile_id'):
-                forum_profile = ForumProfile.objects.get(
-                    id=data.get('forum_profile_id')
-                )
-            else:
+            if not forum_profile:
                 forum_profile = ForumProfile.objects.get(
                     id=fp_map[sig.id]
                 )

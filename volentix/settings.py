@@ -244,8 +244,10 @@ if DEBUG:
     VENUE_DOMAIN = 'https://venue.volentix.io'
     VENUE_FRONTEND = 'https://venue.volentix.io'
 else:
-    VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.volentix.io')
-    VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.volentix.io')
+    VENUE_DOMAIN = config('VENUE_DOMAIN', default='http://demo.venue.ninja')
+    VENUE_FRONTEND = config('VENUE_FRONTEND', default='http://demo.venue.ninja')
+    # VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.volentix.io')
+    # VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.volentix.io')
 
 # if not DEBUG:
 #     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
