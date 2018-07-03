@@ -858,7 +858,7 @@ def get_leaderboard_data(request):
     user_profiles = UserProfile.objects.filter(email_confirmed=True)
     leaderboard_data = []
     for user_profile in user_profiles:
-        fps = user_profile.forum_profiles.filter(active=True)
+        fps = user_profile.forum_profiles.filter(active=True, verified=True)
         if fps.count():
             user_data = {
                 'username': user_profile.user.username,

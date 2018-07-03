@@ -106,7 +106,7 @@ class UserProfile(models.Model):
 
     @property
     def with_forum_profile(self):
-        if self.forum_profiles.count() > 0:
+        if self.forum_profiles.filter(active=True, verified=True).count() > 0:
             return True
         else:
             return False
