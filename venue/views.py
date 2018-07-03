@@ -712,11 +712,13 @@ def get_stats(request):
                 'forumUserRank': fp.forum_rank.name,
                 'rankBonusPercentage': fp.forum_rank.bonus_percentage,
                 'numPosts': fp.total_posts,
-                'totalPoints': fp.total_points
+                'totalPoints': fp.total_points,
+                'VTX_Tokens': 0
             }
-            pct_contrib = float(fp.total_points) / global_total_pts
-            fp_tokens = pct_contrib * config.VTX_AVAILABLE
-            fp_data['VTX_Tokens'] = int(round(fp_tokens, 0))
+            if global_total_pts:
+                pct_contrib = float(fp.total_points) / global_total_pts
+                fp_tokens = pct_contrib * config.VTX_AVAILABLE
+                fp_data['VTX_Tokens'] = int(round(fp_tokens, 0))
             profile_stats.append(fp_data)
         stats['profile_level'] = profile_stats
         # --------------------------
@@ -740,7 +742,10 @@ def get_stats(request):
         userlevel_stats['total_posts'] = user_profile.get_num_posts()['total']
         total_points = user_profile.total_points
         userlevel_stats['total_points'] = total_points
-        pct_contrib = total_points / global_total_pts
+        if global_total_pts:
+            pct_contrib = total_points / global_total_pts
+        else:
+            pct_contrib = 0
         userlevel_stats['total_points_pct'] = int(round(pct_contrib * 100, 0))
         userlevel_stats['total_tokens'] = user_profile.total_tokens
         userlevel_stats['overall_rank'] = user_profile.get_ranking()
