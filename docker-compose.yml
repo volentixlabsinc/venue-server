@@ -1,7 +1,6 @@
 version: '3'
 services:
     web:
-        image: volentixlabs/venueserver:v0.0.15-beta
         build: .
         restart: 'always'
         expose:
@@ -18,6 +17,8 @@ services:
         tty: true
         entrypoint: '/entrypoint.sh'
         command: supervisord -c ./supervisord.conf --nodaemon
+        environment:
+            DEBUG: 1
     redis:
         image: 'bitnami/redis:latest'
         expose:
