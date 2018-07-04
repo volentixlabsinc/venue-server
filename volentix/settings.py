@@ -214,7 +214,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CSRF_COOKIE_NAME = "csrftoken"
 
 ROLLBAR = {
-    'access_token': 'ab9dbc1f9b494685810779e9460e480b',
+    'access_token': '529481318c454550884186f042d9b4bc',
     'environment': 'development' if DEBUG else 'production',
     'branch': 'master',
     'root': BASE_DIR,
@@ -222,7 +222,7 @@ ROLLBAR = {
 
 
 rollbar.init(
-    'ab9dbc1f9b494685810779e9460e480b',
+    '529481318c454550884186f042d9b4bc',
     environment='development' if DEBUG else 'production'
 )
 
