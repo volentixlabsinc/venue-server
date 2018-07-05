@@ -191,6 +191,34 @@ def authenticate(request):
     return Response(response, status=resp_status)
 
 
+# ---------------
+# Logout endpoint
+# ---------------
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def logout_user(request):
+    """ Logs out a user
+
+    ### Response
+
+    * Status code 200
+
+            {'success': <boolean: true>}
+
+        * `success` - Whether the user has been logged out or not
+
+    * Status code 401 (When logout fails)
+    """
+    token = request.META.get('HTTP_AUTHORIZATION')
+    if token:
+        token = token.split()[-1]
+        token_obj = Token.objects.get(key=token)
+        token_obj.delete()
+    return Response({'success': True})
+
+
 # -------------------------
 # Get user details endpoint
 # -------------------------

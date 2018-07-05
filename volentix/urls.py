@@ -22,7 +22,7 @@ from venue.views import (
     get_languages, generate_2fa_uri, verify_2fa_code, disable_2fa,
     get_notifications, dismiss_notification, create_forum_profile,
     get_forum_sites, get_forum_profiles, get_signatures, get_points_breakdown,
-    confirm_email_change, trigger_data_update, check_task_status
+    confirm_email_change, trigger_data_update, check_task_status, logout_user
 )
 from rest_framework.documentation import include_docs_urls
 from django.views.static import serve
@@ -41,6 +41,7 @@ urlpatterns = [
     )),
 
     url(r'^api/authenticate/', authenticate),
+    url(r'^api/logout/', logout_user),
 
     url(r'^api/create/signature/', save_signature),
     url(r'^api/create/user/', create_user),
