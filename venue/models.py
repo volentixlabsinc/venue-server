@@ -93,7 +93,7 @@ class Language(models.Model):
 class UserProfile(models.Model):
     """ Custom internal user profiles """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, related_name='profiles')
+    user = models.ForeignKey(User, related_name='profiles', unique=True)
     language = models.ForeignKey(
         Language, null=True, blank=True, related_name='profiles')
     otp_secret = models.TextField(blank=True)
