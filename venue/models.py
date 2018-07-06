@@ -264,12 +264,12 @@ class ForumProfile(models.Model):
     def total_posts(self):
         count = 0
         if self.posts.exists():
-            count = self.posts.count()
+            count = self.posts.filter(credited=True).count()
         return count
 
     @property
     def total_points(self):
-        points = sum([x.total_points for x in self.posts.all()])
+        points = sum([x.total_points for x in self.posts.filter(credited=True)])
         return round(points, 2)
 
 

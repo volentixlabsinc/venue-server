@@ -251,7 +251,6 @@ def compute_points(self, subtasks=None):
     # Proceed to compute the points
     if proceed:
         posts = ForumPost.objects.filter(
-            credited=False,
             matured=True
         )
         for post in posts:
