@@ -56,6 +56,7 @@ class BitcoinTalk(object):
         profile_url = self.base_url + '/index.php?action=profile;u='
         profile_url += str(user_id)
         response = requests.get(profile_url, headers=self.headers)
+        self.response_text = response.text
         self.status_code = response.status_code
         self.soup = BeautifulSoup(response.content, 'html.parser')
         if len(self.soup.select('div.cf-im-under-attack')) > 0:
@@ -140,6 +141,9 @@ class BitcoinTalk(object):
 
     def check_signature(self, vcode=None):
         sig = None
+        page_ok = False
+        if 'icons/profile_sm.gif' in self.response_text:
+            page_ok = True
         try:
             rows = self.soup.select('div#bodyarea tr')
             found = False
@@ -151,7 +155,8 @@ class BitcoinTalk(object):
                     sig = row
                     break
             if not found:
-                raise ScraperError('Cannot find signature')
+                # raise ScraperError('Cannot find signature')
+                page_ok = False
         except IndexError:
             pass
         if sig:
@@ -181,7 +186,7 @@ class BitcoinTalk(object):
                 sig_found = True
         else:
             sig_found = False
-        return sig_found
+        return (page_ok, sig_found)
 
     def _scrape_posts_page(self, soup, last_scrape=None):
         post_details = []
@@ -257,9 +262,9 @@ def verify_and_scrape(forum_profile_id,
     scraper.get_profile(forum_user_id)
     username = scraper.get_username()
     position = scraper.get_user_position()
-    verified = scraper.check_signature(vcode=vcode)
+    page_ok, verified = scraper.check_signature(vcode=vcode)
     posts = scraper.get_total_posts()
-    data = (scraper.status_code, verified, posts, username, position)
+    data = (scraper.status_code, page_ok, verified, posts, username, position)
     return data
 
 

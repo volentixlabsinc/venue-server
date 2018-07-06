@@ -69,10 +69,26 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             vcode=forum_profile.verification_code,
             test_mode=test_mode,
             test_signature=forum_profile.signature.test_signature)
-        status_code, signature_found, total_posts, username, position = results
+        status_code, page_ok, signature_found, total_posts, username, position = results
         del username
-        # Update the signature_found flag in forum profile
-        forum_profile.signature_found = signature_found
+        #if status_code == 200 and page_ok:
+        #    # Update the signature_found flag in forum profile
+        #    forum_profile.signature_found = signature_found
+        #    forum_profile.save()
+        # Update forum profile page status
+        status_list = forum_profile.last_page_status
+        if len(status_list):
+            old_status = status_list[-1]
+            new_status_list = [old_status]
+        else:
+            new_status_list = []
+        new_status = {
+            'status_code': status_code,
+            'page_ok': page_ok,
+            'signature_found': signature_found
+        }
+        new_status_list.append(new_status)
+        forum_profile.last_page_status = new_status_list
         forum_profile.save()
         # Update the forum user rank, if it changed
         forum_rank = ForumUserRank.objects.get(name=position)
@@ -141,7 +157,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
         expected_links,
         test_mode=config.TEST_MODE,
         test_signature=signature.test_signature)
-    status_code, verified, posts, username, position = results
+    status_code, page_ok, verified, posts, username, position = results
     del status_code, posts, position
     if verified:
         # Save the forum username

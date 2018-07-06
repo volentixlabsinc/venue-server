@@ -1,5 +1,6 @@
 import os
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
 from django.dispatch import receiver
 from django.utils import timezone
 from django.conf import settings
@@ -233,8 +234,8 @@ class ForumProfile(models.Model):
     # Dummy account flag
     dummy = models.BooleanField(default=False)
     # The flag below is overwritten every scrape
-    signature_found = models.BooleanField(default=False)
     last_scrape = models.DateTimeField(null=True, blank=True)
+    last_page_status = JSONField(default=list)
 
     class Meta:
         unique_together = ('forum', 'forum_user_id', 'verified')
@@ -351,12 +352,37 @@ class ForumPost(models.Model):
                 dt_now = timezone.now().replace(tzinfo=None)
                 tdiff = dt_now - last_scrape
                 tdiff_minutes = tdiff.total_seconds() / 60
-                if self.forum_profile.signature_found:
-                    self.valid_sig_minutes = current.valid_sig_minutes
-                    self.valid_sig_minutes += tdiff_minutes
-                else:
+                # Get status list, previous and current
+                page_status_list = self.forum_profile.last_page_status
+                if len(page_status_list) == 1:
+                    previous_status = None
+                    current_status = page_status_list[-1]
+                elif len(page_status_list) == 2:
+                    previous_status, current_status = page_status_list
+                # Get details of the current status
+                status_code = current_status.get('status_code')
+                page_ok = current_status.get('page_ok')
+                signature_found = current_status.get('signature_found')
+                invalidate = False
+                if status_code == 200:
+                    if page_ok:
+                        if not signature_found:
+                            invalidate = True
+                if invalidate == False:
+                    if not previous_status['signature_found']:
+                        invalidate = True
+                if invalidate:
                     self.invalid_sig_minutes = current.invalid_sig_minutes
                     self.invalid_sig_minutes += tdiff_minutes
+                else:
+                    self.valid_sig_minutes = current.valid_sig_minutes
+                    self.valid_sig_minutes += tdiff_minutes
+                # if status_code == 200 and not page_ok and not signature_found:
+                #     self.valid_sig_minutes = current.valid_sig_minutes
+                #     self.valid_sig_minutes += tdiff_minutes
+                # else:
+                #     self.invalid_sig_minutes = current.invalid_sig_minutes
+                #     self.invalid_sig_minutes += tdiff_minutes
             except ForumPost.DoesNotExist:
                 pass
         super(ForumPost, self).save(*args, **kwargs)
