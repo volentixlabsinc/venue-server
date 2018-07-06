@@ -161,6 +161,10 @@ class BitcoinTalk(object):
                 links = [x.attrs['href'] for x in links]
             else:
                 links = sig.text.strip().splitlines()
+            if links:
+                links = list(set(links))
+            else:
+                links = []
             links_verified, scraped_vcode = self.verify_links(
                 links,
                 self.expected_links,

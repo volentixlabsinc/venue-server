@@ -124,7 +124,7 @@ class UserProfile(models.Model):
         for fp in self.forum_profiles.filter(verified=True):
             posts = fp.posts.filter(timestamp__date__lte=date)
             for post in posts:
-                if post.date_credited:
+                if post.date_credited and post.credited:
                     date_credited = post.date_credited.date()
                     if date_credited >= date:
                         num_posts['credited'] += 1
@@ -289,10 +289,10 @@ class ForumPost(models.Model):
     message_id = models.CharField(max_length=20, db_index=True)
     unique_content_length = models.IntegerField()
     timestamp = models.DateTimeField(db_index=True)
-    credited = models.BooleanField(default=False)
+    credited = models.BooleanField(default=True)
     matured = models.BooleanField(default=False)
     date_matured = models.DateTimeField(null=True, blank=True)
-    date_credited = models.DateTimeField(null=True, blank=True)
+    date_credited = models.DateTimeField(default=timezone.now)
     base_points = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -328,6 +328,17 @@ class ForumPost(models.Model):
         return str(self.id)
 
     def save(self, *args, **kwargs):
+        # Credit the points immediately
+        if self._state.adding:
+            base_points = config.POST_POINTS_MULTIPLIER
+            bonus_pct = self.forum_profile.forum_rank.bonus_percentage
+            influence_bonus = base_points * (float(bonus_pct) / 100)
+            total_points = base_points + influence_bonus
+            self.base_points = base_points
+            self.influence_bonus_pct = bonus_pct
+            self.influence_bonus_pts = influence_bonus
+            self.total_points = total_points
+        # Track the valid and invalid minutes, if post is not matured yet
         if not self.matured:
             try:
                 current = ForumPost.objects.filter(
@@ -340,7 +351,6 @@ class ForumPost(models.Model):
                 dt_now = timezone.now().replace(tzinfo=None)
                 tdiff = dt_now - last_scrape
                 tdiff_minutes = tdiff.total_seconds() / 60
-                print(tdiff_minutes)
                 if self.forum_profile.signature_found:
                     self.valid_sig_minutes = current.valid_sig_minutes
                     self.valid_sig_minutes += tdiff_minutes

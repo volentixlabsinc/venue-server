@@ -209,19 +209,25 @@ def compute_ranking():
                 'total_points': total_points
             }
             user_points.append(info)
-    # Sort the points based on the total
-    user_points = sorted(
-        user_points,
-        key=itemgetter('total_points'),
-        reverse=True
-    )
+    if user_points:
+        # Sort the points based on the total
+        user_points = sorted(
+            user_points,
+            key=itemgetter('total_points'),
+            reverse=True
+        )
     # Ranking batch
-    last_ranking = Ranking.objects.all().latest()
+    global_total = 0
+    try:
+        last_ranking = Ranking.objects.all().latest()
+        batch_number = last_ranking.batch + 1
+    except Ranking.DoesNotExist:
+        batch_number = 1
     for rank, user in enumerate(user_points, 1):
         # Update user's ranking
         user_points[rank-1]['rank'] = rank
         ranking = Ranking(
-            batch=last_ranking.batch + 1,
+            batch=batch_number,
             user_profile_id=user['user_profile_id'],
             rank=rank
         )
@@ -254,16 +260,8 @@ def compute_points(self, subtasks=None):
                 maturation = config.MATURATION_PERIOD
                 uptime_pct = (post.valid_sig_minutes / (maturation * 60))
                 uptime_pct *= 100
-                if uptime_pct >= pct_threshold:
-                    base_points = config.POST_POINTS_MULTIPLIER
-                    bonus_pct = post.forum_profile.forum_rank.bonus_percentage
-                    influence_bonus = base_points * (float(bonus_pct) / 100)
-                    total_points = base_points + influence_bonus
-                    post.base_points = base_points
-                    post.influence_bonus_pct = bonus_pct
-                    post.influence_bonus_pts = influence_bonus
-                    post.total_points = total_points
-                    post.credited = True
+                if uptime_pct < pct_threshold:
+                    post.credited = False
                     post.save()
         # Call the task to compute the ranking
         compute_ranking.delay()
