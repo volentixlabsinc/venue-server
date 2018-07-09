@@ -10,7 +10,6 @@ import pyotp
 import coreschema
 import coreapi
 from django.shortcuts import redirect
-from hashids import Hashids
 from constance import config
 from celery.result import AsyncResult
 from django.utils import timezone
@@ -18,10 +17,11 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.models import User
 from django.conf import settings
+from knox.settings import CONSTANTS as KNOX_CONSTANTS
 from django.db.models import Sum
 from venue.utils import encrypt_data, decrypt_data
 from rest_framework import status
-from rest_framework.authtoken.models import Token
+from knox.models import AuthToken
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, schema
 from rest_framework import serializers
@@ -38,8 +38,11 @@ from .utils import RedisTemp
 import shortuuid
 
 
-# Instantiate a Hashids instance to be used later
-hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
+def generate_token_salt(user):
+    token = AuthToken.objects.create(user=user)
+    token_key = token[:KNOX_CONSTANTS.TOKEN_KEY_LENGTH]
+    token_obj = AuthToken.objects.get(token_key=token_key)
+    return token_obj.salt
 
 
 # Function that converts points to percentages
@@ -164,16 +167,15 @@ def authenticate(request):
                     error_code = 'email_verification_required'
                     resp_status = status.HTTP_403_FORBIDDEN
                 if proceed:
-                    token, created = Token.objects.get_or_create(user=user)
-                    del created
+                    token = AuthToken.objects.create(user=user)
                     user.last_login = timezone.now()
                     user.save()
                     user_profile = user.profiles.first()
                     response = {
                         'success': True,
-                        'token': token.key,
+                        'token': token,
                         'username': user.username,
-                        'email': token.user.email,
+                        'email': user.email,
                         'user_profile_id': user_profile.id,
                         'email_confirmed': user_profile.email_confirmed,
                         'language': user_profile.language.code
@@ -211,11 +213,7 @@ def logout_user(request):
 
     * Status code 401 (When logout fails)
     """
-    token = request.META.get('HTTP_AUTHORIZATION')
-    if token:
-        token = token.split()[-1]
-        token_obj = Token.objects.get(key=token)
-        token_obj.delete()
+    request._auth.delete()
     return Response({'success': True})
 
 
@@ -373,8 +371,8 @@ def create_user(request):
             user_profile.language = Language.objects.get(code=language)
             user_profile.save()
             # Send confirmation email
-            code = hashids.encode(int(user.id))
-            send_email_confirmation.delay(user.email, user.username, code)
+            token_salt = generate_token_salt(user)
+            send_email_confirmation.delay(user.email, user.username, token_salt)
             response['status'] = 'success'
             resp_status = status.HTTP_200_OK
         except Exception as exc:
@@ -408,7 +406,7 @@ def confirm_email(request):
 
     ### Response
 
-    * Status code 302 (When email is confirmed)
+    * Status code 301 (When email is confirmed)
 
         Redirects to `<domain>/#/?email_confirmed=1`
 
@@ -422,9 +420,8 @@ def confirm_email(request):
     """
     code = request.query_params.get('code')
     try:
-        user_id, = hashids.decode(code)
-        user_profile = UserProfile.objects.get(user_id=user_id)
-    except (ValueError, UserProfile.DoesNotExist):
+        token = AuthToken.objects.filter(salt=code)
+    except AuthToken.DoesNotExist:
         return Response(
             {'message': 'not_found'},
             status=status.HTTP_404_NOT_FOUND
@@ -989,11 +986,11 @@ def delete_account(request):
     response = {'success': False}
     if request.method == 'POST':
         user = request.user
-        code = hashids.encode(int(user.id))
+        token_salt = generate_token_salt(user)
         send_deletion_confirmation.delay(
             user.email,
             user.username,
-            code
+            token_salt
         )
         response['success'] = True
         return Response(response, status=status.HTTP_202_ACCEPTED)
@@ -1001,10 +998,9 @@ def delete_account(request):
         code = request.query_params.get('code')
         if code:
             try:
-                user_id, = hashids.decode(code)
-                User.objects.filter(id=user_id).delete()
+                token = AuthToken.objects.filter(salt=code)
                 return redirect('%s/#/?account_deleted=1' % settings.VENUE_FRONTEND)
-            except (ValueError, User.DoesNotExist):
+            except AuthToken.DoesNotExist:
                 response['message'] = 'wrong_code'
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1065,12 +1061,12 @@ def change_email(request):
         response['message'] = 'email_exists'
         resp_status = status.HTTP_302_FOUND
     else:
-        code = hashids.encode(int(user.id))
+        token_salt = generate_token_salt(user)
         rtemp.store(code, data['email'])
         send_email_change_confirmation.delay(
             data['email'],
             user.username,
-            code
+            token_salt
         )
         response['success'] = True
         resp_status = status.HTTP_202_ACCEPTED
@@ -1118,18 +1114,18 @@ def confirm_email_change(request):
     code = request.query_params.get('code')
     response = {'success': False}
     try:
-        user_id, = hashids.decode(code)
+        token = AuthToken.objects.get(salt=code)
         new_email = rtemp.retrieve(code)
         if code and new_email:
             try:
-                User.objects.filter(id=user_id).update(email=new_email)
+                User.objects.filter(id=token.user.id).update(email=new_email)
                 rtemp.remove(code)
                 return redirect('%s/#/settings/?updated_email=1' % settings.VENUE_FRONTEND)
             except User.DoesNotExist:
                 response['error_code'] = 'user_not_found'
         else:
             response['error_code'] = 'expired_code'
-    except ValueError:
+    except AuthToken.DoesNotExist:
         response['error_code'] = 'wrong_code'
     return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1291,50 +1287,61 @@ RESET_PASSWORD_SCHEMA = AutoSchema(
         coreapi.Field(
             'action',
             required=True,
-            location='form',
+            location='query',
             schema=coreschema.String(
-                description='Action can either be `trigger` or `set_password`'
+                description='Action can either be `request`, `confirm`, or `change`'
+            )
+        ),
+        coreapi.Field(
+            'email',
+            required=False,
+            location='query',
+            schema=coreschema.String(
+                description='Registered email of the user'
             )
         ),
         coreapi.Field(
             'code',
-            required=True,
-            location='form',
+            required=False,
+            location='query',
             schema=coreschema.String(description='Code')
+        ),
+        coreapi.Field(
+            'password',
+            required=False,
+            location='query',
+            schema=coreschema.String(description='New password')
         )
     ]
 )
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
+@api_view(['GET'])
 @schema(RESET_PASSWORD_SCHEMA)
 def reset_password(request):
     """ Resets user's password
 
     ### Response
 
-    **For `POST` Request with `action == "trigger"`**
+    **For `action == "request"`**
 
-    The request for this only requires `action` in the payload.
+    The request requires `email` as parameter.
 
-    * Status code 202 (When password reset is accepted for processing)
+    * Status code 202 (When the reset request is accepted for processing)
 
             {
                 "success": <boolean>
             }
 
-        * `success` - Whether the change request succeeded or not
+        * `success` - Whether the change request is accepted or not
 
-    **For `POST` Request with `action == "set_password"`**
+    **For `action == "confirm"`**
 
-    The request for this requires both `action` and `password` in the payload.
+    The request requires the `code` as parameter.
 
-    * Status code 200 (When password is changed successfully)
+    * Status code 301 (When `code` is correct)
 
-            {
-                "success": <boolean: true>
-            }
+        Redirects to `<hostname>/#/change-password/?code=<code>`
 
     * Status code 400 (When password not changed due to wrong confirmation code)
 
@@ -1344,24 +1351,43 @@ def reset_password(request):
             }
 
         * `message` - Error message
+    
+    **For `action == "change"`**
+
+    The request requires `password` as parameter.
+
+    * Status code 200 (When password has been changed)
+
+            {
+                "success": <boolean: true>
+            }
     """
     response = {'success': False}
-    data = request.data
-    user = request.user
-    if data['action'] == 'trigger':
-        code = hashids.encode(int(user.id))
-        send_reset_password.delay(user.email, user.username, code)
-        response['success'] = True
-        resp_status = status.HTTP_202_ACCEPTED
-    elif data['action'] == 'set_password':
+    data = request.query_params
+    if data['action'] == 'request':
         try:
-            user_id, = hashids.decode(data['code'])
-            user = User.objects.get(id=user_id)
-            user.set_password(data['password'])
-            user.save()
+            user = User.objects.get(email=data['email'])
+            token_salt = generate_token_salt(user)
+            send_reset_password.delay(user.email, user.username, token_salt)
             response['success'] = True
-            resp_status = status.HTTP_200_OK
-        except (ValueError, User.DoesNotExist):
+            resp_status = status.HTTP_202_ACCEPTED
+        except User.DoesNotExist:
+            resp_status = status.HTTP_404_NOT_FOUND
+            response['message'] = 'user_not_found'
+    elif data['action'] == 'confirm' or data['action'] == 'change':
+        try:
+            code = data['code']
+            token = AuthToken.objects.get(salt=code)
+            if data['action'] == 'confirm':
+                return redirect('%s/#/change-password/?code=%s' % (settings.VENUE_FRONTEND, code))
+            elif data['action'] == 'change':
+                user = User.objects.get(id=token.user.id)
+                user.set_password(data['password'])
+                user.save()
+                response['success'] = True
+                resp_status = status.HTTP_200_OK
+                token.delete()
+        except AuthToken.DoesNotExist:
             response['message'] = 'wrong_code'
             resp_status = status.HTTP_400_BAD_REQUEST
     return Response(response, status=resp_status)

@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_extensions',
     'rest_framework',
-    'rest_framework.authtoken',
+    'knox',
+    # 'rest_framework.authtoken',
     'corsheaders',
     'constance',
     'ws4redis',
@@ -53,13 +54,11 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
+        'knox.auth.TokenAuthentication',
     ),
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ],
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
@@ -110,9 +109,11 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware'
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
+
+if not DEBUG:
+    MIDDLEWARE.append('rollbar.contrib.django.middleware.RollbarNotifierMiddleware')
 
 ROOT_URLCONF = 'volentix.urls'
 
@@ -213,26 +214,30 @@ CORS_ORIGIN_WHITELIST = ('localhost:8080', 'localhost:8000', 'venue.volentix.io'
 CORS_ORIGIN_ALLOW_ALL = True
 CSRF_COOKIE_NAME = "csrftoken"
 
-ROLLBAR = {
-    'access_token': '529481318c454550884186f042d9b4bc',
-    'environment': 'development' if DEBUG else 'production',
-    'branch': 'master',
-    'root': BASE_DIR,
-}
+
+# Send error logs to rollbar only in production (i.e. DEBUG = False)
+if not DEBUG:
+    ROLLBAR = {
+        'access_token': '529481318c454550884186f042d9b4bc',
+        'environment': 'development' if DEBUG else 'production',
+        'branch': 'master',
+        'root': BASE_DIR,
+    }
 
 
-rollbar.init(
-    '529481318c454550884186f042d9b4bc',
-    environment='development' if DEBUG else 'production'
-)
+    rollbar.init(
+        '529481318c454550884186f042d9b4bc',
+        environment='development' if DEBUG else 'production'
+    )
 
 
-def celery_base_data_hook(request, data):
-    del request
-    data['framework'] = 'celery'
+    def celery_base_data_hook(request, data):
+        del request
+        data['framework'] = 'celery'
 
 
-rollbar.BASE_DATA_HOOK = celery_base_data_hook
+    rollbar.BASE_DATA_HOOK = celery_base_data_hook
+
 
 # Create the logs folder if it does not exist yet
 log_folder = os.path.join(BASE_DIR, 'logs')
