@@ -368,21 +368,12 @@ class ForumPost(models.Model):
                     if page_ok:
                         if not signature_found:
                             invalidate = True
-                if invalidate == False:
-                    if not previous_status['signature_found']:
-                        invalidate = True
                 if invalidate:
                     self.invalid_sig_minutes = current.invalid_sig_minutes
                     self.invalid_sig_minutes += tdiff_minutes
                 else:
                     self.valid_sig_minutes = current.valid_sig_minutes
                     self.valid_sig_minutes += tdiff_minutes
-                # if status_code == 200 and not page_ok and not signature_found:
-                #     self.valid_sig_minutes = current.valid_sig_minutes
-                #     self.valid_sig_minutes += tdiff_minutes
-                # else:
-                #     self.invalid_sig_minutes = current.invalid_sig_minutes
-                #     self.invalid_sig_minutes += tdiff_minutes
             except ForumPost.DoesNotExist:
                 pass
         super(ForumPost, self).save(*args, **kwargs)
