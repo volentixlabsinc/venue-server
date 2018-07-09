@@ -1287,7 +1287,7 @@ RESET_PASSWORD_SCHEMA = AutoSchema(
         coreapi.Field(
             'action',
             required=True,
-            location='query',
+            location='form',
             schema=coreschema.String(
                 description='Action can either be `request`, `confirm`, or `change`'
             )
@@ -1295,7 +1295,7 @@ RESET_PASSWORD_SCHEMA = AutoSchema(
         coreapi.Field(
             'email',
             required=False,
-            location='query',
+            location='form',
             schema=coreschema.String(
                 description='Registered email of the user'
             )
@@ -1303,20 +1303,20 @@ RESET_PASSWORD_SCHEMA = AutoSchema(
         coreapi.Field(
             'code',
             required=False,
-            location='query',
+            location='form',
             schema=coreschema.String(description='Code')
         ),
         coreapi.Field(
             'password',
             required=False,
-            location='query',
+            location='form',
             schema=coreschema.String(description='New password')
         )
     ]
 )
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @schema(RESET_PASSWORD_SCHEMA)
 def reset_password(request):
     """ Resets user's password
@@ -1325,7 +1325,7 @@ def reset_password(request):
 
     **For `action == "request"`**
 
-    The request requires `email` as parameter.
+    The request requires `email` in the payload.
 
     * Status code 202 (When the reset request is accepted for processing)
 
@@ -1335,35 +1335,32 @@ def reset_password(request):
 
         * `success` - Whether the change request is accepted or not
 
-    **For `action == "confirm"`**
-
-    The request requires the `code` as parameter.
-
-    * Status code 301 (When `code` is correct)
-
-        Redirects to `<hostname>/#/change-password/?code=<code>`
-
-    * Status code 400 (When password not changed due to wrong confirmation code)
+    * Status code 404 (When the email is not found)
 
             {
                 "success": <boolean: false>,
-                "message": <string: "wrong_code">
+                "message": <string: "user_not_found">
             }
-
-        * `message` - Error message
     
     **For `action == "change"`**
 
-    The request requires `password` as parameter.
+    The request requires the `code` and `password` in the payload.
 
     * Status code 200 (When password has been changed)
 
             {
                 "success": <boolean: true>
             }
+
+    * Status code 400 (When the code is not correct)
+
+            {
+                "success": <boolean: false>,
+                "message": <string: "user_not_found">
+            }
     """
     response = {'success': False}
-    data = request.query_params
+    data = request.data
     if data['action'] == 'request':
         try:
             user = User.objects.get(email=data['email'])
@@ -1374,19 +1371,16 @@ def reset_password(request):
         except User.DoesNotExist:
             resp_status = status.HTTP_404_NOT_FOUND
             response['message'] = 'user_not_found'
-    elif data['action'] == 'confirm' or data['action'] == 'change':
+    elif data['action'] == 'change':
         try:
             code = data['code']
             token = AuthToken.objects.get(salt=code)
-            if data['action'] == 'confirm':
-                return redirect('%s/#/change-password/?code=%s' % (settings.VENUE_FRONTEND, code))
-            elif data['action'] == 'change':
-                user = User.objects.get(id=token.user.id)
-                user.set_password(data['password'])
-                user.save()
-                response['success'] = True
-                resp_status = status.HTTP_200_OK
-                token.delete()
+            user = User.objects.get(id=token.user.id)
+            user.set_password(data['password'])
+            user.save()
+            response['success'] = True
+            resp_status = status.HTTP_200_OK
+            token.delete()
         except AuthToken.DoesNotExist:
             response['message'] = 'wrong_code'
             resp_status = status.HTTP_400_BAD_REQUEST
