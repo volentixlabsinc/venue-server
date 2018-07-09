@@ -1845,7 +1845,7 @@ def dismiss_notification(request):
 
 
 class ForumSiteSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.CharField()
     name = serializers.CharField(max_length=50)
 
 
