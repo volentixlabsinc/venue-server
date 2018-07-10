@@ -205,9 +205,6 @@ def get_user_position(forum_site_id, profile_url, user_id):
 
 def send_websocket_signal(signal):
     # Send a test message over websocket
-    # TODO -- This is not called at the moment,
-    # This needs to be called somehow at a later time
-    # to inform the frontend that new data is available
     redis_publisher = RedisPublisher(facility='signals', broadcast=True)
     message = RedisMessage(signal)
     redis_publisher.publish_message(message)
@@ -248,8 +245,14 @@ def compute_ranking():
             rank=rank
         )
         ranking.save()
-    # Save the global total points in redis
+    # Compute the global total points
     global_total = sum([x['total_points'] for x in user_points])
+    # Send ws signals to all connected clients if global total has changed
+    old_total = settings.REDIS_DB.get('global_total_points')
+    if old_total:
+        if float(old_total) != global_total:
+            send_websocket_signal('refresh')
+    # Save the global total points in redis
     settings.REDIS_DB.set('global_total_points', global_total)
     return {'total': global_total, 'points': user_points}
 
