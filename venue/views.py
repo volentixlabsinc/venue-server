@@ -1200,10 +1200,16 @@ def change_username(request):
 CHANGE_PASSWORD_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
-            'password',
+            'old_password',
             required=True,
             location='form',
-            schema=coreschema.String(description='Password')
+            schema=coreschema.String(description='Old password')
+        ),
+        coreapi.Field(
+            'new_password',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='New password')
         )
     ]
 )
@@ -1213,25 +1219,38 @@ CHANGE_PASSWORD_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(CHANGE_PASSWORD_SCHEMA)
 def change_password(request):
-    """ Changes user's password
+    """ Sets a new password given the old password
 
     ### Response
 
     * Status code 200
 
             {
-                "success": <boolean>
+                "success": <boolean: true>
             }
 
         * `success` - Whether the change request succeeded or not
+    
+    * Status code 400 (When old password is incorrect)
+
+            {
+                "success": <boolean: false>,
+                "message": <string: "wrong_old_password">
+            }
     """
     data = request.data
     response = {}
     user = User.objects.get(id=request.user.id)
-    user.set_password(data['password'])
-    user.save()
-    response['success'] = True
-    return Response(response)
+    if user.check_password(data.get('old_password')):
+        user.set_password(data.get('new_password'))
+        user.save()
+        response['success'] = True
+        resp_status = status.HTTP_200_OK
+    else:
+        response['success'] = False
+        response['message'] = 'wrong_old_password'
+        resp_status = status.HTTP_400_BAD_REQUEST
+    return Response(response, status=resp_status)
 
 
 # ------------------------

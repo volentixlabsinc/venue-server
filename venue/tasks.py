@@ -390,7 +390,7 @@ def send_email_change_confirmation(email, name, code):
 @shared_task(queue='mails')
 def send_reset_password(email, name, code):
     context = {
-        'domain': settings.VENUE_DOMAIN,
+        'domain': settings.VENUE_FRONTEND,
         'name': name,
         'code': code
     }
