@@ -312,38 +312,47 @@ def create_user(request):
     * Status code 201
 
             {
-                "status": <string: "success">,
+                "success": <boolean: true>,
                 "user": {
                     "username": <string>,
                     "email": <string>
                 }
             }
 
-        * `status` - Status of creating the user: `success` or `error`
+        * `success` - Whether creation of user succeeded or not
         * `user` - An array containing user details
         * `username` - User's username
         * `email` - User's email
-        * `token` - Authentication token
 
-    * Status code 400
+    * Status code 422 (When the create request cannot be processed)
 
             {
-                "status": <string: "error">,
+                "success": <boolean: false>,
                 "message": <string>
             }
 
-        * `message` - Error message
+        * `message` - Error message. Possible values:
+            - not_whitelisted
+            - username_too_long
+            - user_already_exists
+
+    * Status code 403 (When the user is not allowed to register)
     """
     data = request.data
     data['email'] = data['email'].lower()
     user_check = User.objects.filter(email=data['email'])
-    response = {}
+    response = {'success': False}
     proceed = True
     if config.CLOSED_BETA_MODE:
         if not data['email'] in config.SIGN_UP_WHITELIST.splitlines():
             proceed = False
-            response['error_code'] = 'not_whitelisted'
+            response['message'] = 'not_whitelisted'
             resp_status = status.HTTP_403_FORBIDDEN
+    if data.get('username'):
+        if len(data['username']) > 25:
+            proceed = False
+            response['message'] = 'username_too_long'
+            resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
     if proceed:
         try:
             language = data['language']
@@ -353,30 +362,29 @@ def create_user(request):
                 receive_emails = data['receive_emails']
                 del data['receive_emails']
             if user_check.exists():
-                response['status'] = 'exists'
-                user = user_check.first()
+                response['message'] = 'user_already_exists'
+                # user = user_check.first()
+                resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
             else:
                 user = User.objects.create_user(**data)
-                response['status'] = 'created'
-            user_data = {
-                'username': user.username,
-                'email': user.email
-            }
-            response['user'] = user_data
-            user_profile, created = UserProfile.objects.get_or_create(
-                user=user
-            )
-            del created
-            user_profile.receive_emails = receive_emails
-            user_profile.language = Language.objects.get(code=language)
-            user_profile.save()
-            # Send confirmation email
-            token_salt = generate_token_salt(user)
-            send_email_confirmation.delay(user.email, user.username, token_salt)
-            response['status'] = 'success'
-            resp_status = status.HTTP_200_OK
+                user_data = {
+                    'username': user.username,
+                    'email': user.email
+                }
+                response['user'] = user_data
+                user_profile, created = UserProfile.objects.get_or_create(
+                    user=user
+                )
+                del created
+                user_profile.receive_emails = receive_emails
+                user_profile.language = Language.objects.get(code=language)
+                user_profile.save()
+                # Send confirmation email
+                token_salt = generate_token_salt(user)
+                send_email_confirmation.delay(user.email, user.username, token_salt)
+                response['success'] = True
+                resp_status = status.HTTP_200_OK
         except Exception as exc:
-            response['status'] = 'error'
             response['message'] = str(exc)
             resp_status = status.HTTP_400_BAD_REQUEST
     return Response(response, status=resp_status)
