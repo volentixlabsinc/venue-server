@@ -412,6 +412,7 @@ def confirm_email(request):
 
     * Status code 404
             {
+                "success": <boolean: false>,
                 "message": <string: "not_found">
             }
     
@@ -420,14 +421,15 @@ def confirm_email(request):
     """
     code = request.query_params.get('code')
     try:
-        token = AuthToken.objects.filter(salt=code)
+        token = AuthToken.objects.get(salt=code)
+        user_profile = UserProfile.objects.get(user=token.user)
+        user_profile.email_confirmed = True
+        user_profile.save()
     except AuthToken.DoesNotExist:
         return Response(
-            {'message': 'not_found'},
+            {'success': False, 'message': 'not_found'},
             status=status.HTTP_404_NOT_FOUND
         )
-    user_profile.email_confirmed = True
-    user_profile.save()
     return redirect('%s/login?email_confirmed=1' % settings.VENUE_FRONTEND)
 
 
@@ -998,7 +1000,7 @@ def delete_account(request):
         code = request.query_params.get('code')
         if code:
             try:
-                token = AuthToken.objects.filter(salt=code)
+                token = AuthToken.objects.get(salt=code)
                 return redirect('%s/#/?account_deleted=1' % settings.VENUE_FRONTEND)
             except AuthToken.DoesNotExist:
                 response['message'] = 'wrong_code'
