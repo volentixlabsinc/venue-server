@@ -255,7 +255,7 @@ SIGNATURES = [
         ],
         'code': '[center][table][tr][td][url=http://volentix.com/][tt][size=2px][color=black]█▌                     ▐█\r\n██▌                   ▐██\r\n█▐█▌                 ▐█▌█\r\n█ ▐█▌ ▐█▌ █\r\n█  ▐█▌             ▐█▌  █\r\n█   ▐█▌           ▐█▌   █\r\n█    ▐█▌         ▐█▌    █\r\n█     ▐█▌       ▐█▌     █\r\n█      ▐█▌     ▐█▌      █\r\n▀███████████████████████▀\r\n  ▀█▄   ▐█▌   ▐█▌   ▄█▀\r\n    ▀█▄  ▐█▌ ▐█▌  ▄█▀\r\n      ▀█▄ ▐█ █▌ ▄█▀\r\n        ▀█▄▐█▌▄█▀\r\n  ▀███▀[/color][/size][/tt][/url][/td]\r\n\r\n[td][url=http://volentix.com/][font=arial][size=4pt][color=transparent].[/color][/size]\r\n[size=16pt][color=black]VOLENTIX[/color][/size][/font][/url][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=8pt][color=#232c3b]█████  3rd Party DAPP Platform  █████[/color][/size]\r\n[size=16pt][url=http://volentix.com/][color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color][/url][/size][/b][/font][/center][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=8pt][url=http://][color=#232c3b]ANN[/color][/url]\r\n[url=https://twitter.com/VolentixDAO/][color=#232c3b]TWITTER[/color][/url]\r\n[url=][color=#232c3b]TELEGRAM[/color][/url][/size][/b][/font][/center][/td][td][/td]\r\n\r\n[td][size=4pt][color=#f25a4a]▄\r\n█\r\n█\r\n█\r\n█\r\n▀[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=16pt][color=black]▬ •  VENUE  • ▬[/color][/size]\r\n[size=8pt][color=#232c3b]Social Rewards Platform[/color][/size][/b][/font][/url][/center][/td][td][/td]\r\n\r\n[td][size=4pt][color=#f25a4a]▄\r\n█\r\n█\r\n█\r\n█\r\n▀[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=8pt][color=#232c3b]Decentralized Exchange[/color][/size]\r\n[size=16pt][color=black]▬ • VDEX • ▬[/color][/size][/b][/font][/url][/center][/td][td][/td]\r\n\r\n[td][tt][size=2px][color=#1f3150]  ▄████████▄▄       \r\n      ▄██████████████▄ \r\n    ▄████▀▀      ▀▀████▄ ▄▄\r\n   ███▀             ▀██████ \r\n  ███     ▄████▄     ██████\r\n ███     █▀    ▀█   ███████        \r\n███     ▐▌   ▄▄▄▄▄        \r\n        ▐▌  ▐▄▄▄▄▄▌        \r\n         █▄ ▐     ▌     ███ \r\n███████   ▀█▐▀▀▀▀▀▌    ███ \r\n██████       ▀▀▀▀▀    ███  \r\n██████▄             ▄███▀    \r\n▀▀ ▀████▄▄      ▄▄████▀     \r\n     ▀██████████████▀\r\n        ▀▀███████▀▀[/color][/size][/tt][/td]\r\n\r\n[td][size=4pt][color=#f25a4a]▄\r\n█\r\n█\r\n█\r\n█\r\n▀[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][tt][size=2px]\r\n\r\n\r\n▄▄███████████▄▄\r\n▄█▀▀           ▀▀█▄\r\n▄█    █       █    █▄\r\n█▌    ██     ██    ▐█\r\n█▌    █ █   █ █    ▐█\r\n█▌    █  █ █  █    ▐█\r\n█▌    ▀█▀▀█▀▀█▀    ▐█\r\n▀█      ▀███▀      █▀\r\n▀█▄▄           ▄▄█▀\r\n▀▀███████████▀▀[/size][/tt][/center][/td]\r\n\r\n[td][size=5px][color=transparent].[/color][/size]\r\n[font=arial][b][size=13px][color=#e22b2b]BETA TESTER[/color][/size]\r\n[size=8px]Designed by Zpectrum[/size][/b][/font][/td][/tr][/table][/center]',
         'test_signature': 'Love For All, Hatred For None',
-        'image': 'uploads/sig_bf01f803-9e25-402b-ab42-e5896b42fea0.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/sr_1.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -268,7 +268,7 @@ SIGNATURES = [
         ],
         'code': '[center][table][tr][td][center][font=arial][b][size=16pt]VESPUCCI[/size]\r\n[size=8pt][color=#232c3b]Analytical Engine[/color][/size][/b][/font][/center][/td][td][/td]\r\n\r\n[td][tt][size=2px][color=#232c3b]\r\n\r\n                                [color=#777777]▄████▄▄   ▄██[/color]\r\n                              [color=#777777]▄█▀    ▀▀███▀[/color]\r\n                           [color=#777777]▄███▀[/color]\r\n    [color=#777777]▄▄██████▄▄          ▄███▀▀[/color]   ▄███▄\r\n  [color=#777777]▄████████████▄     ▄██▀[/color]    ▄█████████▄\r\n [color=#777777]██████████████████ ██▀[/color]  ▄███████████████▄\r\n [color=#777777]████████████████████[/color]  ▄███████████████████▄\r\n[color=#777777]██████████[/color]███████████████████████████████████\r\n[color=#777777]█████████[/color]████████████████████████████████████\r\n[color=#777777]███████[/color]██████████████████████████████████████\r\n█████████████████████████████████████████████\r\n█████████████████████████████████████████████\r\n█████████████████████████████████████████████[/color][/size][/tt][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=16pt][color=black]▬ •  VENUE  • ▬[/color][/size]\r\n[size=8pt][color=#232c3b]Social Rewards Platform[/color][/size][/b][/font][/url][/center][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][url=https://volentix.com/][tt][size=2px][color=black]█▌                     ▐█\r\n██▌                   ▐██\r\n█▐█▌                 ▐█▌█\r\n█ ▐█▌               ▐█▌ █\r\n█  ▐█▌             ▐█▌  █\r\n█   ▐█▌           ▐█▌   █\r\n█    ▐█▌         ▐█▌    █\r\n█     ▐█▌       ▐█▌     █\r\n█      ▐█▌     ▐█▌      █\r\n▀███████████████████████▀\r\n  ▀█▄   ▐█▌   ▐█▌   ▄█▀\r\n    ▀█▄  ▐█▌ ▐█▌  ▄█▀\r\n      ▀█▄ ▐█ █▌ ▄█▀\r\n        ▀█▄▐█▌▄█▀\r\n          ▀███▀[/color][/size][/tt][/url][/td]\r\n\r\n[td][url=https://volentix.com/][font=arial][b][size=16pt][color=black]VOLENTIX[/color][/size]\r\n[size=8pt][color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color][/size][/b][/font][/url][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=8pt][url=http://][color=#232c3b]ANN[/color][/url]\r\n[url=https://twitter.com/VolentixDAO/][color=#232c3b]TWITTER[/color][/url]\r\n[url=][color=#232c3b]TELEGRAM[/color][/url][/size][/b][/font][/center][/td][td][/td]\r\n\r\n[td][center][tt][size=2px]\r\n\r\n\r\n▄▄███████████▄▄\r\n▄█▀▀      ▀▀█▄\r\n▄█    █       █    █▄\r\n█▌    ██     ██    ▐█\r\n█▌    █ █   █ █    ▐█\r\n█▌    █  █ █  █    ▐█\r\n█▌    ▀█▀▀█▀▀█▀    ▐█\r\n▀█   ▀███▀      █▀\r\n▀█▄▄           ▄▄█▀\r\n▀▀███████████▀▀[/size][/tt][/center][/td]\r\n\r\n[td][size=5px][color=transparent].[/color][/size]\r\n[font=arial][b][size=13px][color=#e22b2b]BETA TESTER[/color][/size]\r\n[size=8px]Designed by Zpectrum[/size][/b][/font][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=16pt][color=black]▬ • VDEX • ▬[/color][/size]\r\n[size=8pt][color=#232c3b]Decentralized Exchange[/color][/size][/b][/font][/url][/center][/td][td][/td]\r\n\r\n[td][tt][size=2px][color=#232c3b]       ▄██▄\r\n     ▄▐████▌▄▄▄ ▄██▄\r\n ▄▄ ▀  ▀██▀    ▐████▌\r\n▐██▌     ▀▄▄  █ ▀██▀▀▄\r\n▄▀▀ ▄    ████   ▄ ▄  ▄█▄\r\n█    ▀▄▄▀ ▀▀▄  ▀   █ ▀█▀\r\n ▄ ▄▄▀██    ▄███▄ ▄▀▄  ▌\r\n███ ▄▐█████▌  ▄██▄\r\n ▀ ▄ ▄  ▄▀  ▀███▀  ▐████▌\r\n    ███    ▄▀   ▀▄  ▀██▀\r\n     ▀▀▄███▄     ▄██▄▀\r\n      ███████   ▐████▌\r\n     ▐███████▌▄▀ ▀██▀\r\n      ███████\r\n       ▀███▀[/color][/size][/tt][/td]\r\n\r\n[td][center][font=arial][b][size=16pt]VCHAIN[/size]\r\n[size=8pt]▬▬▬▬▬▬▬▬[/size][/b][/font][/center][/td][/tr][/table][/center]',
         'test_signature': 'Change the world by being yourself',
-        'image': 'uploads/sig_2c96827b-907a-44e0-86ad-8e2eab146415.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/sr_2.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -281,7 +281,7 @@ SIGNATURES = [
         ],
         'code': '[center][table][tr][td][table][tr][td][url=http://volentix.com/][tt][size=2px][color=black]█▌                     ▐█\r\n██▌                   ▐██\r\n█▐█▌                 ▐█▌█\r\n█ ▐█▌               ▐█▌ █\r\n█  ▐█▌             ▐█▌  █\r\n█   ▐█▌           ▐█▌   █\r\n█    ▐█▌         ▐█▌    █\r\n█     ▐█▌       ▐█▌     █\r\n█    ▐█▌     ▐█▌      █\r\n▀███████████████████████▀\r\n  ▀█▄   ▐█▌   ▐█▌   ▄█▀\r\n    ▀█▄  ▐█▌ ▐█▌  ▄█▀\r\n      ▀█▄ ▐█ █▌ ▄█▀\r\n        ▀█▄▐█▌▄█▀\r\n          ▀███▀[/color][/size][/tt][/url][/td]\r\n\r\n[td][url=http://volentix.com/][font=arial][size=4pt][color=transparent].[/color][/size]\r\n[size=16pt][color=black]VOLENTIX[/color][/size][/font][/url][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=16pt][url=http://volentix.com/][color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color][/url][/size]\r\n[size=8pt][color=#f25a4a]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color]  [url=http://][color=black]ANN[/color][/url][/size][/b][/font][/center][/td][td][/td][td][/td]\r\n\r\n[td][size=6px][color=transparent].[/color][/size]\r\n[url=https://twitter.com/VolentixDAO/][tt][size=2px][color=#00aced]                ▄█████▄▄    \r\n█▄             ████████████▀ \r\n████▄         █████████████▀ \r\n▀████████▄▄   ████████████\r\n▄▄████████████████████████\r\n █████████████████████████\r\n ▀███████████████████████ \r\n   █████████████████████ \r\n    ▀█████████████████▀\r\n      ▄█████████████▀\r\n▄▄███████████████▀ \r\n   ▀▀▀▀▀▀▀▀▀▀▀[/color][/size][/tt][/url][/td][td][/td]\r\n\r\n[td][size=6px][color=transparent].[/color][/size]\r\n[url=][tt][size=2px][color=#2ca5e0]      ▄▄████\r\n                ▄▄▄████████▌\r\n          ▄▄▄███████▀▄█████\r\n     ▄▄█████████▀▀ ▄██████▌\r\n▄▄███████████▀  ▄█████████\r\n ▀▀▀█████▀    ▄██████████▌\r\n       ██   █████████████\r\n        █▄ █████████████▌\r\n        ▐█▄███▀▀████████\r\n         ███▀    ▀▀████▌\r\n                ▀▀█[/color][/size][/tt][/url][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=8pt][color=#232c3b]Analytical Engine • VESPUCCI   |   VCHAIN • Blockchain Technology\r\n[color=#f25a4a]▬▬▬▬▬▬▬▬▬▬  3rd Party DAPP Platform  ▬▬▬▬▬▬▬▬▬▬[/color]\r\nSocial Rewards Platform • VENUE   |   VDEX • Decentralized Exchange[/color][/size][/b][/font][/url][/center][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][tt][size=2px][url=https://bitcointalk.org/index.php?topic=2221211][/url]\r\n\r\n\r\n▄▄███████████▄▄\r\n▄█▀▀           ▀▀█▄\r\n▄█    █       █    █▄\r\n█▌    ██     ██    ▐█\r\n█▌    █ █   █ █    ▐█\r\n█▌    █  █ █  █    ▐█\r\n█▌    ▀█▀▀█▀▀█▀    ▐█\r\n▀█      ▀███▀      █▀\r\n▀█▄▄           ▄▄█▀\r\n▀▀███████████▀▀[/size][/tt][/center][/td]\r\n\r\n[td][size=5px][color=transparent].[/color][/size]\r\n[font=arial][b][size=13px][color=#e22b2b]BETA TESTER[/color][/size]\r\n[size=8px]Designed by Zpectrum[/size][/b][/font][/td][/tr][/table][/center]',
         'test_signature': 'Every moment is a fresh beginning',
-        'image': 'uploads/sig_bf4ec904-012e-49ca-9e3c-e7ccaa663fc1.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/sr_3.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -294,7 +294,7 @@ SIGNATURES = [
         ],
         'code': '[center][table][tr][td][table][tr][td][url=http://volentix.com/][tt][size=2px][color=black]█▌                     ▐█\r\n██▌                   ▐██\r\n█▐█▌                 ▐█▌█\r\n█ ▐█▌               ▐█▌ █\r\n█  ▐█▌             ▐█▌  █\r\n█   ▐█▌           ▐█▌   █\r\n█    ▐█▌         ▐█▌    █\r\n█     ▐█▌       ▐█▌     █\r\n█    ▐█▌     ▐█▌      █\r\n▀███████████████████████▀\r\n  ▀█▄   ▐█▌   ▐█▌   ▄█▀\r\n    ▀█▄  ▐█▌ ▐█▌  ▄█▀\r\n      ▀█▄ ▐█ █▌ ▄█▀\r\n        ▀█▄▐█▌▄█▀\r\n          ▀███▀[/color][/size][/tt][/url][/td]\r\n\r\n[td][url=http://volentix.com/][font=arial][size=4pt][color=transparent].[/color][/size]\r\n[size=16pt][color=black]VOLENTIX[/color][/size][/font][/url][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=16pt][url=http://volentix.com/][color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color][/url][/size]\r\n[size=8pt][color=#f25a4a]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color]  [url=http://][color=black]ANN[/color][/url][/size][/b][/font][/center][/td][td][/td][td][/td]\r\n\r\n[td][size=6px][color=transparent].[/color][/size]\r\n[url=https://twitter.com/VolentixDAO/][tt][size=2px][color=#232c3b]                ▄█████▄▄    \r\n█▄             ████████████▀ \r\n████▄         █████████████▀ \r\n▀████████▄▄   ████████████\r\n▄▄████████████████████████\r\n █████████████████████████\r\n ▀███████████████████████ \r\n   █████████████████████ \r\n    ▀█████████████████▀\r\n      ▄█████████████▀\r\n▄▄███████████████▀ \r\n   ▀▀▀▀▀▀▀▀▀▀▀[/color][/size][/tt][/url][/td][td][/td]\r\n\r\n[td][size=6px][color=transparent].[/color][/size]\r\n[url=][tt][size=2px][color=#232c3b]      ▄▄████\r\n                ▄▄▄████████▌\r\n          ▄▄▄███████▀▄█████\r\n     ▄▄█████████▀▀ ▄██████▌\r\n▄▄███████████▀  ▄█████████\r\n ▀▀▀█████▀    ▄██████████▌\r\n       ██   █████████████\r\n        █▄ █████████████▌\r\n        ▐█▄███▀▀████████\r\n         ███▀    ▀▀████▌\r\n                ▀▀█[/color][/size][/tt][/url][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=8pt][color=#232c3b]Analytical Engine • VESPUCCI   |   VCHAIN • Blockchain Technology\r\n[color=#f25a4a]▬▬▬▬▬▬▬▬▬▬  3rd Party DAPP Platform  ▬▬▬▬▬▬▬▬▬▬[/color]\r\nSocial Rewards Platform • VENUE   |   VDEX • Decentralized Exchange[/color][/size][/b][/font][/url][/center][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][tt][size=2px][url=https://bitcointalk.org/index.php?topic=2221211][/url]\r\n\r\n\r\n▄▄███████████▄▄\r\n▄█▀▀           ▀▀█▄\r\n▄█    █       █    █▄\r\n█▌    ██     ██    ▐█\r\n█▌    █ █   █ █    ▐█\r\n█▌    █  █ █  █    ▐█\r\n█▌    ▀█▀▀█▀▀█▀    ▐█\r\n▀█      ▀███▀      █▀\r\n▀█▄▄           ▄▄█▀\r\n▀▀███████████▀▀[/size][/tt][/center][/td]\r\n\r\n[td][size=5px][color=transparent].[/color][/size]\r\n[font=arial][b][size=13px][color=#e22b2b]BETA TESTER[/color][/size]\r\n[size=8px]Designed by Zpectrum[/size][/b][/font][/td][/tr][/table][/center]',
         'test_signature': 'Never regret anything that made you smile',
-        'image': 'uploads/sig_a896372c-a418-451f-af42-1ddb6c8d96f7.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/sr_4.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -308,7 +308,7 @@ SIGNATURES = [
         ],
         'code': '[center][table][tr][td][url=http://volentix.com/][tt][size=2px][color=black]█▌                     ▐█\r\n██▌                   ▐██\r\n█▐█▌                 ▐█▌█\r\n█ ▐█▌            ▐█▌ █\r\n█  ▐█▌             ▐█▌  █\r\n█   ▐█▌           ▐█▌   █\r\n█    ▐█▌         ▐█▌    █\r\n█     ▐█▌       ▐█▌     █\r\n█▐█▌     ▐█▌      █\r\n▀███████████████████████▀\r\n  ▀█▄   ▐█▌   ▐█▌   ▄█▀\r\n    ▀█▄  ▐█▌ ▐█▌  ▄█▀\r\n      ▀█▄ ▐█ █▌ ▄█▀\r\n        ▀█▄▐█▌▄█▀\r\n          ▀███▀[/color][/size][/tt][/url][/td]\r\n\r\n[td][url=http://volentix.com/][font=arial][size=4pt][color=transparent].[/color][/size]\r\n[size=16pt][color=black]VOLENTIX[/color][/size][/font][/url][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=8pt][glow=#232c3b,2,300][color=white][color=transparent]...............[/color]3rd Party DAPP Platform[color=transparent]...............[/color][/color][/glow][/size]\r\n[size=16pt][url=http://volentix.com/][color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color][/url][/size][/b][/font][/center][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=8pt][url=http://][color=#232c3b]ANN[/color][/url]\r\n[url=https://twitter.com/VolentixDAO/][color=#232c3b]TWITTER[/color][/url]\r\n[url=][color=#232c3b]TELEGRAM[/color][/url][/size][/b][/font][/center][/td][td][/td]\r\n\r\n[td][size=4pt][color=#f25a4a]▄\r\n█\r\n█\r\n█\r\n█\r\n▀[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=16pt][color=black]▬ •  VENUE  • ▬[/color][/size]\r\n[size=8pt][glow=#232c3b,2,300][color=white][color=transparent]......[/color]Social Rewards Platform[color=transparent]......[/color][/color][/glow][/size][/b][/font][/url][/center][/td][td][/td]\r\n\r\n[td][size=4pt][color=#f25a4a]▄\r\n█\r\n█\r\n█\r\n█\r\n▀[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=8pt][glow=#232c3b,2,300][color=white][color=transparent]...[/color]Decentralized Exchange[color=transparent]...[/color][/color][/glow][/size]\r\n[size=16pt][color=black]▬ • VDEX • ▬[/color][/size][/b][/font][/url][/center][/td][td][/td]\r\n\r\n[td][tt][size=2px][color=#1f3150]        ▄████████▄▄       \r\n      ▄██████████████▄ \r\n    ▄████▀▀      ▀▀████▄ ▄▄\r\n   ███▀             ▀██████ \r\n  ███     ▄████▄     ██████\r\n ███    █▀    ▀█   ███████        \r\n███     ▐▌   ▄▄▄▄▄        \r\n        ▐▌  ▐▄▄▄▄▄▌        \r\n         █▄ ▐     ▌     ███ \r\n███████   ▀█▐▀▀▀▀▀▌    ███ \r\n██████       ▀▀▀▀▀    ███  \r\n██████▄             ▄███▀    \r\n▀▀ ▀████▄▄      ▄▄████▀     \r\n     ▀██████████████▀       \r\n      ▀▀███████▀▀[/color][/size][/tt][/td]\r\n\r\n[td][size=4pt][color=#f25a4a]▄\r\n█\r\n█\r\n█\r\n█\r\n▀[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][tt][size=2px]\r\n\r\n\r\n▄▄███████████▄▄\r\n▄█▀▀           ▀▀█▄\r\n▄█    █       █    █▄\r\n█▌    ██     ██    ▐█\r\n█▌    █ █   █ █    ▐█\r\n█▌    █  █ █  █    ▐█\r\n█▌    ▀█▀▀█▀▀█▀    ▐█\r\n▀█      ▀███▀      █▀\r\n▀█▄▄           ▄▄█▀\r\n▀▀███████████▀▀[/size][/tt][/center][/td]\r\n\r\n[td][size=5px][color=transparent].[/color][/size]\r\n[font=arial][b][size=13px][color=#e22b2b]BETA TESTER[/color][/size]\r\n[size=8px]Designed by Zpectrum[/size][/b][/font][/td][/tr][/table][/center]',
         'test_signature': 'Die with memories, not dreams',
-        'image': 'uploads/sig_95a98747-4606-4911-bfe8-e68118ac98a6.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/hero_legendary_1.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -322,7 +322,7 @@ SIGNATURES = [
         ],
         'code': '[center][table][tr][td][center][font=arial][b][size=16pt]VESPUCCI[/size]\r\n[size=8pt][glow=#232c3b,2,300][color=white][color=transparent]....[/color]Analytical Engine[color=transparent]....[/color][/color][/glow][/size][/b][/font][/center][/td][td][/td]\r\n\r\n[td][tt][size=2px][color=#232c3b]\r\n\r\n                    [color=#777777]▄████▄▄   ▄██[/color]\r\n                              [color=#777777]▄█▀    ▀▀███▀[/color]\r\n             [color=#777777]▄███▀[/color]\r\n    [color=#777777]▄▄██████▄▄          ▄███▀▀[/color]   ▄███▄\r\n  [color=#777777]▄████████████▄  ▄██▀[/color]    ▄█████████▄\r\n [color=#777777]██████████████████ ██▀[/color]  ▄███████████████▄\r\n [color=#777777]████████████████████[/color]  ▄███████████████████▄\r\n[color=#777777]██████████[/color]███████████████████████████████████\r\n[color=#777777]█████████[/color]████████████████████████████████████\r\n[color=#777777]███████[/color]██████████████████████████████████████\r\n█████████████████████████████████████████████\r\n█████████████████████████████████████████████\r\n█████████████████████████████████████████████[/color][/size][/tt][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=16pt][color=black]▬ •  VENUE  • ▬[/color][/size]\r\n[size=8pt][glow=#232c3b,2,300][color=white][color=transparent]......[/color]Social Rewards Platform[color=transparent]......[/color][/color][/glow][/size][/b][/font][/url][/center][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][url=https://volentix.com/][tt][size=2px][color=black]█▌                     ▐█\r\n██▌                   ▐██\r\n█▐█▌       ▐█▌█\r\n█ ▐█▌               ▐█▌ █\r\n█  ▐█▌             ▐█▌  █\r\n█   ▐█▌           ▐█▌   █\r\n█    ▐█▌         ▐█▌    █\r\n█     ▐█▌   ▐█▌     █\r\n█      ▐█▌     ▐█▌      █\r\n▀███████████████████████▀\r\n  ▀█▄   ▐█▌   ▐█▌   ▄█▀\r\n    ▀█▄  ▐█▌ ▐█▌  ▄█▀\r\n      ▀█▄ ▐█ █▌ ▄█▀\r\n        ▀█▄▐█▌▄█▀\r\n          ▀███▀[/color][/size][/tt][/url][/td]\r\n\r\n[td][url=https://volentix.com/][font=arial][b][size=16pt][color=black]VOLENTIX[/color][/size]\r\n[size=8pt][color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color][/size][/b][/font][/url][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=8pt][url=http://][color=#232c3b]ANN[/color][/url]\r\n[url=https://twitter.com/VolentixDAO/][color=#232c3b]TWITTER[/color][/url]\r\n[url=][color=#232c3b]TELEGRAM[/color][/url][/size][/b][/font][/center][/td][td][/td]\r\n\r\n[td][center][tt][size=2px]\r\n\r\n\r\n▄▄███████████▄▄\r\n▄█▀▀           ▀▀█▄\r\n▄█    █       █    █▄\r\n█▌    ██     ██    ▐█\r\n█▌    █ █   █ █    ▐█\r\n█▌    █  █ █  █    ▐█\r\n█▌    ▀█▀▀█▀▀█▀    ▐█\r\n▀█      ▀███▀      █▀\r\n▀█▄▄           ▄▄█▀\r\n▀▀███████████▀▀[/size][/tt][/center][/td]\r\n\r\n[td][size=5px][color=transparent].[/color][/size]\r\n[font=arial][b][size=13px][color=#e22b2b]BETA TESTER[/color][/size]\r\n[size=8px]Designed by Zpectrum[/size][/b][/font][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██\r\n██[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=16pt][color=black]▬ • VDEX • ▬[/color][/size]\r\n[size=8pt][glow=#232c3b,2,300][color=white][color=transparent]...[/color]Decentralized Exchange[color=transparent]...[/color][/color][/glow][/size][/b][/font][/url][/center][/td][td][/td]\r\n\r\n[td][tt][size=2px][color=#232c3b]       ▄██▄\r\n     ▄▐████▌▄▄▄ ▄██▄\r\n ▄▄ ▀  ▀██▀ ▐████▌\r\n▐██▌     ▀▄▄  █ ▀██▀▀▄\r\n▄▀▀ ▄    ████   ▄ ▄  ▄█▄\r\n█    ▀▄▄▀ ▀▀▄  ▀   █ ▀█▀\r\n ▄ ▄▄▀██    ▄███▄ ▄▀▄  ▌\r\n███       ▄▐█████▌  ▄██▄\r\n ▀ ▄ ▄  ▄▀  ▀███▀  ▐████▌\r\n    ███    ▄▀   ▀▄  ▀██▀\r\n     ▀▀▄███▄     ▄██▄▀\r\n      ███████   ▐████▌\r\n     ▐███████▌▄▀ ▀██▀\r\n ███████\r\n       ▀███▀[/color][/size][/tt][/td]\r\n\r\n[td][center][font=arial][b][size=16pt]VCHAIN[/size]\r\n[size=8pt]▬▬▬▬▬▬▬▬[/size][/b][/font][/center][/td][/tr][/table][/center]',
         'test_signature': 'Aspire to inspire before we expire',
-        'image': 'uploads/sig_a89e9efd-9a5c-4d00-806b-a141027c19e9.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/hero_legendary_2.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -336,7 +336,7 @@ SIGNATURES = [
         ],
         'code': '[center][table][tr][td][table][tr][td][url=http://volentix.com/][tt][size=2px][color=black]█▌                     ▐█\r\n██▌                   ▐██\r\n█▐█▌                 ▐█▌█\r\n█ ▐█▌               ▐█▌ █\r\n█  ▐█▌             ▐█▌  █\r\n█   ▐█▌           ▐█▌   █\r\n█    ▐█▌         ▐█▌    █\r\n█     ▐█▌       ▐█▌   █\r\n█      ▐█▌     ▐█▌      █\r\n▀███████████████████████▀\r\n  ▀█▄   ▐█▌   ▐█▌   ▄█▀\r\n    ▀█▄  ▐█▌ ▐█▌  ▄█▀\r\n      ▀█▄ ▐█ █▌ ▄█▀\r\n     ▀█▄▐█▌▄█▀\r\n          ▀███▀[/color][/size][/tt][/url][/td]\r\n\r\n[td][url=http://volentix.com/][font=arial][size=4pt][color=transparent].[/color][/size]\r\n[size=16pt][color=black]VOLENTIX[/color][/size][/font][/url][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=16pt][url=http://volentix.com/][glow=#232c3b,2,300][color=transparent]...[/color][color=white]Decentralized[/color] [color=#f25a4a]Change[/color][color=transparent]...[/color][/glow][/url][/size]\r\n[size=8pt][color=#f25a4a]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color]  [url=http://][color=black]ANN[/color][/url][/size][/b][/font][/center][/td][td][/td][td][/td]\r\n\r\n[td][size=6px][color=transparent].[/color][/size]\r\n[url=https://twitter.com/VolentixDAO/][tt][size=2px][color=#00aced]                ▄█████▄▄    \r\n█▄             ████████████▀ \r\n████▄         █████████████▀ \r\n▀████████▄▄   ████████████\r\n▄▄████████████████████████\r\n █████████████████████████\r\n ▀███████████████████████ \r\n   █████████████████████ \r\n    ▀█████████████████▀\r\n      ▄█████████████▀\r\n▄▄███████████████▀ \r\n   ▀▀▀▀▀▀▀▀▀▀▀[/color][/size][/tt][/url][/td][td][/td]\r\n\r\n[td][size=6px][color=transparent].[/color][/size]\r\n[url=][tt][size=2px][color=#2ca5e0]                      ▄▄████\r\n                ▄▄▄████████▌\r\n          ▄▄▄███████▀▄█████\r\n     ▄▄█████████▀▀ ▄██████▌\r\n▄▄███████████▀  ▄█████████\r\n ▀▀▀█████▀    ▄██████████▌\r\n       ██   █████████████\r\n        █▄ █████████████▌\r\n        ▐█▄███▀▀████████\r\n         ███▀    ▀▀████▌\r\n                    ▀▀█[/color][/size][/tt][/url][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][url=http://volentix.com/][font=arial][b][size=8pt][color=#232c3b]Analytical Engine • VESPUCCI   |   VCHAIN • Blockchain Technology\r\n[glow=#f25a4a,2,300][color=white][color=transparent]....[/color]▬▬▬▬▬▬▬▬▬  3rd Party DAPP Platform  ▬▬▬▬▬▬▬▬▬[color=transparent]....[/color][/color][/glow]\r\nSocial Rewards Platform • VENUE   |   VDEX • Decentralized Exchange[/color][/size][/b][/font][/url][/center][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][tt][size=2px][url=https://bitcointalk.org/index.php?topic=2221211][/url]\r\n\r\n\r\n▄▄███████████▄▄\r\n▄█▀▀           ▀▀█▄\r\n▄█    █       █    █▄\r\n█▌    ██     ██    ▐█\r\n█▌    █ █   █ █    ▐█\r\n█▌    █  █ █  █    ▐█\r\n█▌    ▀█▀▀█▀▀█▀    ▐█\r\n▀█      ▀███▀ █▀\r\n▀█▄▄           ▄▄█▀\r\n▀▀███████████▀▀[/size][/tt][/center][/td]\r\n\r\n[td][size=5px][color=transparent].[/color][/size]\r\n[font=arial][b][size=13px][color=#e22b2b]BETA TESTER[/color][/size]\r\n[size=8px]Designed by Zpectrum[/size][/b][/font][/td][/tr][/table][/center]',
         'test_signature': 'Everything you can imagine is real',
-        'image': 'uploads/sig_8e5abcf7-5062-4603-baba-99a932276f14.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/hero_legendary_3.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -350,7 +350,7 @@ SIGNATURES = [
         ],
         'code': '[center][table][tr][td][table][tr][td][url=http://volentix.com/][tt][size=2px][color=black]█▌                     ▐█\r\n██▌                   ▐██\r\n█▐█▌                 ▐█▌█\r\n█ ▐█▌               ▐█▌ █\r\n█  ▐█▌             ▐█▌  █\r\n█   ▐█▌           ▐█▌   █\r\n█    ▐█▌         ▐█▌    █\r\n█     ▐█▌       ▐█▌   █\r\n█      ▐█▌     ▐█▌      █\r\n▀███████████████████████▀\r\n  ▀█▄   ▐█▌   ▐█▌   ▄█▀\r\n    ▀█▄  ▐█▌ ▐█▌  ▄█▀\r\n      ▀█▄ ▐█ █▌ ▄█▀\r\n     ▀█▄▐█▌▄█▀\r\n          ▀███▀[/color][/size][/tt][/url][/td]\r\n\r\n[td][url=http://volentix.com/][font=arial][size=4pt][color=transparent].[/color][/size]\r\n[size=16pt][color=black]VOLENTIX[/color][/size][/font][/url][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=16pt][url=http://volentix.com/][glow=#232c3b,2,300][color=transparent]...[/color][color=white]Decentralized[/color] [color=#f25a4a]Change[/color][color=transparent]...[/color][/glow][/url][/size]\r\n[size=8pt][color=#f25a4a]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color]  [url=http://][color=black]ANN[/color][/url][/size][/b][/font][/center][/td][td][/td][td][/td]\r\n\r\n[td][size=6px][color=transparent].[/color][/size]\r\n[url=https://twitter.com/VolentixDAO/][tt][size=2px][color=#232c3b]                ▄█████▄▄    \r\n█▄             ████████████▀ \r\n████▄         █████████████▀ \r\n▀████████▄▄   ████████████\r\n▄▄████████████████████████\r\n █████████████████████████\r\n ▀███████████████████████ \r\n   █████████████████████ \r\n    ▀█████████████████▀\r\n      ▄█████████████▀\r\n▄▄███████████████▀ \r\n   ▀▀▀▀▀▀▀▀▀▀▀[/color][/size][/tt][/url][/td][td][/td]\r\n\r\n[td][size=6px][color=transparent].[/color][/size]\r\n[url=][tt][size=2px][color=#232c3b]                      ▄▄████\r\n                ▄▄▄████████▌\r\n          ▄▄▄███████▀▄█████\r\n     ▄▄█████████▀▀ ▄██████▌\r\n▄▄███████████▀  ▄█████████\r\n ▀▀▀█████▀    ▄██████████▌\r\n       ██   █████████████\r\n        █▄ █████████████▌\r\n        ▐█▄███▀▀████████\r\n         ███▀    ▀▀████▌\r\n                    ▀▀█[/color][/size][/tt][/url][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][font=arial][b][size=8pt][color=#232c3b]Analytical Engine • VESPUCCI   |   VCHAIN • Blockchain Technology\r\n[glow=#f25a4a,2,300][color=white][color=transparent]....[/color]▬▬▬▬▬▬▬▬▬  3rd Party DAPP Platform  ▬▬▬▬▬▬▬▬▬[color=transparent]....[/color][/color][/glow]\r\nSocial Rewards Platform • VENUE   |   VDEX • Decentralized Exchange[/color][/size][/b][/font][/center][/td][td][/td][td][/td]\r\n\r\n[td][size=2pt][color=#ec6d5a]\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█\r\n█[/color][/size][/td][td][/td][td][/td]\r\n\r\n[td][center][tt][size=2px]\r\n\r\n\r\n▄▄███████████▄▄\r\n▄█▀▀           ▀▀█▄\r\n▄█    █       █    █▄\r\n█▌    ██     ██    ▐█\r\n█▌    █ █   █ █    ▐█\r\n█▌    █  █ █  █    ▐█\r\n█▌    ▀█▀▀█▀▀█▀    ▐█\r\n▀█      ▀███▀      █▀\r\n▀█▄▄           ▄▄█▀\r\n▀▀███████████▀▀[/size][/tt][/center][/td]\r\n\r\n[td][size=5px][color=transparent].[/color][/size]\r\n[font=arial][b][size=13px][color=#e22b2b]BETA TESTER[/color][/size]\r\n[size=8px]Designed by Zpectrum[/size][/b][/font][/td][/tr][/table][/center]',
         'test_signature': 'Simplicity is the ultimate sophistication',
-        'image': 'uploads/sig_d51edbec-9989-45c0-8218-52772ab73ae4.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/hero_legendary_4.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -363,7 +363,7 @@ SIGNATURES = [
         ],
         'code': '[center][font=arial][b][size=8pt][url=http://volentix.com/][color=black][u]     V O L E N T I X[/u][/color][/url]   [color=#f25a4a]█[/color]   [url=http://volentix.com/][color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color][/url]   [color=#f25a4a]█[/color]   [url=http://volentix.com/][color=#232c3b]3rd Party DAPP Platform[/color][/url]\r\n[url=http://volentix.com/][color=black]▬ •  VENUE  • ▬[/color]  [color=#232c3b]Social Rewards Platform[/color][/url]   [color=#f25a4a]█[/color]   [url=][color=#232c3b]ANN[/color][/url]   [url=https://twitter.com/VolentixDAO/][color=#232c3b]TWITTER[/color][/url]   [url=][color=#232c3b]TELEGRAM[/color][/url]   [color=#f25a4a]█[/color]   [url=http://volentix.com/][color=black]▬ • VDEX • ▬[/color]  [color=#232c3b]Decentralized Exchange[/color][/url]\r\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬    ( V ) [color=#e22b2b]BETA TESTER[/color]  |  Designed by Zpectrum    ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/size][/b][/font][/center]',
         'test_signature': 'Whatever you do, do it well',
-        'image': 'uploads/sig_deabaa53-8472-48e3-8746-410ea7352fae.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/full_1.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -376,7 +376,7 @@ SIGNATURES = [
         ],
         'code': '[center][font=arial][b][size=8pt][color=#ec6d5a]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color]\r\n[url=https://volentix.com/][color=black]VESPUCCI |[/color] [color=#232c3b]Analytical Engine[/color]  [color=black]►[/color]  [color=black]VENUE |[/color] [color=#232c3b]Social Rewards Platform[/color]     [color=#232c3b]▌[/color]    [color=black]VOLENTIX[/color]  |  [color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color]    [color=#232c3b]▐[/color]     [color=black]VDEX |[/color] [color=#232c3b]Decentralized Exchange[/color]  [color=black]◄[/color]  [color=black][u]VCHAIN    [/u][/color][/url]\r\n[color=#ec6d5a]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬  [color=#232c3b]|  [url=http://][color=#232c3b]ANN[/color][/url]•  [url=https://twitter.com/VolentixDAO/][color=#232c3b]TWITTER[/color][/url]  •  [url=][color=#232c3b]TELEGRAM[/color][/url]   █   [color=#232c3b]( V ) [color=#e22b2b]BETA TESTER[/color]  •[/color]  [color=#232c3b]Designed by Zpectrum[/color]  |  [/color]  ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/size][/b][/font][/center]',
         'test_signature': 'What we think, we become',
-        'image': 'uploads/sig_5f8e0793-63f0-444f-82d0-dd8bf3113ec2.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/full_2.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     },
@@ -389,7 +389,7 @@ SIGNATURES = [
         ],
         'code': '[center][font=arial][b][size=8pt][url=http://volentix.com/][color=black][u]          V O L E N T I X[/u][/color][/url]  [color=#232c3b]█[/color]  [url=http://volentix.com/][color=#232c3b]Decentralized[/color] [color=#f25a4a]Change[/color][/url]  [color=#232c3b]█[/color]  ( V ) [color=#e22b2b]BETA TESTER[/color]  ★  Designed by Zpectrum\r\n[color=#f25a4a]▌▌  [url=http://volentix.com/][color=black]3rd Party DAPP Platform[/color][/url]   ▌▌  ▬▬▬▬  [url=http://][color=black]ANN[/color][/url]  [url=https://twitter.com/VolentixDAO/][color=#00aced]Twitter[/color][/url]  [url=][color=#2ca5e0]Telegram[/color][/url]  ▬▬▬▬[/color]\r\n[color=#f25a4a]▌▌[/color]  [url=http://volentix.com/][color=black]Analytical Engine • VESPUCCI[/color]   [color=#f25a4a]|[/color]   [color=black]VCHAIN • Blockchain Technology[/color]  [color=#f25a4a]|[/color]  [color=black]Social Rewards Platform • VENUE[/color]   [color=#f25a4a]|[/color]   [color=black]VDEX • Decentralized Exchange[/color][/url]   [color=#f25a4a]▌▌[/color][/size][/b][/font][/center]',
         'test_signature': 'All limitations are self-imposed',
-        'image': 'uploads/sig_2a615f06-e124-4727-aa3e-64672d6d9617.png',
+        'image': 'https://s3.ca-central-1.amazonaws.com/venue-static/signatures/full_3.png',
         'active': True,
         'date_added': '2018-06-14 12:03:50+00:00'
     }
@@ -417,8 +417,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-14 12:48:05+00:00',
         'date_added': '2018-06-14 12:37:54+00:00',
         'date_updated': '2018-06-16 07:24:09.271000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': '709bc479-a411-40df-bc9a-7564da0f521e',
@@ -433,8 +432,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-14 14:27:16+00:00',
         'date_added': '2018-06-14 14:26:43+00:00',
         'date_updated': '2018-06-16 07:25:34.201000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': '480dd458-9325-44ca-a4a2-ee4c0ccfa173',
@@ -449,8 +447,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-10 03:34:27+00:00',
         'date_added': '2018-06-10 03:19:07+00:00',
         'date_updated': '2018-06-16 07:22:32.686000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': '6b4d6821-ccba-41a9-8625-2a1da174b93d',
@@ -465,8 +462,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-10 03:33:13+00:00',
         'date_added': '2018-06-10 03:19:07+00:00',
         'date_updated': '2018-06-16 07:25:20.047000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': 'ce52c2f5-ae68-4a31-83a5-01f96de5d78f',
@@ -481,8 +477,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-10 03:32:37+00:00',
         'date_added': '2018-06-10 03:19:07+00:00',
         'date_updated': '2018-06-16 07:25:51.218000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': 'bd57efbc-9b53-4c85-9e05-5f593b96581d',
@@ -497,8 +492,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-10 03:32:08+00:00',
         'date_added': '2018-06-10 03:19:07+00:00',
         'date_updated': '2018-06-16 03:53:43.877000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': '19bb3f6b-52b6-4651-947e-b99c2566049b',
@@ -513,8 +507,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-10 03:31:44+00:00',
         'date_added': '2018-06-10 03:19:07+00:00',
         'date_updated': '2018-06-16 07:42:46.570000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': '404a09b4-34ce-4a54-a52e-af815d289b31',
@@ -529,8 +522,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-10 03:30:35+00:00',
         'date_added': '2018-06-10 03:19:07+00:00',
         'date_updated': '2018-06-16 03:53:29.320000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': 'b759e131-192f-4656-b977-3f6010900528',
@@ -545,8 +537,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-10 03:29:00+00:00',
         'date_added': '2018-06-10 03:19:07+00:00',
         'date_updated': '2018-06-16 03:53:18.016000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     },
     {
         'id': '5bb143a4-22e1-4ba6-b14b-00235595f585',
@@ -561,8 +552,7 @@ FORUM_PROFILES = [
         'date_verified': '2018-06-10 03:27:46+00:00',
         'date_added': '2018-06-10 03:27:56+00:00',
         'date_updated': '2018-06-16 03:53:08.829000+00:00',
-        'dummy': True,
-        'signature_found': True
+        'dummy': True
     }
 ]
 

@@ -69,10 +69,7 @@ class Signature(models.Model):
         ForumUserRank, related_name='signatures')
     code = models.TextField()
     test_signature = models.TextField(blank=True)
-    image = models.ImageField(
-        upload_to=image_file_name,
-        default=DEFAULT_SIGNATURE_IMAGE
-    )
+    image = models.CharField(max_length=200)
     active = models.BooleanField(default=True)
     date_added = models.DateTimeField(default=timezone.now)
 

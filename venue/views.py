@@ -2244,7 +2244,7 @@ def get_signatures(request):
                 )
             else:
                 sig.code = sig_code
-            sig.image = '%s/media/%s' % (settings.VENUE_DOMAIN, sig.image)
+            # sig.image = '%s/media/%s' % (settings.VENUE_DOMAIN, sig.image)
             sig.usage_count = sig.users.count()
             sig.verification_code = verification_code
             sig.forum_site_name = forum_profile.forum.name
