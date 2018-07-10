@@ -28,8 +28,7 @@ SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', 'venue.volentix.io']
-
+ALLOWED_HOSTS = ['localhost', '.volentix.com', '.volentix.io', '.venue.ninja', 'venue-service','.dev.vlabs.ninja', '.vlabs.ninja']
 
 # Application definition
 
@@ -93,7 +92,8 @@ CONSTANCE_CONFIG = {
     'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield')
 }
 
-REDIS_PASSWORD = '4e7a84d5'
+REDIS_PASSWORD = config('REDIS_PASSWORD', default='4e7a84d5')
+
 CONSTANCE_REDIS_CONNECTION = {
     'password': REDIS_PASSWORD,
     'host': 'redis',
@@ -140,10 +140,10 @@ WSGI_APPLICATION = 'volentix.wsgi_django.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'volentix_v2',
-        'USER': 'volentix',
-        'PASSWORD': 'BxKkpaihl67B',
-        'HOST': 'postgres'
+        'NAME': config('POSTGRES_NAME', default='venuepostgress'),
+        'USER': config('POSTGRES_USER', default='venueadmin'), 
+        'PASSWORD': config('POSTGRES_PASSWORD', default='BxKkpaihl67B'),
+        'HOST': config('POSTGRES_HOST', default='postgres')
     }
 }
 

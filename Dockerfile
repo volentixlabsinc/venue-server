@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.6
 ADD . /code
 WORKDIR /code
 RUN apt-get update -y
