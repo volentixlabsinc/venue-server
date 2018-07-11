@@ -1,9 +1,0 @@
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: postgres-service-dev2
-  namespace: venue-dev
-spec:
-  type: ExternalName
-  externalName: venuedev.cksjgpgfbsbd.ca-central-1.rds.amazonaws.com
