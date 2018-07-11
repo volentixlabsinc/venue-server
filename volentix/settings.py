@@ -254,7 +254,7 @@ else:
     # VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.volentix.io')
     # VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.volentix.io')
 
-# if not DEBUG:
+# if not DEBUG: 
 #     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 #     SECURE_SSL_REDIRECT = True
 #     SESSION_COOKIE_SECURE = True
