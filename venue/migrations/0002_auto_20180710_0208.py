@@ -60,6 +60,7 @@ def add_languages(apps, schema_editor):
         lang.save()
 
 
+# Admin superuser
 USERS = [
     {
         'password': 'default2018',
@@ -71,69 +72,69 @@ USERS = [
     }
 ]
 
-if settings.DEBUG:
-    USERS += [
-        {
-            'password': 'default2018',
-            'username': 'stingray',
-            'email': 'joemar.ct+stingray@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'spiderman',
-            'email': 'joemar.ct+spiderman@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'thor',
-            'email': 'joemar.ct+thor@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'ironman',
-            'email': 'joemar.ct+ironman@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'antman',
-            'email': 'joemar.ct+antman@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'silverclaw',
-            'email': 'joemar.ct+silverclaw@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'hulk',
-            'email': 'joemar.ct+hulk@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'nomad',
-            'email': 'joemar.ct+nomad@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'hawkeye',
-            'email': 'joemar.ct+hawkeye@gmail.com',
-            'is_active': True
-        },
-        {
-            'password': 'default2018',
-            'username': 'wolverine',
-            'email': 'joemar.ct+wolverine@gmail.com',
-            'is_active': True
-        },
-    ]
+# Other users
+USERS += [
+    {
+        'password': 'default2018',
+        'username': 'stingray',
+        'email': 'joemar.ct+stingray@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'spiderman',
+        'email': 'joemar.ct+spiderman@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'thor',
+        'email': 'joemar.ct+thor@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'ironman',
+        'email': 'joemar.ct+ironman@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'antman',
+        'email': 'joemar.ct+antman@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'silverclaw',
+        'email': 'joemar.ct+silverclaw@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'hulk',
+        'email': 'joemar.ct+hulk@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'nomad',
+        'email': 'joemar.ct+nomad@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'hawkeye',
+        'email': 'joemar.ct+hawkeye@gmail.com',
+        'is_active': True
+    },
+    {
+        'password': 'default2018',
+        'username': 'wolverine',
+        'email': 'joemar.ct+wolverine@gmail.com',
+        'is_active': True
+    },
+]
 
 
 def add_users(apps, schema_editor):
@@ -613,10 +614,3 @@ class Migration(migrations.Migration):
         migrations.RunPython(add_forum_profiles),
         migrations.RunPython(add_forum_posts)
     ]
-
-    # if settings.DEBUG:
-    #     operations += [
-    #         migrations.RunPython(add_user_profiles),
-    #         migrations.RunPython(add_forum_profiles),
-    #         migrations.RunPython(add_forum_posts)
-    #     ]
