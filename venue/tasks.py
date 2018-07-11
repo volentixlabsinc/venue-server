@@ -10,6 +10,7 @@ from operator import itemgetter
 from constance import config
 from django.utils import timezone
 from celery.result import AsyncResult, ResultSet
+import re
 
 import rollbar
 from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
@@ -40,6 +41,17 @@ def load_scraper(name):
     return scraper
 
 
+def get_expected_links(code):
+    terms = re.split('[\[\]]', code)
+    links = []
+    for term in terms:
+        if 'url=' in term:
+            link = term.split('url=')[1]
+            if link:
+                links.append(link)
+    return set(links)
+
+
 @shared_task(queue='scrapers')
 def scrape_forum_profile(forum_profile_id, test_mode=None):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
@@ -49,16 +61,34 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         pass
     else:
         scraper = load_scraper(forum_profile.forum.scraper_name)
+        expected_links = get_expected_links(forum_profile.signature.code)
         results = scraper.verify_and_scrape(
             forum_profile.id,
             forum_profile.forum_user_id,
-            forum_profile.signature.expected_links.splitlines(),
+            expected_links,
+            vcode=forum_profile.verification_code,
             test_mode=test_mode,
             test_signature=forum_profile.signature.test_signature)
-        status_code, signature_found, total_posts, username, position = results
+        status_code, page_ok, signature_found, total_posts, username, position = results
         del username
-        # Update the signature_found flag in forum profile
-        forum_profile.signature_found = signature_found
+        #if status_code == 200 and page_ok:
+        #    # Update the signature_found flag in forum profile
+        #    forum_profile.signature_found = signature_found
+        #    forum_profile.save()
+        # Update forum profile page status
+        status_list = forum_profile.last_page_status
+        if len(status_list):
+            old_status = status_list[-1]
+            new_status_list = [old_status]
+        else:
+            new_status_list = []
+        new_status = {
+            'status_code': status_code,
+            'page_ok': page_ok,
+            'signature_found': signature_found
+        }
+        new_status_list.append(new_status)
+        forum_profile.last_page_status = new_status_list
         forum_profile.save()
         # Update the forum user rank, if it changed
         forum_rank = ForumUserRank.objects.get(name=position)
@@ -118,7 +148,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
 def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     signature = Signature.objects.get(id=signature_id)
-    expected_links = signature.expected_links.splitlines()
+    expected_links = get_expected_links(signature.code)
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
     results = scraper.verify_and_scrape(
@@ -127,7 +157,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
         expected_links,
         test_mode=config.TEST_MODE,
         test_signature=signature.test_signature)
-    status_code, verified, posts, username, position = results
+    status_code, page_ok, verified, posts, username, position = results
     del status_code, posts, position
     if verified:
         # Save the forum username
@@ -141,39 +171,40 @@ def get_user_position(forum_site_id, profile_url, user_id):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
     forum_user_id = scraper.extract_user_id(profile_url)
-    status_code, position, username = scraper.get_user_position(forum_user_id)
-    result = {
-        'status_code': status_code,
-        'position': position,
-        'forum_user_id': forum_user_id,
-        'forum_user_name': username
-    }
-    fp_check = ForumProfile.objects.filter(
-        forum=forum,
-        forum_user_id=forum_user_id
-    )
-    result['active'] = False
-    result['with_signature'] = False
-    result['exists'] = fp_check.exists()
-    if fp_check.exists():
-        fp = fp_check.last()
-        result['forum_profile_id'] = fp.id   
-        result['own'] = False
-        if fp.user_profile.user.id == user_id:
-            result['own'] = True
-            if fp.posts.count():
-                result['active'] = True
-        result['verified'] = fp.verified
-        if fp.signature and fp.verified:
-            result['with_signature'] = True
+    try:
+        status_code, position, username = scraper.get_user_position(forum_user_id)
+        result = {
+            'status_code': status_code,
+            'found': True,
+            'position': position,
+            'forum_user_id': forum_user_id,
+            'forum_user_name': username
+        }
+        fp_check = ForumProfile.objects.filter(
+            forum=forum,
+            forum_user_id=forum_user_id
+        )
+        result['active'] = False
+        result['with_signature'] = False
+        result['exists'] = fp_check.exists()
+        if fp_check.exists():
+            fp = fp_check.latest()
+            result['forum_profile_id'] = fp.id   
+            result['own'] = False
+            if fp.user_profile.user.id == user_id:
+                result['own'] = True
+                if fp.posts.count():
+                    result['active'] = True
+            result['verified'] = fp.verified
+            if fp.signature and fp.verified:
+                result['with_signature'] = True
+    except scraper.ProfileDoesNotExist:
+        result = {'found': False}
     return result
 
 
 def send_websocket_signal(signal):
     # Send a test message over websocket
-    # TODO -- This is not called at the moment,
-    # This needs to be called somehow at a later time
-    # to inform the frontend that new data is available
     redis_publisher = RedisPublisher(facility='signals', broadcast=True)
     message = RedisMessage(signal)
     redis_publisher.publish_message(message)
@@ -191,22 +222,37 @@ def compute_ranking():
                 'total_points': total_points
             }
             user_points.append(info)
-    # Sort the points based on the total
-    user_points = sorted(
-        user_points,
-        key=itemgetter('total_points'),
-        reverse=True
-    )
+    if user_points:
+        # Sort the points based on the total
+        user_points = sorted(
+            user_points,
+            key=itemgetter('total_points'),
+            reverse=True
+        )
+    # Ranking batch
+    global_total = 0
+    try:
+        last_ranking = Ranking.objects.all().latest()
+        batch_number = last_ranking.batch + 1
+    except Ranking.DoesNotExist:
+        batch_number = 1
     for rank, user in enumerate(user_points, 1):
         # Update user's ranking
         user_points[rank-1]['rank'] = rank
         ranking = Ranking(
+            batch=batch_number,
             user_profile_id=user['user_profile_id'],
             rank=rank
         )
         ranking.save()
-    # Save the global total points in redis
+    # Compute the global total points
     global_total = sum([x['total_points'] for x in user_points])
+    # Send ws signals to all connected clients if global total has changed
+    old_total = settings.REDIS_DB.get('global_total_points')
+    if old_total:
+        if float(old_total) != global_total:
+            send_websocket_signal('refresh')
+    # Save the global total points in redis
     settings.REDIS_DB.set('global_total_points', global_total)
     return {'total': global_total, 'points': user_points}
 
@@ -224,7 +270,6 @@ def compute_points(self, subtasks=None):
     # Proceed to compute the points
     if proceed:
         posts = ForumPost.objects.filter(
-            credited=False,
             matured=True
         )
         for post in posts:
@@ -233,16 +278,8 @@ def compute_points(self, subtasks=None):
                 maturation = config.MATURATION_PERIOD
                 uptime_pct = (post.valid_sig_minutes / (maturation * 60))
                 uptime_pct *= 100
-                if uptime_pct >= pct_threshold:
-                    base_points = config.POST_POINTS_MULTIPLIER
-                    bonus_pct = post.forum_profile.forum_rank.bonus_percentage
-                    influence_bonus = base_points * (float(bonus_pct) / 100)
-                    total_points = base_points + influence_bonus
-                    post.base_points = base_points
-                    post.influence_bonus_pct = bonus_pct
-                    post.influence_bonus_pts = influence_bonus
-                    post.total_points = total_points
-                    post.credited = True
+                if uptime_pct < pct_threshold:
+                    post.credited = False
                     post.save()
         # Call the task to compute the ranking
         compute_ranking.delay()
@@ -314,7 +351,7 @@ def send_email_confirmation(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Email Confirmation',
-        ReplyTo='noreply@volentixlabs.com',
+        ReplyTo=settings.POSTMARK_SENDER_EMAIL,
         HtmlBody=html)
     return mail
 
@@ -331,7 +368,7 @@ def send_deletion_confirmation(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Account Deletion Confirmation',
-        ReplyTo='noreply@volentixlabs.com',
+        ReplyTo=settings.POSTMARK_SENDER_EMAIL,
         HtmlBody=html)
     return mail
 
@@ -348,7 +385,7 @@ def send_email_change_confirmation(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Email Change Confirmation',
-        ReplyTo='noreply@volentixlabs.com',
+        ReplyTo=settings.POSTMARK_SENDER_EMAIL,
         HtmlBody=html)
     return mail
 
@@ -356,7 +393,7 @@ def send_email_change_confirmation(email, name, code):
 @shared_task(queue='mails')
 def send_reset_password(email, name, code):
     context = {
-        'domain': settings.VENUE_DOMAIN,
+        'domain': settings.VENUE_FRONTEND,
         'name': name,
         'code': code
     }
@@ -365,6 +402,6 @@ def send_reset_password(email, name, code):
         From=settings.POSTMARK_SENDER_EMAIL,
         To=email,
         Subject='Account Password Reset',
-        ReplyTo='noreply@volentixlabs.com',
+        ReplyTo=settings.POSTMARK_SENDER_EMAIL,
         HtmlBody=html)
     return mail

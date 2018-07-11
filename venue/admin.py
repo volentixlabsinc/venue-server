@@ -13,7 +13,7 @@ from django.contrib import admin
 
 class FieldForumProfileFilter(SimpleListFilter):
     title = 'active_forum_profile'
-    parameter_name = 'forum_profile'
+    parameter_name = 'forum_profile' 
 
     def lookups(self, request, model_admin):
         forum_profiles = set([x.forum_profile for x in model_admin.model.objects.all()])
@@ -94,7 +94,7 @@ admin.site.register(ForumPost, ForumPostAdmin)
 
 
 class RankingAdmin(admin.ModelAdmin):
-    list_display = ['user_profile', 'rank', 'timestamp']
+    list_display = ['user_profile', 'rank', 'batch', 'timestamp']
 
 
 admin.site.register(Ranking, RankingAdmin)

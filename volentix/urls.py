@@ -22,7 +22,7 @@ from venue.views import (
     get_languages, generate_2fa_uri, verify_2fa_code, disable_2fa,
     get_notifications, dismiss_notification, create_forum_profile,
     get_forum_sites, get_forum_profiles, get_signatures, get_points_breakdown,
-    confirm_email_change
+    confirm_email_change, trigger_data_update, check_task_status, logout_user
 )
 from rest_framework.documentation import include_docs_urls
 from django.views.static import serve
@@ -41,6 +41,7 @@ urlpatterns = [
     )),
 
     url(r'^api/authenticate/', authenticate),
+    url(r'^api/logout/', logout_user),
 
     url(r'^api/create/signature/', save_signature),
     url(r'^api/create/user/', create_user),
@@ -79,10 +80,12 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += [
-        url(r'^media/(?P<path>.*)$', serve, {
-            'document_root': settings.MEDIA_ROOT
-        }),
-        url(r'^static/(?P<path>.*)$', serve, {
-            'document_root': settings.STATIC_ROOT
-        })
+        # url(r'^media/(?P<path>.*)$', serve, {
+        #    'document_root': settings.MEDIA_ROOT
+        #}),
+        #url(r'^static/(?P<path>.*)$', serve, {
+        #    'document_root': settings.STATIC_ROOT
+        #}),
+        url(r'^api/debug/trigger-data-update/', trigger_data_update),
+        url(r'^api/debug/check-task-status/', check_task_status)
     ]

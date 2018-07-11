@@ -1,6 +1,6 @@
 """
 Volentix VENUE
-View functions
+View functions 
 """
 
 from operator import itemgetter
@@ -10,17 +10,18 @@ import pyotp
 import coreschema
 import coreapi
 from django.shortcuts import redirect
-from hashids import Hashids
 from constance import config
+from celery.result import AsyncResult
 from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.models import User
 from django.conf import settings
+from knox.settings import CONSTANTS as KNOX_CONSTANTS
 from django.db.models import Sum
 from venue.utils import encrypt_data, decrypt_data
 from rest_framework import status
-from rest_framework.authtoken.models import Token
+from knox.models import AuthToken
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, schema
 from rest_framework import serializers
@@ -30,14 +31,18 @@ from rest_framework.schemas import AutoSchema
 from .tasks import (verify_profile_signature, get_user_position, update_data,
                     send_email_confirmation, send_deletion_confirmation,
                     send_email_change_confirmation, send_reset_password,
-                    set_scraping_rate)
+                    set_scraping_rate, update_data)
 from .models import (UserProfile, ForumSite, ForumProfile, Notification, ForumPost,
                      Language, Signature, ForumUserRank, compute_total_points)
 from .utils import RedisTemp
+import shortuuid
 
 
-# Instantiate a Hashids instance to be used later
-hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
+def generate_token_salt(user):
+    token = AuthToken.objects.create(user=user)
+    token_key = token[:KNOX_CONSTANTS.TOKEN_KEY_LENGTH]
+    token_obj = AuthToken.objects.get(token_key=token_key)
+    return token_obj.salt
 
 
 # Function that converts points to percentages
@@ -162,16 +167,15 @@ def authenticate(request):
                     error_code = 'email_verification_required'
                     resp_status = status.HTTP_403_FORBIDDEN
                 if proceed:
-                    token, created = Token.objects.get_or_create(user=user)
-                    del created
+                    token = AuthToken.objects.create(user=user)
                     user.last_login = timezone.now()
                     user.save()
                     user_profile = user.profiles.first()
                     response = {
                         'success': True,
-                        'token': token.key,
+                        'token': token,
                         'username': user.username,
-                        'email': token.user.email,
+                        'email': user.email,
                         'user_profile_id': user_profile.id,
                         'email_confirmed': user_profile.email_confirmed,
                         'language': user_profile.language.code
@@ -187,6 +191,30 @@ def authenticate(request):
     if not response['success']:
         response['error_code'] = error_code
     return Response(response, status=resp_status)
+
+
+# ---------------
+# Logout endpoint
+# ---------------
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def logout_user(request):
+    """ Logs out a user
+
+    ### Response
+
+    * Status code 200
+
+            {'success': <boolean: true>}
+
+        * `success` - Whether the user has been logged out or not
+
+    * Status code 401 (When logout fails)
+    """
+    request._auth.delete()
+    return Response({'success': True})
 
 
 # -------------------------
@@ -284,38 +312,47 @@ def create_user(request):
     * Status code 201
 
             {
-                "status": <string: "success">,
+                "success": <boolean: true>,
                 "user": {
                     "username": <string>,
                     "email": <string>
                 }
             }
 
-        * `status` - Status of creating the user: `success` or `error`
+        * `success` - Whether creation of user succeeded or not
         * `user` - An array containing user details
         * `username` - User's username
         * `email` - User's email
-        * `token` - Authentication token
 
-    * Status code 400
+    * Status code 422 (When the create request cannot be processed)
 
             {
-                "status": <string: "error">,
+                "success": <boolean: false>,
                 "message": <string>
             }
 
-        * `message` - Error message
+        * `message` - Error message. Possible values:
+            - not_whitelisted
+            - username_too_long
+            - user_already_exists
+
+    * Status code 403 (When the user is not allowed to register)
     """
     data = request.data
     data['email'] = data['email'].lower()
     user_check = User.objects.filter(email=data['email'])
-    response = {}
+    response = {'success': False}
     proceed = True
     if config.CLOSED_BETA_MODE:
         if not data['email'] in config.SIGN_UP_WHITELIST.splitlines():
             proceed = False
-            response['error_code'] = 'not_whitelisted'
+            response['message'] = 'not_whitelisted'
             resp_status = status.HTTP_403_FORBIDDEN
+    if data.get('username'):
+        if len(data['username']) > 25:
+            proceed = False
+            response['message'] = 'username_too_long'
+            resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
     if proceed:
         try:
             language = data['language']
@@ -325,30 +362,29 @@ def create_user(request):
                 receive_emails = data['receive_emails']
                 del data['receive_emails']
             if user_check.exists():
-                response['status'] = 'exists'
-                user = user_check.first()
+                response['message'] = 'user_already_exists'
+                # user = user_check.first()
+                resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
             else:
                 user = User.objects.create_user(**data)
-                response['status'] = 'created'
-            user_data = {
-                'username': user.username,
-                'email': user.email
-            }
-            response['user'] = user_data
-            user_profile, created = UserProfile.objects.get_or_create(
-                user=user
-            )
-            del created
-            user_profile.receive_emails = receive_emails
-            user_profile.language = Language.objects.get(code=language)
-            user_profile.save()
-            # Send confirmation email
-            code = hashids.encode(int(user.id))
-            send_email_confirmation.delay(user.email, user.username, code)
-            response['status'] = 'success'
-            resp_status = status.HTTP_200_OK
+                user_data = {
+                    'username': user.username,
+                    'email': user.email
+                }
+                response['user'] = user_data
+                user_profile, created = UserProfile.objects.get_or_create(
+                    user=user
+                )
+                del created
+                user_profile.receive_emails = receive_emails
+                user_profile.language = Language.objects.get(code=language)
+                user_profile.save()
+                # Send confirmation email
+                token_salt = generate_token_salt(user)
+                send_email_confirmation.delay(user.email, user.username, token_salt)
+                response['success'] = True
+                resp_status = status.HTTP_200_OK
         except Exception as exc:
-            response['status'] = 'error'
             response['message'] = str(exc)
             resp_status = status.HTTP_400_BAD_REQUEST
     return Response(response, status=resp_status)
@@ -378,12 +414,13 @@ def confirm_email(request):
 
     ### Response
 
-    * Status code 302 (When email is confirmed)
+    * Status code 301 (When email is confirmed)
 
         Redirects to `<domain>/#/?email_confirmed=1`
 
     * Status code 404
             {
+                "success": <boolean: false>,
                 "message": <string: "not_found">
             }
     
@@ -392,15 +429,15 @@ def confirm_email(request):
     """
     code = request.query_params.get('code')
     try:
-        user_id, = hashids.decode(code)
-        user_profile = UserProfile.objects.get(user_id=user_id)
-    except (ValueError, UserProfile.DoesNotExist):
+        token = AuthToken.objects.get(salt=code)
+        user_profile = UserProfile.objects.get(user=token.user)
+        user_profile.email_confirmed = True
+        user_profile.save()
+    except AuthToken.DoesNotExist:
         return Response(
-            {'message': 'not_found'},
+            {'success': False, 'message': 'not_found'},
             status=status.HTTP_404_NOT_FOUND
         )
-    user_profile.email_confirmed = True
-    user_profile.save()
     return redirect('%s/login?email_confirmed=1' % settings.VENUE_FRONTEND)
 
 
@@ -478,24 +515,25 @@ def check_profile(request):
     }
     resp_status = status.HTTP_404_NOT_FOUND
     info = get_user_position(forum.id, data.get('forum_user_id'), user.id)
-    if info['status_code'] == 200 and info['position']:
-        resp_status = status.HTTP_200_OK
-        response['position'] = info['position']
-        forum_rank = ForumUserRank.objects.get(
-            forum_site=forum,
-            name__iexact=info['position'].strip()
-        )
-        response['position_allowed'] = forum_rank.allowed
-        response['forum_user_id'] = info['forum_user_id']
-        response['found'] = True
-        response['exists'] = info['exists']
-        if info['exists']:
-            response['verified'] = info['verified']
-            response['own'] = info['own']
-            response['active'] = info['active']
-            response['with_signature'] = info['with_signature']
-            response['forum_profile_id'] = info['forum_profile_id']
-    response['status_code'] = info['status_code']
+    if info['found']:
+        if info['status_code'] == 200 and info['position']:
+            resp_status = status.HTTP_200_OK
+            response['position'] = info['position']
+            forum_rank = ForumUserRank.objects.get(
+                forum_site=forum,
+                name__iexact=info['position'].strip()
+            )
+            response['position_allowed'] = forum_rank.allowed
+            response['forum_user_id'] = info['forum_user_id']
+            response['found'] = True
+            response['exists'] = info['exists']
+            if info['exists']:
+                response['verified'] = info['verified']
+                response['own'] = info['own']
+                response['active'] = info['active']
+                response['with_signature'] = info['with_signature']
+                response['forum_profile_id'] = info['forum_profile_id']
+        response['status_code'] = info['status_code']
     return Response(response, status=resp_status)
 
 
@@ -710,11 +748,13 @@ def get_stats(request):
                 'forumUserRank': fp.forum_rank.name,
                 'rankBonusPercentage': fp.forum_rank.bonus_percentage,
                 'numPosts': fp.total_posts,
-                'totalPoints': fp.total_points
+                'totalPoints': fp.total_points,
+                'VTX_Tokens': 0
             }
-            pct_contrib = float(fp.total_points) / global_total_pts
-            fp_tokens = pct_contrib * config.VTX_AVAILABLE
-            fp_data['VTX_Tokens'] = int(round(fp_tokens, 0))
+            if global_total_pts:
+                pct_contrib = float(fp.total_points) / global_total_pts
+                fp_tokens = pct_contrib * config.VTX_AVAILABLE
+                fp_data['VTX_Tokens'] = int(round(fp_tokens, 0))
             profile_stats.append(fp_data)
         stats['profile_level'] = profile_stats
         # --------------------------
@@ -738,7 +778,10 @@ def get_stats(request):
         userlevel_stats['total_posts'] = user_profile.get_num_posts()['total']
         total_points = user_profile.total_points
         userlevel_stats['total_points'] = total_points
-        pct_contrib = total_points / global_total_pts
+        if global_total_pts:
+            pct_contrib = total_points / global_total_pts
+        else:
+            pct_contrib = 0
         userlevel_stats['total_points_pct'] = int(round(pct_contrib * 100, 0))
         userlevel_stats['total_tokens'] = user_profile.total_tokens
         userlevel_stats['overall_rank'] = user_profile.get_ranking()
@@ -848,10 +891,10 @@ def get_leaderboard_data(request):
         * `value` - Number of users for the forum
     """
     response = {}
-    user_profiles = UserProfile.objects.all()
+    user_profiles = UserProfile.objects.filter(email_confirmed=True)
     leaderboard_data = []
     for user_profile in user_profiles:
-        fps = user_profile.forum_profiles.filter(active=True)
+        fps = user_profile.forum_profiles.filter(active=True, verified=True)
         if fps.count():
             user_data = {
                 'username': user_profile.user.username,
@@ -861,19 +904,18 @@ def get_leaderboard_data(request):
                 'total_tokens': user_profile.total_tokens
             }
             leaderboard_data.append(user_data)
+    # Get site-wide stats
+    users_with_fp = [x for x in user_profiles if x.with_forum_profile]
+    response['sitewide'] = {
+        'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
+        'total_users': len(users_with_fp),
+        'total_posts': int(sum([x.total_posts for x in users_with_fp])),
+        'total_points': int(sum([x.total_points for x in users_with_fp]))
+    }
     # Order according to amount of tokens
     if leaderboard_data:
         leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
         response['rankings'] = leaderboard_data
-        users = UserProfile.objects.filter(email_confirmed=True)
-        users_with_fp = [x.id for x in users if x.with_forum_profile]
-        # Get site-wide stats
-        response['sitewide'] = {
-            'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
-            'total_users': len(users_with_fp),
-            'total_posts': int(sum([x.total_posts for x in users])),
-            'total_points': int(sum([x.total_points for x in users]))
-        }
         if request.user.is_anonymous():
             response['userstats'] = {}
         else:
@@ -883,7 +925,6 @@ def get_leaderboard_data(request):
                 'overall_rank': user_profile.get_ranking(),
                 'total_tokens': int(round(total_tokens, 0))
             }
-
     # Generate forum stats
     forum_stats = {
         'posts': [],
@@ -955,11 +996,11 @@ def delete_account(request):
     response = {'success': False}
     if request.method == 'POST':
         user = request.user
-        code = hashids.encode(int(user.id))
+        token_salt = generate_token_salt(user)
         send_deletion_confirmation.delay(
             user.email,
             user.username,
-            code
+            token_salt
         )
         response['success'] = True
         return Response(response, status=status.HTTP_202_ACCEPTED)
@@ -967,10 +1008,9 @@ def delete_account(request):
         code = request.query_params.get('code')
         if code:
             try:
-                user_id, = hashids.decode(code)
-                User.objects.filter(id=user_id).delete()
+                token = AuthToken.objects.get(salt=code)
                 return redirect('%s/#/?account_deleted=1' % settings.VENUE_FRONTEND)
-            except (ValueError, User.DoesNotExist):
+            except AuthToken.DoesNotExist:
                 response['message'] = 'wrong_code'
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1031,12 +1071,12 @@ def change_email(request):
         response['message'] = 'email_exists'
         resp_status = status.HTTP_302_FOUND
     else:
-        code = hashids.encode(int(user.id))
+        token_salt = generate_token_salt(user)
         rtemp.store(code, data['email'])
         send_email_change_confirmation.delay(
             data['email'],
             user.username,
-            code
+            token_salt
         )
         response['success'] = True
         resp_status = status.HTTP_202_ACCEPTED
@@ -1084,18 +1124,18 @@ def confirm_email_change(request):
     code = request.query_params.get('code')
     response = {'success': False}
     try:
-        user_id, = hashids.decode(code)
+        token = AuthToken.objects.get(salt=code)
         new_email = rtemp.retrieve(code)
         if code and new_email:
             try:
-                User.objects.filter(id=user_id).update(email=new_email)
+                User.objects.filter(id=token.user.id).update(email=new_email)
                 rtemp.remove(code)
                 return redirect('%s/#/settings/?updated_email=1' % settings.VENUE_FRONTEND)
             except User.DoesNotExist:
                 response['error_code'] = 'user_not_found'
         else:
             response['error_code'] = 'expired_code'
-    except ValueError:
+    except AuthToken.DoesNotExist:
         response['error_code'] = 'wrong_code'
     return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1170,10 +1210,16 @@ def change_username(request):
 CHANGE_PASSWORD_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
-            'password',
+            'old_password',
             required=True,
             location='form',
-            schema=coreschema.String(description='Password')
+            schema=coreschema.String(description='Old password')
+        ),
+        coreapi.Field(
+            'new_password',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='New password')
         )
     ]
 )
@@ -1183,25 +1229,38 @@ CHANGE_PASSWORD_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(CHANGE_PASSWORD_SCHEMA)
 def change_password(request):
-    """ Changes user's password
+    """ Sets a new password given the old password
 
     ### Response
 
     * Status code 200
 
             {
-                "success": <boolean>
+                "success": <boolean: true>
             }
 
         * `success` - Whether the change request succeeded or not
+    
+    * Status code 400 (When old password is incorrect)
+
+            {
+                "success": <boolean: false>,
+                "message": <string: "wrong_old_password">
+            }
     """
     data = request.data
     response = {}
     user = User.objects.get(id=request.user.id)
-    user.set_password(data['password'])
-    user.save()
-    response['success'] = True
-    return Response(response)
+    if user.check_password(data.get('old_password')):
+        user.set_password(data.get('new_password'))
+        user.save()
+        response['success'] = True
+        resp_status = status.HTTP_200_OK
+    else:
+        response['success'] = False
+        response['message'] = 'wrong_old_password'
+        resp_status = status.HTTP_400_BAD_REQUEST
+    return Response(response, status=resp_status)
 
 
 # ------------------------
@@ -1259,75 +1318,99 @@ RESET_PASSWORD_SCHEMA = AutoSchema(
             required=True,
             location='form',
             schema=coreschema.String(
-                description='Action can either be `trigger` or `set_password`'
+                description='Action can either be `request`, `confirm`, or `change`'
+            )
+        ),
+        coreapi.Field(
+            'email',
+            required=False,
+            location='form',
+            schema=coreschema.String(
+                description='Registered email of the user'
             )
         ),
         coreapi.Field(
             'code',
-            required=True,
+            required=False,
             location='form',
             schema=coreschema.String(description='Code')
+        ),
+        coreapi.Field(
+            'password',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='New password')
         )
     ]
 )
 
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 @schema(RESET_PASSWORD_SCHEMA)
 def reset_password(request):
     """ Resets user's password
 
     ### Response
 
-    **For `POST` Request with `action == "trigger"`**
+    **For `action == "request"`**
 
-    The request for this only requires `action` in the payload.
+    The request requires `email` in the payload.
 
-    * Status code 202 (When password reset is accepted for processing)
+    * Status code 202 (When the reset request is accepted for processing)
 
             {
                 "success": <boolean>
             }
 
-        * `success` - Whether the change request succeeded or not
+        * `success` - Whether the change request is accepted or not
 
-    **For `POST` Request with `action == "set_password"`**
+    * Status code 404 (When the email is not found)
 
-    The request for this requires both `action` and `password` in the payload.
+            {
+                "success": <boolean: false>,
+                "message": <string: "user_not_found">
+            }
+    
+    **For `action == "change"`**
 
-    * Status code 200 (When password is changed successfully)
+    The request requires the `code` and `password` in the payload.
+
+    * Status code 200 (When password has been changed)
 
             {
                 "success": <boolean: true>
             }
 
-    * Status code 400 (When password not changed due to wrong confirmation code)
+    * Status code 400 (When the code is not correct)
 
             {
                 "success": <boolean: false>,
-                "message": <string: "wrong_code">
+                "message": <string: "user_not_found">
             }
-
-        * `message` - Error message
     """
     response = {'success': False}
     data = request.data
-    user = request.user
-    if data['action'] == 'trigger':
-        code = hashids.encode(int(user.id))
-        send_reset_password.delay(user.email, user.username, code)
-        response['success'] = True
-        resp_status = status.HTTP_202_ACCEPTED
-    elif data['action'] == 'set_password':
+    if data['action'] == 'request':
         try:
-            user_id, = hashids.decode(data['code'])
-            user = User.objects.get(id=user_id)
+            user = User.objects.get(email=data['email'])
+            token_salt = generate_token_salt(user)
+            send_reset_password.delay(user.email, user.username, token_salt)
+            response['success'] = True
+            resp_status = status.HTTP_202_ACCEPTED
+        except User.DoesNotExist:
+            resp_status = status.HTTP_404_NOT_FOUND
+            response['message'] = 'user_not_found'
+    elif data['action'] == 'change':
+        try:
+            code = data['code']
+            token = AuthToken.objects.get(salt=code)
+            user = User.objects.get(id=token.user.id)
             user.set_password(data['password'])
             user.save()
             response['success'] = True
             resp_status = status.HTTP_200_OK
-        except (ValueError, User.DoesNotExist):
+            token.delete()
+        except AuthToken.DoesNotExist:
             response['message'] = 'wrong_code'
             resp_status = status.HTTP_400_BAD_REQUEST
     return Response(response, status=resp_status)
@@ -1384,7 +1467,10 @@ def get_signature_code(request):
             sig_code = forum_profile.signature.test_signature
         else:
             sig_code = forum_profile.signature.code
-        response['signature_code'] = inject_verification_code(sig_code, vcode)
+        if config.ENABLE_CLICK_TRACKING:
+            response['signature_code'] = inject_verification_code(sig_code, vcode)
+        else:
+            response['signature_code'] = sig_code
         response['success'] = True
         resp_status = status.HTTP_200_OK
     except ForumProfile.DoesNotExist:
@@ -1782,7 +1868,7 @@ def dismiss_notification(request):
 
 
 class ForumSiteSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.CharField()
     name = serializers.CharField(max_length=50)
 
 
@@ -1877,6 +1963,12 @@ def create_forum_profile(request):
                 "verified": <boolean>,
                 "id": <int>
             }
+
+    * Status code 400 (When the forum profile cannot be created)
+
+            {
+                "success": <boolean: false>,
+            }
     """
     data = request.data
     response = {'success': False}
@@ -1890,44 +1982,50 @@ def create_forum_profile(request):
         data['forum_user_id'],
         request.user.id
     )
-    profile_check = ForumProfile.objects.filter(
-        forum_user_id=info['forum_user_id'],
-        forum=forum
-    )
-    if profile_check.exists():
-        resp_status = status.HTTP_200_OK
-        response['exists'] = True
-        response['verified'] = False
-        response['id'] = profile_check.last().id
-        fps = profile_check.filter(active=True, verified=True)
-        fp = fps.last()
-        if fp and fp.signature:
-            response['verified'] = True
-    else:
-        rank, created = ForumUserRank.objects.get_or_create(
-            name=info['position'],
-            forum_site=forum
+    if info['found']:
+        profile_check = ForumProfile.objects.filter(
+            forum_user_id=info['forum_user_id'],
+            forum=forum
         )
-        del created
-        if rank.allowed or config.TEST_MODE:
-            resp_status = status.HTTP_201_CREATED
-            user_profile = UserProfile.objects.get(user=request.user)
-            fp_object = ForumProfile(
-                user_profile=user_profile,
-                forum_user_id=info['forum_user_id'],
-                forum_username=info['forum_user_name'],
-                forum=forum,
-                forum_rank=rank,
-                active=True
-            )
-            fp_object.save()
-            response['id'] = fp_object.id
-            response['success'] = True
-            # Trigger the task to adjust the scraping rate
-            set_scraping_rate.delay()
+        if profile_check.exists():
+            resp_status = status.HTTP_200_OK
+            response['exists'] = True
+            response['verified'] = False
+            response['id'] = profile_check.latest().id
+            fps = profile_check.filter(active=True, verified=True)
+            if fps.count():
+                fp = fps.latest()
+                if fp.signature:
+                    response['verified'] = True
         else:
-            resp_status = status.HTTP_403_FORBIDDEN
-            response['error_code'] = 'insufficient_forum_position'
+            rank, created = ForumUserRank.objects.get_or_create(
+                name=info['position'],
+                forum_site=forum
+            )
+            del created
+            if rank.allowed or config.TEST_MODE:
+                resp_status = status.HTTP_201_CREATED
+                user_profile = UserProfile.objects.get(user=request.user)
+                fp_object = ForumProfile(
+                    user_profile=user_profile,
+                    forum_user_id=info['forum_user_id'],
+                    forum_username=info['forum_user_name'],
+                    forum=forum,
+                    forum_rank=rank,
+                    active=True,
+                    verification_code=shortuuid.ShortUUID().random(length=8)
+                )
+                fp_object.save()
+                response['id'] = fp_object.id
+                response['success'] = True
+                # Trigger the task to adjust the scraping rate
+                set_scraping_rate.delay()
+            else:
+                resp_status = status.HTTP_403_FORBIDDEN
+                response['error_code'] = 'insufficient_forum_position'
+    else:
+        response['error_code'] = 'user_not_found_in_forum_site'
+        resp_status = status.HTTP_400_BAD_REQUEST
     return Response(response, status=resp_status)
 
 
@@ -2025,7 +2123,7 @@ def inject_verification_code(sig_code, verification_code):
     def repl(m):
         return '%s?vcode=%s' % (m.group(), verification_code)
     if 'http' in sig_code:
-        pattern = r'http[s]?://([a-z./-?=&])+'
+        pattern = r'http[s]?://([a-z.])*volentix([a-z./-?=&])+'
         return re.sub(pattern, repl, sig_code)
     elif 'link' in sig_code:
         return sig_code + '?vcode=' + verification_code
@@ -2124,9 +2222,19 @@ def get_signatures(request):
         signatures = Signature.objects.filter(
             forum_site_id=forum_id,
         )
-        if not config.TEST_MODE:
+        if not config.TEST_MODE and data.get('forum_user_rank'):
             signatures = signatures.filter(
                 user_ranks__name=data.get('forum_user_rank')
+            )
+    forum_profile = None
+    if data.get('forum_profile_id'):
+        forum_profile = ForumProfile.objects.get(
+            id=data.get('forum_profile_id')
+        )
+    if not data.get('forum_user_rank') and forum_profile:
+        if forum_profile.forum_rank:
+            signatures = signatures.filter(
+                user_ranks__in=[forum_profile.forum_rank]
             )
     if signatures.count():
         for sig in signatures:
@@ -2134,20 +2242,19 @@ def get_signatures(request):
                 sig_code = sig.test_signature
             else:
                 sig_code = sig.code
-            if data.get('forum_profile_id'):
-                forum_profile = ForumProfile.objects.get(
-                    id=data.get('forum_profile_id')
-                )
-            else:
+            if not forum_profile:
                 forum_profile = ForumProfile.objects.get(
                     id=fp_map[sig.id]
                 )
             verification_code = forum_profile.verification_code
-            sig.code = inject_verification_code(
-                sig_code,
-                verification_code
-            )
-            sig.image = '%s/media/%s' % (settings.VENUE_DOMAIN, sig.image)
+            if config.ENABLE_CLICK_TRACKING:
+                sig.code = inject_verification_code(
+                    sig_code,
+                    verification_code
+                )
+            else:
+                sig.code = sig_code
+            # sig.image = '%s/media/%s' % (settings.VENUE_DOMAIN, sig.image)
             sig.usage_count = sig.users.count()
             sig.verification_code = verification_code
             sig.forum_site_name = forum_profile.forum.name
@@ -2165,7 +2272,7 @@ def get_signatures(request):
 
 
 def build_bonus_points_data(rank, posts):
-    bonus_pct = posts.last().influence_bonus_pct
+    bonus_pct = posts.latest().influence_bonus_pct
     bonus_pts = posts.aggregate(Sum('influence_bonus_pts'))
     bonus_pts = bonus_pts['influence_bonus_pts__sum']
     data = {
@@ -2334,3 +2441,18 @@ def get_points_breakdown(request):
     except ForumSite.DoesNotExist:
         response = {'error_code': 'forum_site_not_found'}
         return Response(response, status.HTTP_400_BAD_REQUEST)
+
+
+# ------------------------
+# Debugging view functions
+# ------------------------
+
+
+def trigger_data_update(request):
+    update_data.delay()
+    return Response({'success': True})
+
+
+def check_task_status(request, task_id):
+    task = AsyncResult(task_id)
+    return Response({'status': task.status})

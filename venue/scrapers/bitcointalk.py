@@ -10,6 +10,10 @@ from dateutil import parser
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
+class ProfileDoesNotExist(Exception):
+    pass
+
+
 class ScraperError(Exception):
     pass
 
@@ -52,6 +56,7 @@ class BitcoinTalk(object):
         profile_url = self.base_url + '/index.php?action=profile;u='
         profile_url += str(user_id)
         response = requests.get(profile_url, headers=self.headers)
+        self.response_text = response.text
         self.status_code = response.status_code
         self.soup = BeautifulSoup(response.content, 'html.parser')
         if len(self.soup.select('div.cf-im-under-attack')) > 0:
@@ -67,6 +72,12 @@ class BitcoinTalk(object):
                 self.status_code = 200
             driver.close()
             driver.quit()
+        # Check if profile exists
+        body_area = self.soup.find('div', {'id': 'bodyarea'})
+        if body_area:
+            body_text = body_area.text
+            if 'The user whose profile you are trying to view does not exist.' in body_text:
+                raise ProfileDoesNotExist()
 
     def get_total_posts(self):
         row = self.soup.select('div#bodyarea tr')[4]
@@ -101,18 +112,6 @@ class BitcoinTalk(object):
         except IndexError:
             return ''
 
-    def verify_code(self, code, forum_profile_id, forum_user_id):
-        verified = False
-        if self.test:
-            if code.strip() == self.test_signature.strip():
-                verified = True
-        else:
-            hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
-            numbers = hashids.decode(code.strip())
-            if numbers == (forum_profile_id, int(forum_user_id)):
-                verified = True
-        return verified
-
     def verify_links(self,
                      scraped_links,
                      expected_links,
@@ -128,8 +127,11 @@ class BitcoinTalk(object):
                 links = []
                 for link in scraped_links:
                     try:
-                        clean_link, vcode = link.split('vcode=')
-                        vcode = vcode.split('&')[0]
+                        if 'vcode=' in link: 
+                            clean_link, vcode = link.split('vcode=')
+                            vcode = vcode.split('&')[0]
+                        else:
+                            clean_link = link
                         links.append(clean_link.replace('?', ''))
                     except ValueError:
                         pass
@@ -137,31 +139,54 @@ class BitcoinTalk(object):
                     verified = True
         return (verified, vcode)
 
-    def check_signature(self):
-        sig = self.soup.select('div#bodyarea tr')[26]
-        # Find links and check their integrity
-        links = sig.find_all('a')
-        if links:
-            links = [x.attrs['href'] for x in links]
-        else:
-            links = sig.text.strip().splitlines()
-        links_verified, vcode = self.verify_links(
-            links,
-            self.expected_links,
-            scraped_signature=sig.text
-        )
-        if vcode:
-            code_verified = self.verify_code(
-                vcode.strip(),
-                self.forum_profile_id,
-                self.forum_user_id
+    def check_signature(self, vcode=None):
+        sig = None
+        page_ok = False
+        if 'icons/profile_sm.gif' in self.response_text:
+            page_ok = True
+        try:
+            rows = self.soup.select('div#bodyarea tr')
+            found = False
+            for row in rows:
+                if 'Signature' in row.text.strip()[0:10]:
+                    found = True
+                    text_list = row.text.split()
+                    name_index = text_list.index('Signature:')
+                    sig = row
+                    break
+            if not found:
+                # raise ScraperError('Cannot find signature')
+                page_ok = False
+        except IndexError:
+            pass
+        if sig:
+            # Find links and check their integrity
+            links = sig.find_all('a')
+            if links:
+                links = [x.attrs['href'] for x in links]
+            else:
+                links = sig.text.strip().splitlines()
+            if links:
+                links = list(set(links))
+            else:
+                links = []
+            links_verified, scraped_vcode = self.verify_links(
+                links,
+                self.expected_links,
+                scraped_signature=sig.text
             )
-        else:
             code_verified = False
-        sig_found = False
-        if links_verified and code_verified:
-            sig_found = True
-        return sig_found
+            if vcode and scraped_vcode:
+                if vcode == scraped_vcode:
+                    code_verified = True
+            else:
+                code_verified = True
+            sig_found = False
+            if links_verified and code_verified:
+                sig_found = True
+        else:
+            sig_found = False
+        return (page_ok, sig_found)
 
     def _scrape_posts_page(self, soup, last_scrape=None):
         post_details = []
@@ -229,6 +254,7 @@ class BitcoinTalk(object):
 def verify_and_scrape(forum_profile_id,
                       forum_user_id,
                       expected_links,
+                      vcode=None,
                       test_mode=False,
                       test_signature=None):
     scraper = BitcoinTalk(test=test_mode, test_signature=test_signature)
@@ -236,9 +262,9 @@ def verify_and_scrape(forum_profile_id,
     scraper.get_profile(forum_user_id)
     username = scraper.get_username()
     position = scraper.get_user_position()
-    verified = scraper.check_signature()
+    page_ok, verified = scraper.check_signature(vcode=vcode)
     posts = scraper.get_total_posts()
-    data = (scraper.status_code, verified, posts, username, position)
+    data = (scraper.status_code, page_ok, verified, posts, username, position)
     return data
 
 
