@@ -28,7 +28,7 @@ SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '.volentix.com', '.volentix.io', '.venue.ninja', 'venue-service']
+ALLOWED_HOSTS = ['localhost', '.volentix.com', '.volentix.io', '.venue.ninja', 'venue-service','.dev.vlabs.ninja', '.vlabs.ninja']
 
 # Application definition
 

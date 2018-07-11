@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.6
 RUN apt-get update -y
 RUN pip install --upgrade pip
 RUN apt-get -y install postgresql libpq-dev postgresql-client postgresql-client-common libncurses5-dev git

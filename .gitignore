@@ -16,6 +16,7 @@ node_modules/
 .vscode/
 .pytest_cache/
 *.backup
+kube/dev.yml
 notes
 *-secret.yml
 generated

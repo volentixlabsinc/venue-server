@@ -1,8 +1,0 @@
-kind: Service
-apiVersion: v1
-metadata:
-  name: postgres-service
-  namespace: venue-{{namespace}}
-spec:
-  type: ExternalName
-  externalName: {{postgress-external-name}}

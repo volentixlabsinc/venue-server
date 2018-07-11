@@ -1,6 +1,6 @@
 """
 Volentix VENUE
-View functions
+View functions 
 """
 
 from operator import itemgetter
