@@ -249,8 +249,8 @@ if DEBUG:
     VENUE_DOMAIN = 'http://localhost:8000'
     VENUE_FRONTEND = 'http://localhost:3000'
 else:
-    VENUE_DOMAIN = config('VENUE_DOMAIN', default='http://demo.venue.ninja')
-    VENUE_FRONTEND = config('VENUE_FRONTEND', default='http://demo.venue.ninja')
+    VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.dev.vlabs.ninja')
+    VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.dev.vlabs.ninja')
     # VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.volentix.io')
     # VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.volentix.io')
 
