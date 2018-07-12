@@ -235,7 +235,6 @@ class ForumProfile(models.Model):
     last_page_status = JSONField(default=list)
 
     class Meta:
-        unique_together = ('forum', 'forum_user_id', 'verified')
         get_latest_by = 'date_updated'
 
     def __str__(self):

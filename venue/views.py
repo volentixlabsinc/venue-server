@@ -2002,12 +2002,6 @@ def create_forum_profile(request):
             resp_status = status.HTTP_200_OK
             response['exists'] = True
             response['verified'] = True
-            # response['id'] = profile_check.latest().id
-            # fps = profile_check.filter(active=True, verified=True)
-            # if fps.count():
-            #     fp = fps.latest()
-            #     if fp.signature:
-            #         response['verified'] = True
         else:
             rank, created = ForumUserRank.objects.get_or_create(
                 name=info['position'],
