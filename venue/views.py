@@ -418,7 +418,7 @@ def confirm_email(request):
 
         Redirects to `<domain>/#/?email_confirmed=1`
 
-    * Status code 404
+    * Status code 400
             {
                 "success": <boolean: false>,
                 "message": <string: "not_found">
@@ -436,7 +436,7 @@ def confirm_email(request):
     except AuthToken.DoesNotExist:
         return Response(
             {'success': False, 'message': 'not_found'},
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_400_BAD_REQUEST
         )
     return redirect('%s/login?email_confirmed=1' % settings.VENUE_FRONTEND)
 
@@ -494,7 +494,7 @@ def check_profile(request):
         * `exists` - Whether the profile exists in DB or not
         * `status_code` - Status code of the forum profile scraping request
 
-    * Status code 404 (when profile is not found)
+    * Status code 400 (when profile is not found)
 
             {
                 "found": <boolean: false>,
@@ -513,7 +513,7 @@ def check_profile(request):
         'found': False,
         'forum_id': data.get('forum_id')
     }
-    resp_status = status.HTTP_404_NOT_FOUND
+    resp_status = status.HTTP_400_BAD_REQUEST
     info = get_user_position(forum.id, data.get('forum_user_id'), user.id)
     if info['found']:
         if info['status_code'] == 200 and info['position']:
@@ -578,7 +578,7 @@ def save_signature(request):
         * `success` - Whether saving the signature succeeded or not
         * `task_id` - ID of background task that scraped the profile
 
-    * Status code 404
+    * Status code 400
 
             {
                 "success": <boolean: false>,
@@ -609,7 +609,7 @@ def save_signature(request):
     else:
         response['success'] = False
         response['message'] = 'signature_not_found'
-        resp_status = status.HTTP_404_NOT_FOUND
+        resp_status = status.HTTP_400_BAD_REQUEST
     return Response(response, status=resp_status)
 
 
@@ -1364,7 +1364,7 @@ def reset_password(request):
 
         * `success` - Whether the change request is accepted or not
 
-    * Status code 404 (When the email is not found)
+    * Status code 400 (When the email is not found)
 
             {
                 "success": <boolean: false>,
@@ -1398,7 +1398,7 @@ def reset_password(request):
             response['success'] = True
             resp_status = status.HTTP_202_ACCEPTED
         except User.DoesNotExist:
-            resp_status = status.HTTP_404_NOT_FOUND
+            resp_status = status.HTTP_400_BAD_REQUEST
             response['message'] = 'user_not_found'
     elif data['action'] == 'change':
         try:
@@ -1451,10 +1451,11 @@ def get_signature_code(request):
         * `success` - Whether the retrieve request succeeded or not
         * `signature_code` - The signature's BBCode
 
-    * Status code 404
+    * Status code 400
 
             {
-                "success": <boolean: false>
+                "success": <boolean: false>,
+                "message": <string: "forum_profile_not_found">
             }
 
     """
@@ -1474,7 +1475,8 @@ def get_signature_code(request):
         response['success'] = True
         resp_status = status.HTTP_200_OK
     except ForumProfile.DoesNotExist:
-        resp_status = status.HTTP_404_NOT_FOUND
+        resp_status = status.HTTP_400_BAD_REQUEST
+        response['message'] = 'forum_profile_not_found'
     return Response(response, status=resp_status)
 
 
@@ -1847,8 +1849,11 @@ def dismiss_notification(request):
     * Status code 400 (When the notification ID cannot be found)
 
             {
-                "success": <boolean: false>
+                "success": <boolean: false>,
+                "message": <string: "notification_not_found">
             }
+        
+        * `message` - Error message, when success is false
     """
     response = {'success': False}
     data = request.data
@@ -1858,7 +1863,8 @@ def dismiss_notification(request):
         response['success'] = True
         resp_status = status.HTTP_200_OK
     except Notification.DoesNotExist:
-        resp_status = status.HTTP_404_NOT_FOUND
+        resp_status = status.HTTP_400_BAD_REQUEST
+        response['message'] = 'notification_not_found'
     return Response(response, status=resp_status)
 
 
@@ -1902,8 +1908,11 @@ def get_forum_sites(request):
     * Status code 404 (When no forum sites were found)
 
             {
-                "success": <boolean: false>
+                "success": <boolean: false>,
+                "message": <string: "forum_sites_not_found">
             }
+
+        * `message` - Error message, when success is false
     """
     response = {'success': False}
     sites = ForumSite.objects.all()
@@ -1913,7 +1922,8 @@ def get_forum_sites(request):
         response['success'] = True
         resp_status = status.HTTP_200_OK
     else:
-        resp_status = status.HTTP_404_NOT_FOUND
+        resp_status = status.HTTP_400_BAD_REQUEST
+        response['message'] = 'forum_sites_not_found'
     return Response(response, status=resp_status)
 
 
@@ -2084,11 +2094,14 @@ def get_forum_profiles(request):
         * `id` - ID of the forum profile in the database
         * `forum_user_id` - ID of the user in the forum site
 
-    * Status code 404
+    * Status code 400
 
             {
-                "success": <boolean: false>
+                "success": <boolean: false>,
+                "message": <string: "forum_profiles_not_found">
             }
+
+        * `message` - Error message, when success if false
     """
     data = request.query_params
     response = {'success': False}
@@ -2109,7 +2122,8 @@ def get_forum_profiles(request):
         response['forum_profiles'] = serializer.data
         resp_status = status.HTTP_200_OK
     else:
-        resp_status = status.HTTP_404_NOT_FOUND
+        resp_status = status.HTTP_400_BAD_REQUEST
+        response['message'] = 'forum_profiles_not_found'
     return Response(response, status=resp_status)
 
 
