@@ -1995,18 +1995,19 @@ def create_forum_profile(request):
     if info['found']:
         profile_check = ForumProfile.objects.filter(
             forum_user_id=info['forum_user_id'],
+            verified=True,
             forum=forum
         )
         if profile_check.exists():
             resp_status = status.HTTP_200_OK
             response['exists'] = True
-            response['verified'] = False
-            response['id'] = profile_check.latest().id
-            fps = profile_check.filter(active=True, verified=True)
-            if fps.count():
-                fp = fps.latest()
-                if fp.signature:
-                    response['verified'] = True
+            response['verified'] = True
+            # response['id'] = profile_check.latest().id
+            # fps = profile_check.filter(active=True, verified=True)
+            # if fps.count():
+            #     fp = fps.latest()
+            #     if fp.signature:
+            #         response['verified'] = True
         else:
             rank, created = ForumUserRank.objects.get_or_create(
                 name=info['position'],
