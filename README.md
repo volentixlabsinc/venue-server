@@ -32,7 +32,7 @@
 On the `venue-server` base directory, run these commands in sequence:
 1. `docker-compose down`
 2. `docker-compose build web`
-3. `docker-compose up`
+3. `docker-compose up` 
 ```
 
 ### Deployment to remote server
