@@ -101,6 +101,10 @@ spec:
             value: CI_POSTGRES_NAME
           - name: POSTGRES_HOST
             value: postgres-service-dev
+          - name: VENUE_DOMAIN
+            value: https://venue-server.volentix.io
+          - name: VENUE_FRONTEND
+            value: https://venue-server.volentix.io
           - name: REDIS_HOST
             valueFrom:
               secretKeyRef:
