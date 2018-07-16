@@ -53,3 +53,4 @@ Note: This only works in Ubuntu/Unix machines because `fab sync` command uses co
     1. Sync the source code to the server with command `fab sync`
     2. Run the application on the remote server with `fab run_app`
     3. Open the site in the browser: https://venue.volentix.com
+

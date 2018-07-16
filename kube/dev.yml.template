@@ -101,6 +101,10 @@ spec:
             value: CI_POSTGRES_NAME
           - name: POSTGRES_HOST
             value: postgres-service-dev
+          - name: VENUE_DOMAIN
+            value: https://venue-server.volentix.io
+          - name: VENUE_FRONTEND
+            value: https://venue-server.volentix.io
           - name: REDIS_HOST
             valueFrom:
               secretKeyRef:
@@ -142,7 +146,7 @@ metadata:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   rules:
-  - host: venue.dev.vlabs.ninja
+  - host: venue-server.volentix.io
     http:
       paths:
       - path: /api
