@@ -1072,7 +1072,7 @@ def change_email(request):
         resp_status = status.HTTP_302_FOUND
     else:
         token_salt = generate_token_salt(user)
-        rtemp.store(code, data['email'])
+        rtemp.store(token_salt, data['email'])
         send_email_change_confirmation.delay(
             data['email'],
             user.username,

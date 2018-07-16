@@ -71,10 +71,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             test_signature=forum_profile.signature.test_signature)
         status_code, page_ok, signature_found, total_posts, username, position = results
         del username
-        #if status_code == 200 and page_ok:
-        #    # Update the signature_found flag in forum profile
-        #    forum_profile.signature_found = signature_found
-        #    forum_profile.save()
         # Update forum profile page status
         status_list = forum_profile.last_page_status
         if len(status_list):
@@ -106,6 +102,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             tdiff_hours = tdiff.total_seconds() / 3600
             if tdiff_hours > config.MATURATION_PERIOD:
                 post.matured = True
+                post.date_matured = timezone.now()
                 post.save()
             else:
                 tracked_posts.append(post.message_id)
@@ -270,16 +267,18 @@ def compute_points(self, subtasks=None):
     # Proceed to compute the points
     if proceed:
         posts = ForumPost.objects.filter(
-            matured=True
+            monitoring=True
         )
         for post in posts:
             if post.valid_sig_minutes:
                 pct_threshold = config.UPTIME_PERCENTAGE_THRESHOLD
+                downtime_threshold_pct = (100 - pct_threshold)
                 maturation = config.MATURATION_PERIOD
-                uptime_pct = (post.valid_sig_minutes / (maturation * 60))
-                uptime_pct *= 100
-                if uptime_pct < pct_threshold:
+                downtime_pct = (post.invalid_sig_minutes / (maturation * 60))
+                downtime_pct *= 100
+                if downtime_pct >= downtime_threshold_pct:
                     post.credited = False
+                    post.monitoring = False
                     post.save()
         # Call the task to compute the ranking
         compute_ranking.delay()

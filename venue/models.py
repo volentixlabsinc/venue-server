@@ -286,6 +286,7 @@ class ForumPost(models.Model):
     message_id = models.CharField(max_length=20, db_index=True)
     unique_content_length = models.IntegerField()
     timestamp = models.DateTimeField(db_index=True)
+    monitoring = models.BooleanField(default=True)
     credited = models.BooleanField(default=True)
     matured = models.BooleanField(default=False)
     date_matured = models.DateTimeField(null=True, blank=True)
@@ -337,41 +338,43 @@ class ForumPost(models.Model):
             self.total_points = total_points
         # Track the valid and invalid minutes, if post is not matured yet
         if not self.matured:
-            try:
-                current = ForumPost.objects.filter(
-                    message_id=self.message_id).latest()
-                last_scrape = self.forum_profile.get_last_scrape()
-                last_scrape = last_scrape.replace(tzinfo=None)
-                post_timestamp = self.timestamp.replace(tzinfo=None)
-                if not self.forum_profile.last_scrape:
-                    last_scrape = post_timestamp
-                dt_now = timezone.now().replace(tzinfo=None)
-                tdiff = dt_now - last_scrape
-                tdiff_minutes = tdiff.total_seconds() / 60
-                # Get status list, previous and current
-                page_status_list = self.forum_profile.last_page_status
-                if len(page_status_list) == 1:
-                    previous_status = None
-                    current_status = page_status_list[-1]
-                elif len(page_status_list) == 2:
-                    previous_status, current_status = page_status_list
-                # Get details of the current status
-                status_code = current_status.get('status_code')
-                page_ok = current_status.get('page_ok')
-                signature_found = current_status.get('signature_found')
-                invalidate = False
-                if status_code == 200:
-                    if page_ok:
-                        if not signature_found:
-                            invalidate = True
-                if invalidate:
-                    self.invalid_sig_minutes = current.invalid_sig_minutes
-                    self.invalid_sig_minutes += tdiff_minutes
-                else:
-                    self.valid_sig_minutes = current.valid_sig_minutes
-                    self.valid_sig_minutes += tdiff_minutes
-            except ForumPost.DoesNotExist:
-                pass
+            # and the post is still being monitored
+            if self.monitoring:
+                try:
+                    current = ForumPost.objects.filter(
+                        message_id=self.message_id).latest()
+                    last_scrape = self.forum_profile.get_last_scrape()
+                    last_scrape = last_scrape.replace(tzinfo=None)
+                    post_timestamp = self.timestamp.replace(tzinfo=None)
+                    if not self.forum_profile.last_scrape:
+                        last_scrape = post_timestamp
+                    dt_now = timezone.now().replace(tzinfo=None)
+                    tdiff = dt_now - last_scrape
+                    tdiff_minutes = tdiff.total_seconds() / 60
+                    # Get status list, previous and current
+                    page_status_list = self.forum_profile.last_page_status
+                    if len(page_status_list) == 1:
+                        previous_status = None
+                        current_status = page_status_list[-1]
+                    elif len(page_status_list) == 2:
+                        previous_status, current_status = page_status_list
+                    # Get details of the current status
+                    status_code = current_status.get('status_code')
+                    page_ok = current_status.get('page_ok')
+                    signature_found = current_status.get('signature_found')
+                    invalidate = False
+                    if status_code == 200:
+                        if page_ok:
+                            if not signature_found:
+                                invalidate = True
+                    if invalidate:
+                        self.invalid_sig_minutes = current.invalid_sig_minutes
+                        self.invalid_sig_minutes += tdiff_minutes
+                    else:
+                        self.valid_sig_minutes = current.valid_sig_minutes
+                        self.valid_sig_minutes += tdiff_minutes
+                except ForumPost.DoesNotExist:
+                    pass
         super(ForumPost, self).save(*args, **kwargs)
 
 

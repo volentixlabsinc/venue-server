@@ -83,7 +83,7 @@ class ForumPostAdmin(admin.ModelAdmin):
         'user', 'forum_profile', 'message_id', 'timestamp',
         'unique_content_length', 'valid_sig_minutes', 'invalid_sig_minutes',
         'base_points', 'forum_rank', 'influence_bonus_pts', 'total_points',
-        'credited', 'matured'
+        'credited', 'matured', 'monitoring'
     ]
 
     def user(self, obj):
