@@ -270,16 +270,15 @@ def compute_points(self, subtasks=None):
             monitoring=True
         )
         for post in posts:
-            if post.valid_sig_minutes:
-                pct_threshold = config.UPTIME_PERCENTAGE_THRESHOLD
-                downtime_threshold_pct = (100 - pct_threshold)
-                maturation = config.MATURATION_PERIOD
-                downtime_pct = (post.invalid_sig_minutes / (maturation * 60))
-                downtime_pct *= 100
-                if downtime_pct >= downtime_threshold_pct:
-                    post.credited = False
-                    post.monitoring = False
-                    post.save()
+            pct_threshold = config.UPTIME_PERCENTAGE_THRESHOLD
+            downtime_threshold_pct = (100 - pct_threshold)
+            maturation = config.MATURATION_PERIOD
+            downtime_pct = (post.invalid_sig_minutes / (maturation * 60))
+            downtime_pct *= 100
+            if downtime_pct >= downtime_threshold_pct:
+                post.credited = False
+                post.monitoring = False
+                post.save()
         # Call the task to compute the ranking
         compute_ranking.delay()
     else:

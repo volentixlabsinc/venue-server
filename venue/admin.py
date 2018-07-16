@@ -85,6 +85,7 @@ class ForumPostAdmin(admin.ModelAdmin):
         'base_points', 'forum_rank', 'influence_bonus_pts', 'total_points',
         'credited', 'matured', 'monitoring'
     ]
+    ordering = ['-timestamp']
 
     def user(self, obj):
         return obj.user_profile.user.username
