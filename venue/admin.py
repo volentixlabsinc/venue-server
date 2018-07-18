@@ -80,12 +80,25 @@ admin.site.register(Notification, NotificationAdmin)
 
 class ForumPostAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'forum_profile', 'message_id', 'timestamp',
+        'message_id', 'user', 'forum_profile', 'post_link', 'timestamp',
         'unique_content_length', 'valid_sig_minutes', 'invalid_sig_minutes',
         'base_points', 'forum_rank', 'influence_bonus_pts', 'total_points',
         'credited', 'matured', 'monitoring'
     ]
     ordering = ['-timestamp']
+
+    list_filter = ['forum_profile__user_profile__user']
+
+    def post_link(self, obj):
+        forum_site = obj.forum_profile.forum.name
+        if 'bitcointalk' in forum_site.lower():
+            args = (obj.topic_id, obj.message_id, obj.message_id)
+            url = 'https://bitcointalk.org/index.php?topic=%s.msg%s#msg%s' % args
+            return '<a href="%s" target="_blank">%s</a>' % (url, obj.message_id)
+        else:
+            return obj.message_id
+
+    post_link.allow_tags = True
 
     def user(self, obj):
         return obj.user_profile.user.username

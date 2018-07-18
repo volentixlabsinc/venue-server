@@ -188,11 +188,11 @@ class BitcoinTalk(object):
             sig_found = False
         return (page_ok, sig_found)
 
-    def _scrape_posts_page(self, soup, last_scrape=None):
+    def _scrape_posts_page(self, soup, start=None):
         post_details = []
         posts = soup.select('.post')
         check_datetime = timezone.now()
-        last_scrape_reached = False
+        start_reached = False
         for post in posts:
             header = post.parent.parent.parent.select('tr')[0]
             title = header.select('td')[1]
@@ -209,7 +209,7 @@ class BitcoinTalk(object):
                 )
             else:
                 timestamp = parser.parse(date)
-            if timestamp >= last_scrape:
+            if timestamp >= start:
                 # if message_id in tracked_posts:
                 # Remove all the elements with inside quotes
                 for div in post.find_all("div", {'class': 'quoteheader'}):
@@ -227,8 +227,8 @@ class BitcoinTalk(object):
                 }
                 post_details.append(details)
             else:
-                last_scrape_reached = True
-        return (post_details, last_scrape_reached)
+                start_reached = True
+        return (post_details, start_reached)
 
     def scrape_posts(self, user_id, **kwargs):
         url = self.base_url + '/index.php?action=profile;u=%s;' % user_id
@@ -237,16 +237,16 @@ class BitcoinTalk(object):
         soup = BeautifulSoup(resp.content, 'html.parser')
         pages = soup.select('.navPages')
         pages = [x.attrs['href'] for x in pages]
-        posts, last_scrape_reached = self._scrape_posts_page(soup, **kwargs)
-        if not last_scrape_reached:
+        posts, start_reached = self._scrape_posts_page(soup, **kwargs)
+        if not start_reached:
             for page in pages:
                 resp = requests.get(page)
                 soup = BeautifulSoup(resp.content, 'html.parser')
-                posts, last_scrape_reached = self._scrape_posts_page(
+                posts, start_reached = self._scrape_posts_page(
                     soup,
                     **kwargs
                 )
-                if last_scrape_reached:
+                if start_reached:
                     break
         return posts
 

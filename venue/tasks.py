@@ -8,6 +8,7 @@ from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
 from operator import itemgetter
 from constance import config
+from datetime import timedelta
 from django.utils import timezone
 from celery.result import AsyncResult, ResultSet
 import re
@@ -107,12 +108,16 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             else:
                 tracked_posts.append(post.message_id)
         # Get the latest posts from this forum profile
+        # Latest means posts in the last 24 hours
+        posts_scrape_start = last_scrape - timedelta(hours=24)
         posts = scraper.scrape_posts(
             forum_profile.forum_user_id,
-            last_scrape=last_scrape.replace(tzinfo=None)
+            start=posts_scrape_start.replace(tzinfo=None)
         )
         # Save each new post
+        message_ids = []
         for post in posts:
+            message_ids.append(post['message_id'])
             post_check = ForumPost.objects.filter(
                 forum_profile=forum_profile,
                 topic_id=post['topic_id'],
@@ -129,6 +134,19 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
                     timestamp=post['timestamp']
                 )
                 forum_post.save()
+        # Check for post deletion
+        deleted_posts = ForumPost.objects.filter(
+            forum_profile=forum_profile,
+            matured=False,
+            timestamp__gte=posts_scrape_start
+        ).exclude(
+            message_id__in=message_ids
+        )
+        print(message_ids, deleted_posts)
+        for post in deleted_posts:
+            post.credited = False
+            post.monitoring = False
+            post.save()
         # Update tracked posts
         for post in tracked_posts:
             forum_post = ForumPost.objects.get(
