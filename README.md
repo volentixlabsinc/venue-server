@@ -23,7 +23,7 @@
 #### *5. Login as the test user*
     * The test user credentials is:<br>
     username: joemar.ct
-    password: default2018
+    password: default2018 
 
 
 ### Rebuilding the web image and recreating the containers
