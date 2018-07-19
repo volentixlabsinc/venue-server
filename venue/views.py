@@ -2369,7 +2369,7 @@ def get_points_breakdown(request):
     stats = {}
     # Get the forum site
     forum_id = request.query_params.get('forum_id')
-    if not forum_id:
+    if not forum_id or forum_id == '1':
         forum_site = ForumSite.objects.get(name='bitcointalk.org')
         forum_id = str(forum_site.id)
     try:
@@ -2380,13 +2380,14 @@ def get_points_breakdown(request):
             'maturation_period': config.MATURATION_PERIOD
         }
         # Get sum of all post points
-        sum_base_points = ForumPost.objects.aggregate(Sum('base_points'))
+        credited_posts = ForumPost.objects.filter(credited=True)
+        sum_base_points = credited_posts.aggregate(Sum('base_points'))
         sum_base_points = sum_base_points['base_points__sum']
         # Get sum of all bonus points
-        sum_bonus_points = ForumPost.objects.aggregate(Sum('influence_bonus_pts'))
+        sum_bonus_points = credited_posts.aggregate(Sum('influence_bonus_pts'))
         sum_bonus_points = sum_bonus_points['influence_bonus_pts__sum']
         stats['sitewide_stats'] = {
-            'total_posts': ForumPost.objects.count(),
+            'total_posts': credited_posts.count(),
             'total_post_points': sum_base_points,
             'total_bonus_points': sum_bonus_points
         }
@@ -2400,7 +2401,7 @@ def get_points_breakdown(request):
         credited_bonus_pts = credited.aggregate(Sum('influence_bonus_pts'))
         credited_bonus_pts = credited_bonus_pts['influence_bonus_pts__sum']
         # Get user's uncredited posts
-        uncredited = user_posts.filter(credited=False)
+        uncredited = user_posts.filter(credited=False, matured=False)
         uncredited_post_pts = uncredited.aggregate(Sum('base_points'))
         uncredited_post_pts = uncredited_post_pts['base_points__sum']
         uncredited_bonus_pts = uncredited.aggregate(Sum('influence_bonus_pts'))
