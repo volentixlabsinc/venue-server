@@ -45,6 +45,7 @@ Markdown==2.6.11
 MarkupSafe==1.0
 mccabe==0.6.1
 meld3==1.0.2
+model-mommy==1.6.0
 numpy==1.13.3
 olefile==0.44
 pandas==0.21.0
