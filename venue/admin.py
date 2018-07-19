@@ -80,14 +80,14 @@ admin.site.register(Notification, NotificationAdmin)
 
 class ForumPostAdmin(admin.ModelAdmin):
     list_display = [
-        'message_id', 'user', 'forum_profile', 'post_link', 'timestamp',
+        'user', 'forum_profile', 'post_link', 'timestamp',
         'unique_content_length', 'valid_sig_minutes', 'invalid_sig_minutes',
         'base_points', 'forum_rank', 'influence_bonus_pts', 'total_points',
         'credited', 'matured', 'monitoring'
     ]
     ordering = ['-timestamp']
 
-    list_filter = ['forum_profile__user_profile__user']
+    # list_filter = ['forum_profile__user_profile__user']
 
     def post_link(self, obj):
         forum_site = obj.forum_profile.forum.name

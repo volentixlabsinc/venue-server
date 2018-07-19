@@ -1,5 +1,19 @@
 version: '3'
 services:
+    redis:
+        image: 'bitnami/redis:latest'
+        expose:
+            - '6379'
+        environment:
+            REDIS_PASSWORD: '4e7a84d5'
+    postgres:
+        image: 'postgres'
+        expose:
+            - '5432'
+        environment:
+            POSTGRES_DB: 'venuepostgress'
+            POSTGRES_USER: 'venueadmin'
+            POSTGRES_PASSWORD : 'BxKkpaihl67B'
     web:
         build: .
         restart: 'always'
@@ -19,17 +33,3 @@ services:
         command: supervisord -c ./supervisord.conf --nodaemon
         environment:
             DEBUG: 1
-    redis:
-        image: 'bitnami/redis:latest'
-        expose:
-            - '6379'
-        environment:
-            REDIS_PASSWORD: '4e7a84d5'
-    postgres:
-        image: 'postgres'
-        expose:
-            - '5432'
-        environment:
-            POSTGRES_DB: 'venuepostgress'
-            POSTGRES_USER: 'venueadmin'
-            POSTGRES_PASSWORD : 'BxKkpaihl67B'
