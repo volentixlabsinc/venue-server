@@ -9,8 +9,12 @@
 
 > The backend services for the Venue, a community engagement platform for the Volentix community    
 
-Need A LONGER DESCRIPTION HERE!!!!!!!!!!
-?? Autonomous signature campaign tracking
+This Python server provides the services for Venue. Major dependencies are:
+  * [Python 3](https://www.python.org/)
+  * [Django](https://www.djangoproject.com/)
+  * [PostgreSQL](https://www.postgresql.org/)
+  * [Celery](http://www.celeryproject.org/) for asynchronous web scrapes 
+  * [Docker](https://www.docker.com/)
 
 ## Table of Contents
 
