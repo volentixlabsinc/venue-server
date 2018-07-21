@@ -1,12 +1,13 @@
 # venue-server
 
+[![CircleCI](https://circleci.com/gh/Volentix/venue-server.svg?style=shield&circle-token=3467557bd2b7ccdcfe95bc5025d053f70adc3292)](https://circleci.com/gh/Volentix/venue-server)
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-[![Semver](http://img.shields.io/SemVer/2.0.0.png)](http://semver.org/spec/v2.0.0.html)
-[![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
-[![MIT](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
+[![MIT](https://img.shields.io/github/license/mashape/apistatus.svg)](https://choosealicense.com/licenses/mit/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
 
-> The backend services for the Venue rewards and bounty tracker platform.    
+> The backend services for the Venue, a community engagement platform for the Volentix community    
 
 Need A LONGER DESCRIPTION HERE!!!!!!!!!!
 ?? Autonomous signature campaign tracking
@@ -27,7 +28,7 @@ Before running Venue, make sure you have the following installed on your machine
 
   * [Docker](https://www.docker.com/)
   * [Docker Compose](https://docs.docker.com/compose/)
-  * [Pyton 3](https://www.python.org/download/releases/3.0/)
+  * [Python 3](https://www.python.org/download/releases/3.0/)
   * [Pip](https://pip.pypa.io/en/stable/)
 
 ## Usage
@@ -89,12 +90,15 @@ http://localhost:8000/api/
 ## Maintainers
 
 [@shawnlauzon](https://github.com/shawnlauzon)
+[@joemarct](https://github.com/joemarct)
 
 ## Contribute
 
-See [the contribute file](contribute.md)!
+Venue is a project which was originally created by Volentix Labs, but is owned and
+maintained by the Volentix community. We actively support and appreciate anyone
+who wants to improve this or any project within the community.
 
-PRs accepted.
+See [CONTRIBUTING.md](https://www.github.com/Volentix/venue/CONTRIBUTING.md)
 
 Small note: If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
 
