@@ -278,3 +278,18 @@ REDIS_DB = redis.StrictRedis(
     password=REDIS_PASSWORD,
     decode_responses=True
 )
+
+LANGUAGES = (
+    'en',
+    'fr',
+    'jp',
+    'es',
+    'pt',
+    'ru',
+    'zh',
+    'ko',
+)
+
+LOCALE_PATHS = (
+    os.path.join(BASE_DIR, 'locale'),
+)

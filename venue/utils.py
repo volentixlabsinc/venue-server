@@ -1,8 +1,10 @@
-
-import rncryptor
 import base64
 import json
+from contextlib import contextmanager
+
 import redis
+import rncryptor
+from django.utils import translation
 
 
 class RedisTemp(object):
@@ -52,3 +54,10 @@ def decrypt_data(data, password):
     decoded_data = base64.b64decode(data)
     decrypted_data = cryptor.decrypt(decoded_data, password)
     return decrypted_data
+
+
+@contextmanager
+def translation_on(locale):
+    translation.activate(locale)
+    yield
+    translation.deactivate()
