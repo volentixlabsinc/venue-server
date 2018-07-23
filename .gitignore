@@ -21,3 +21,4 @@ notes
 *-secret.yml
 generated
 .coverage
+.tox/

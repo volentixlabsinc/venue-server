@@ -13,6 +13,7 @@ This Python server provides the services for Venue. Major dependencies are:
   * [Python 3](https://www.python.org/)
   * [Django](https://www.djangoproject.com/)
   * [PostgreSQL](https://www.postgresql.org/)
+  * [Redis](https://redis.io)
   * [Celery](http://www.celeryproject.org/) for asynchronous web scrapes 
   * [Docker](https://www.docker.com/)
 
@@ -20,8 +21,8 @@ This Python server provides the services for Venue. Major dependencies are:
 
 - [Install](#install)
 - [Usage](#usage)
-  - [Testing](#testing)
   - [Running](#running)
+  - [Testing](#testing)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
 - [License](#license)
@@ -33,26 +34,11 @@ Before running Venue, make sure you have the following installed on your machine
   * [Docker](https://www.docker.com/)
   * [Docker Compose](https://docs.docker.com/compose/)
   * [Python 3](https://www.python.org/download/releases/3.0/)
+  * [Redis](https://redis.io)
   * [Pip](https://pip.pypa.io/en/stable/)
 
 ## Usage
 
-### Testing
-
-In order to run the tests locally, you will need to set up the projects dependencies.
-```
-pip install -r requirements.txt
-```
-
-Add Supervisor direct from its Github repo master branch (supports Python 3):
-```
-pip install git+https://github.com/Supervisor/Supervisor
-```
-
-Run the tests.
-```
-pytest
-```
 ### Running
 
 Note that at the time of writting, the app does not have a set up for local development other than the docker compose script. Future iterations are expected to provide this capability.
@@ -84,6 +70,14 @@ http://localhost:8000/admin
 See the API docs and interactive explorer:
 ```
 http://localhost:8000/docs/
+```
+
+### Testing
+
+Run the tests
+```
+docker-compose up  # If the containers are not running yet
+docker exec -it venue-server_web_1 pytest
 ```
 
 ## Maintainers
