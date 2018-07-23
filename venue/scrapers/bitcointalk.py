@@ -1,6 +1,5 @@
 import time
 import requests
-from hashids import Hashids
 from bs4 import BeautifulSoup
 from django.conf import settings
 from selenium import webdriver

@@ -39,19 +39,19 @@ Before running Venue, make sure you have the following installed on your machine
 
 ### Testing
 
-In order to run the tests locally, you will need to set up the projects dependancies.
+In order to run the tests locally, you will need to set up the projects dependencies.
 ```
 pip install -r requirements.txt
 ```
 
-Add the Supervisor:
+Add Supervisor direct from its Github repo master branch (supports Python 3):
 ```
 pip install git+https://github.com/Supervisor/Supervisor
 ```
 
 Run the tests.
 ```
-?????? NEED THE COMMAND TO RUN THE TESTS
+pytest
 ```
 ### Running
 
@@ -75,20 +75,15 @@ http://localhost:8000/api/retrieve/leaderboard-data/
 ```
 
 Login to the admin:
-  * **User:** Admin
+  * **User:** admin
   * **Password:** default2018
 ```
 http://localhost:8000/admin
 ```
 
-See the docs:
+See the API docs and interactive explorer:
 ```
 http://localhost:8000/docs/
-```
-
-See the api:
-```
-http://localhost:8000/api/
 ```
 
 ## Maintainers
