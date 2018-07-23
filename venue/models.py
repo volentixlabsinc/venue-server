@@ -79,6 +79,7 @@ class Signature(models.Model):
 
 class Language(models.Model):
     """ Site-wide language selection options """
+    # TODO: Maybe we can use an Enum for a code field?
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=30)
     code = models.CharField(max_length=5)
@@ -90,6 +91,9 @@ class Language(models.Model):
 
 class UserProfile(models.Model):
     """ Custom internal user profiles """
+    # TODO: maybe change unique=True to OneToOneField to avoid
+    # extra manipulations and call just by key
+    # `user.profiles.language` ?
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, related_name='profiles', unique=True)
     language = models.ForeignKey(
