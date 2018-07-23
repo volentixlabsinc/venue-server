@@ -15,24 +15,12 @@ services:
       POSTGRES_USER: 'venueadmin'
       POSTGRES_PASSWORD: 'BxKkpaihl67B'
   web:
-    build: .
-    restart: 'always'
-    expose:
-    - '8000'
-    - '9000'
-    - '5555'
-    ports:
-    - '8000:8000'
-    - '9000:9000'
-    - '5555:5555'
-    volumes:
-    - '.:/code'
-    stdin_open: true
-    tty: true
+    image: venueserver:latest
+    restart: 'no'
+    stdin_open: false
+    tty: false
     entrypoint: '/entrypoint.sh'
     command: supervisord -c ./supervisord.conf --nodaemon
-    environment:
-      DEBUG: 1
     depends_on:
     - postgres
     - redis

@@ -1,30 +1,85 @@
 version: 2
 jobs:
-  build:
-    machine: true
+  tests_and_build:
+    docker:
+    - image: docker:17.09.0-ce
     steps:
-      - checkout
-      - run: |
-          TAG=v0.1.$CIRCLE_BUILD_NUM
-          docker build -t volentixlabs/venueserver:$TAG .
-          docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-          docker push volentixlabs/venueserver:$TAG
+    - checkout
+    - setup_remote_docker
+    - restore_cache:
+        keys:
+        - v1-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}
+        paths:
+        - /caches/venueserver.tar
+
+    - run:
+        name: Load Docker image layer cache
+        command: |
+          set +o pipefail
+          docker load -i /caches/venueserver.tar | true
+
+    - run:
+        name: Build application Docker image
+        command: |
+          docker build --cache-from=venueserver -t venueserver .
+
+    - run:
+        name: Install docker-compose
+        command: |
+          apk add --no-cache \
+            py-pip
+          pip install \
+            docker-compose==1.22.0
+
+    - run:
+        name: Run tests
+        command: |
+          docker-compose -f docker-compose-tests.yml run web pytest
+
+    - run:
+        name: Save Docker image layer cache
+        command: |
+          mkdir -p /caches
+          docker save -o /caches/venueserver.tar venueserver
+
+    - save_cache:
+        name: Save cache to the circle CI
+        key: v1-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}
+        paths:
+        - /caches/venueserver.tar
+
+    - run:
+        name: Tag image and push to server
+        command: |
+          if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              TAG=v0.1.$CIRCLE_BUILD_NUM
+              docker build -t volentixlabs/venueserver:$TAG .
+              docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+              docker push volentixlabs/venueserver:$TAGV
+          else
+            echo 'Skip current step for this branch'
+          fi
+
   deploy:
     docker:
-      - image: volentixlabs/aws-kube-deploy:v0.1.2
+    - image: volentixlabs/aws-kube-deploy:v0.1.2
     working_directory: ~/repo
     steps:
-      - checkout
-      - run: kops export kubecfg
-      - run: |
-          TAG=v0.1.$CIRCLE_PREVIOUS_BUILD_NUM
-          sed 's/CI_DB_SERVICE_ENDPOINT/'$CI_DB_SERVICE_ENDPOINT'/; s/CI_REDIS_HOST/'$CI_REDIS_HOST'/; s/CI_REDIS_PASSWORD/'$CI_REDIS_PASSWORD'/; s/IMAGE_VERSION/'$TAG'/; s/CI_POSTGRES_USER/'$CI_POSTGRES_USER'/; s/CI_POSTGRES_PASSWORD/'$CI_POSTGRES_PASSWORD'/; s/CI_POSTGRES_NAME/'$CI_POSTGRES_NAME'/' kube/dev.yml.template > kube/dev.yml
-          kubectl apply -f kube/dev.yml
+    - checkout
+    - run: kops export kubecfg
+    - run: |
+        TAG=v0.1.$CIRCLE_PREVIOUS_BUILD_NUM
+        sed 's/CI_DB_SERVICE_ENDPOINT/'$CI_DB_SERVICE_ENDPOINT'/; s/CI_REDIS_HOST/'$CI_REDIS_HOST'/; s/CI_REDIS_PASSWORD/'$CI_REDIS_PASSWORD'/; s/IMAGE_VERSION/'$TAG'/; s/CI_POSTGRES_USER/'$CI_POSTGRES_USER'/; s/CI_POSTGRES_PASSWORD/'$CI_POSTGRES_PASSWORD'/; s/CI_POSTGRES_NAME/'$CI_POSTGRES_NAME'/' kube/dev.yml.template > kube/dev.yml
+        kubectl apply -f kube/dev.yml
+
 workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build
-      - deploy:
-          requires:
-            - build
+    - tests_and_build
+    - deploy:
+        requires:
+        - tests_and_build
+        filters:
+          branches:
+            only: master

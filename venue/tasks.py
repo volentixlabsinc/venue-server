@@ -1,21 +1,23 @@
 from __future__ import absolute_import, unicode_literals
-from django.template.loader import get_template
-from django.conf import settings
+
+import re
+from datetime import timedelta
+from operator import itemgetter
+
+import rollbar
 from celery import shared_task
+from celery.result import AsyncResult, ResultSet
 from celery.signals import task_failure
+from constance import config
+from django.conf import settings
+from django.template.loader import get_template
+from django.utils import timezone
 from postmarker.core import PostmarkClient
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
-from operator import itemgetter
-from constance import config
-from datetime import timedelta
-from django.utils import timezone
-from celery.result import AsyncResult, ResultSet
-import re
 
-import rollbar
-from venue.models import (ForumSite, Signature, UserProfile, ForumProfile,
-                          Ranking, ForumPost, ForumUserRank)
+from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Ranking, Signature, UserProfile)
+from venue.utils import translation_on
 
 
 @task_failure.connect
@@ -204,7 +206,7 @@ def get_user_position(forum_site_id, profile_url, user_id):
         result['exists'] = fp_check.exists()
         if fp_check.exists():
             fp = fp_check.latest()
-            result['forum_profile_id'] = fp.id   
+            result['forum_profile_id'] = fp.id
             result['own'] = False
             if fp.user_profile.user.id == user_id:
                 result['own'] = True
@@ -253,7 +255,7 @@ def compute_ranking():
         batch_number = 1
     for rank, user in enumerate(user_points, 1):
         # Update user's ranking
-        user_points[rank-1]['rank'] = rank
+        user_points[rank - 1]['rank'] = rank
         ranking = Ranking(
             batch=batch_number,
             user_profile_id=user['user_profile_id'],
@@ -334,7 +336,7 @@ def set_scraping_rate(num_users=None):
     if rate_per_sec > 1:
         rate = '%s/s' % rate_per_sec
     else:
-        rate_per_min = num_users / (settings.USER_SCRAPE_INTERVAL/60)
+        rate_per_min = num_users / (settings.USER_SCRAPE_INTERVAL / 60)
         rate_per_min = int(round(rate_per_min, 2))
         if rate_per_min > 1:
             rate = '%s/m' % rate_per_min
@@ -356,68 +358,63 @@ postmark = PostmarkClient(
 
 
 @shared_task(queue='mails')
-def send_email_confirmation(email, name, code):
-    context = {
-        'domain': settings.VENUE_DOMAIN,
-        'name': name,
-        'code': code
-    }
-    html = get_template('venue/email_confirmation.html').render(context)
-    mail = postmark.emails.send(
-        From=settings.POSTMARK_SENDER_EMAIL,
-        To=email,
-        Subject='Email Confirmation',
-        ReplyTo=settings.POSTMARK_SENDER_EMAIL,
-        HtmlBody=html)
-    return mail
+def send_email_confirmation(email, name, code, language):
+    return send_email(
+        template='venue/email_confirmation.html',
+        email=email, name=name, code=code,
+        language=language, subject='Email Confirmation',
+    )
 
 
 @shared_task(queue='mails')
-def send_deletion_confirmation(email, name, code):
-    context = {
-        'domain': settings.VENUE_DOMAIN,
-        'name': name,
-        'code': code
-    }
-    html = get_template('venue/deletion_confirmation.html').render(context)
-    mail = postmark.emails.send(
-        From=settings.POSTMARK_SENDER_EMAIL,
-        To=email,
-        Subject='Account Deletion Confirmation',
-        ReplyTo=settings.POSTMARK_SENDER_EMAIL,
-        HtmlBody=html)
-    return mail
+def send_deletion_confirmation(email, name, code, language):
+    return send_email(
+        template='venue/deletion_confirmation.html',
+        email=email, name=name, code=code,
+        language=language, subject='Account Deletion Confirmation',
+    )
 
 
 @shared_task(queue='mails')
-def send_email_change_confirmation(email, name, code):
-    context = {
-        'domain': settings.VENUE_DOMAIN,
-        'name': name,
-        'code': code
-    }
-    html = get_template('venue/email_change.html').render(context)
-    mail = postmark.emails.send(
-        From=settings.POSTMARK_SENDER_EMAIL,
-        To=email,
-        Subject='Email Change Confirmation',
-        ReplyTo=settings.POSTMARK_SENDER_EMAIL,
-        HtmlBody=html)
-    return mail
+def send_email_change_confirmation(email, name, code, language):
+    return send_email(
+        template='venue/email_change.html',
+        email=email, name=name, code=code,
+        language=language, subject='Email Change Confirmation',
+    )
 
 
 @shared_task(queue='mails')
-def send_reset_password(email, name, code):
-    context = {
-        'domain': settings.VENUE_FRONTEND,
-        'name': name,
-        'code': code
-    }
-    html = get_template('venue/reset_password.html').render(context)
-    mail = postmark.emails.send(
-        From=settings.POSTMARK_SENDER_EMAIL,
-        To=email,
-        Subject='Account Password Reset',
-        ReplyTo=settings.POSTMARK_SENDER_EMAIL,
-        HtmlBody=html)
-    return mail
+def send_reset_password(email, name, code, language):
+    return send_email(
+        template='venue/reset_password.html',
+        email=email, name=name, code=code,
+        language=language, subject='Account Password Reset',
+    )
+
+
+def send_email(*, template, email, name, code, subject, language):
+    """
+    Generic function to send email
+    :param template: path to template to be used
+    :param email: email to send
+    :param name: user name
+    :param code:
+    :param subject: email subject
+    :param language: language code (en, fr, etc..)
+    :return:
+    """
+    with translation_on(language):
+        context = {
+            'domain': settings.VENUE_FRONTEND,
+            'name': name,
+            'code': code
+        }
+        html = get_template(template).render(context)
+        mail = postmark.emails.send(
+            From=settings.POSTMARK_SENDER_EMAIL,
+            To=email,
+            Subject=subject,
+            ReplyTo=settings.POSTMARK_SENDER_EMAIL,
+            HtmlBody=html)
+        return mail
