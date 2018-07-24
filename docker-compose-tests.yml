@@ -3,13 +3,13 @@ services:
   redis:
     image: 'bitnami/redis:latest'
     expose:
-    - '6379'
+      - '6379'
     environment:
       REDIS_PASSWORD: '4e7a84d5'
   postgres:
     image: 'postgres'
     expose:
-    - '5432'
+      - '5432'
     environment:
       POSTGRES_DB: 'venuepostgress'
       POSTGRES_USER: 'venueadmin'
@@ -22,5 +22,5 @@ services:
     entrypoint: '/entrypoint.sh'
     command: supervisord -c ./supervisord.conf --nodaemon
     depends_on:
-    - postgres
-    - redis
+      - postgres
+      - redis

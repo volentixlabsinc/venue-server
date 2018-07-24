@@ -523,7 +523,10 @@ def check_profile(request):
                 forum_site=forum,
                 name__iexact=info['position'].strip()
             )
-            response['position_allowed'] = forum_rank.allowed
+            allowed = False
+            if forum_rank.allowed or config.TEST_MODE:
+                allowed = True
+            response['position_allowed'] = allowed
             response['forum_user_id'] = info['forum_user_id']
             response['found'] = True
             response['exists'] = info['exists']

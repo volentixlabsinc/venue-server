@@ -118,6 +118,7 @@ class BitcoinTalk(object):
         verified = False
         vcode = None
         if self.test:
+            scraped_signature = scraped_signature.split('Signature:')[1]
             if self.test_signature.strip() == scraped_signature.strip():
                 verified = True
             return (verified, scraped_signature)
@@ -175,11 +176,14 @@ class BitcoinTalk(object):
                 scraped_signature=sig.text
             )
             code_verified = False
-            if vcode and scraped_vcode:
-                if vcode == scraped_vcode:
-                    code_verified = True
-            else:
+            if self.test:
                 code_verified = True
+            else:
+                if vcode and scraped_vcode:
+                    if vcode == scraped_vcode:
+                        code_verified = True
+                else:
+                    code_verified = True
             sig_found = False
             if links_verified and code_verified:
                 sig_found = True

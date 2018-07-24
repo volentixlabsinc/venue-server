@@ -144,7 +144,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         ).exclude(
             message_id__in=message_ids
         )
-        print(message_ids, deleted_posts)
         for post in deleted_posts:
             post.credited = False
             post.monitoring = False
