@@ -381,7 +381,7 @@ def create_user(request):
                 user_profile.save()
                 # Send confirmation email
                 token_salt = generate_token_salt(user)
-                send_email_confirmation.delay(user.email, user.username, token_salt)
+                send_email_confirmation.delay(user.email, user.username, token_salt, language)
                 response['success'] = True
                 resp_status = status.HTTP_200_OK
         except Exception as exc:
@@ -996,11 +996,16 @@ def delete_account(request):
     response = {'success': False}
     if request.method == 'POST':
         user = request.user
+        user_profile = user.profiles.select_related('language').first()
+
         token_salt = generate_token_salt(user)
+        language_code = user_profile.language.code
+
         send_deletion_confirmation.delay(
             user.email,
             user.username,
-            token_salt
+            token_salt,
+            language_code
         )
         response['success'] = True
         return Response(response, status=status.HTTP_202_ACCEPTED)
@@ -1073,10 +1078,12 @@ def change_email(request):
     else:
         token_salt = generate_token_salt(user)
         rtemp.store(token_salt, data['email'])
+        user_profile = user.profiles.select_related('language').first()
         send_email_change_confirmation.delay(
             data['email'],
             user.username,
-            token_salt
+            token_salt,
+            user_profile.language.code
         )
         response['success'] = True
         resp_status = status.HTTP_202_ACCEPTED
@@ -1392,9 +1399,15 @@ def reset_password(request):
     data = request.data
     if data['action'] == 'request':
         try:
-            user = User.objects.get(email=data['email'])
+            user = User.objects.select_related(
+                'profiles', 'profiles__language'
+            ).get(email=data['email'])
             token_salt = generate_token_salt(user)
-            send_reset_password.delay(user.email, user.username, token_salt)
+            user_profile = user.profiles.first()
+            send_reset_password.delay(
+                user.email, user.username, token_salt,
+                user_profile.language.code
+            )
             response['success'] = True
             resp_status = status.HTTP_202_ACCEPTED
         except User.DoesNotExist:
