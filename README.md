@@ -31,11 +31,8 @@ This Python server provides the services for Venue. Major dependencies are:
 
 Before running Venue, make sure you have the following installed on your machine.
 
-  * [Docker](https://www.docker.com/)
-  * [Docker Compose](https://docs.docker.com/compose/)
-  * [Python 3](https://www.python.org/download/releases/3.0/)
-  * [Redis](https://redis.io)
-  * [Pip](https://pip.pypa.io/en/stable/)
+  * [Docker](https://www.docker.com/) (tested with version 18.03.1-ce)
+  * [Docker Compose (if not installed along with Docker)](https://docs.docker.com/compose/) (tested with version 1.21.1)
 
 ## Usage
 
