@@ -22,6 +22,7 @@ This Python server provides the services for Venue. Major dependencies are:
 - [Install](#install)
 - [Usage](#usage)
   - [Running](#running)
+  - [Troubleshooting](#troubleshooting)
   - [Testing](#testing)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
@@ -68,6 +69,57 @@ See the API docs and interactive explorer:
 ```
 http://localhost:8000/docs/
 ```
+
+### Troubleshooting
+#### Postgres error
+
+If you get this error while trying to run docker on your machine:
+```
+postgres_1  | ERROR:  relation "venue_userprofile" does not exist at character 250
+```
+
+or
+
+```
+postgres_1  | ERROR:  relation "venue_forumprofile" does not exist at character 623
+```
+
+Try to use these commands:
+```
+docker-compose down -v
+docker-compose up postgres
+docker-compose up 
+```
+Docker should work well after this.
+
+#### Docker-Isolation error
+
+If you get this error (on Ubuntu):
+```
+ERROR: unable to insert jump to DOCKER-ISOLATION rule in FORWARD chain:  
+(iptables failed: iptables --wait -I FORWARD -j DOCKER-ISOLATION: 
+iptables v1.6.0: Couldn't load target `DOCKER-ISOLATION':
+No such file or directory
+```
+
+You have to run these commands:
+
+```
+iptables -t filter -F DOCKER
+iptables -t filter -X DOCKER
+iptables -t filter -F DOCKER-ISOLATION
+iptables -t filter -X DOCKER-ISOLATION
+iptables -t nat -F DOCKER
+iptables -t nat -X DOCKER-ISOLATION
+```
+Then you need to restart docker daemon:
+```
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+Run docker again after restarting the daemon and the error should be fixed.
+
 
 ### Testing
 
