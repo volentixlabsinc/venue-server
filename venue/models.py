@@ -7,6 +7,7 @@ from dateutil import parser
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
@@ -111,6 +112,20 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
+    @classmethod
+    def get_by_referral_code(cls, referral_code):
+        """
+        Method returns user profile by referral_code or None
+        :param referral_code: uuid generated with user creation
+        :return: None or UserProfile object
+        """
+        if referral_code is None:
+            return
+        try:
+            return cls.objects.get(referral_code=referral_code)
+        except (cls.DoesNotExist, ValidationError):
+            return
+
     @property
     def with_forum_profile(self):
         if self.forum_profiles.filter(active=True, verified=True).count() > 0:
@@ -187,7 +202,26 @@ class UserProfile(models.Model):
         points = 0
         for fp in self.forum_profiles.filter(active=True, verified=True):
             points += fp.total_points
+        points += self.referrals_points
         return round(float(points), 2)
+
+    @property
+    def referrals_points(self):
+        """
+        Points from the referrals links
+        :return: number of point from the referrals
+        """
+        active_referrals_count = self.referrals.filter(
+            forum_profiles__signature__isnull=False,
+            forum_profiles__active=True,
+            forum_profiles__verified=True,
+            forum_profiles__dummy=False
+        ).count()
+        active_referrals_count = (active_referrals_count
+                                  if config.MAX_REFERRALS > active_referrals_count
+                                  else config.MAX_REFERRALS)
+        points_for_referrals = active_referrals_count * config.POINTS_PER_REFERRALS
+        return round(float(points_for_referrals))
 
     @property
     def total_tokens(self):

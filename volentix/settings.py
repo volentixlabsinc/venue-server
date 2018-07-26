@@ -95,7 +95,9 @@ CONSTANCE_CONFIG = {
     'UPTIME_PERCENTAGE_THRESHOLD': (90, 'Percentage of uptime required'),
     'CLOSED_BETA_MODE': (False, 'Enable closed beta mode'),
     'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield'),
-    'ENABLE_CLICK_TRACKING': (False, 'Enable tracking of clicks in signature links')
+    'ENABLE_CLICK_TRACKING': (False, 'Enable tracking of clicks in signature links'),
+    'MAX_REFERRALS': (100, 'How many referrals give points to user'),
+    'POINTS_PER_REFERRALS': (10, 'Points for each new referral'),
 }
 
 MIDDLEWARE = [

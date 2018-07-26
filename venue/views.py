@@ -238,6 +238,7 @@ def get_user(request):
                 'language': <string>,
                 'email_confirmed': <boolean>,
                 'enabled_2fa': <boolean>
+                'referral_code': <string>
             }
 
         * `found` - Whether a user and user profile are found or not
@@ -246,6 +247,7 @@ def get_user(request):
         * `language` - Code of the user's selected language
         * `email_confirmed` - Whether the user's email is confirmed or not
         * `enabled_2fa` - Whether the user has enabled 2FA or not
+        * `referral_code` - User's referral_code
     """
     data = {'found': False}
     user_profile = request.user.profiles.first()
@@ -256,7 +258,8 @@ def get_user(request):
             'email': request.user.email,
             'language': user_profile.language.code,
             'email_confirmed': user_profile.email_confirmed,
-            'enabled_2fa': user_profile.enabled_2fa
+            'enabled_2fa': user_profile.enabled_2fa,
+            'referral_code': user_profile.referral_code
         }
     return Response(data)
 
@@ -264,7 +267,6 @@ def get_user(request):
 # --------------------
 # Create user endpoint
 # --------------------
-
 
 CREATE_USER_SCHEMA = AutoSchema(
     manual_fields=[
@@ -290,13 +292,20 @@ CREATE_USER_SCHEMA = AutoSchema(
             'receive_emails',
             required=False,
             location='form',
-            schema=coreschema.Boolean(description='Receive newsletter emails')
+            schema=coreschema.Boolean(description='Receive newsletter emails'),
+            description='Boolean field to receive emails'
         ),
         coreapi.Field(
             'language',
             required=False,
             location='form',
             schema=coreschema.String(description='Language code')
+        ),
+        coreapi.Field(
+            'referral_code',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='Referral code')
         )
     ]
 )
@@ -343,6 +352,10 @@ def create_user(request):
     user_check = User.objects.filter(email=data['email'])
     response = {'success': False}
     proceed = True
+    # get referrer profile
+    referral_code = data.pop('referral_code', None)
+    referrer_user_profile = UserProfile.get_by_referral_code(referral_code)
+
     if config.CLOSED_BETA_MODE:
         if not data['email'] in config.SIGN_UP_WHITELIST.splitlines():
             proceed = False
@@ -365,6 +378,10 @@ def create_user(request):
                 response['message'] = 'user_already_exists'
                 # user = user_check.first()
                 resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
+            # referral_code exists but wrong
+            elif referral_code is not None and referrer_user_profile is None:
+                response['message'] = 'wrong_referral_code'
+                resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
             else:
                 user = User.objects.create_user(**data)
                 user_data = {
@@ -372,12 +389,12 @@ def create_user(request):
                     'email': user.email
                 }
                 response['user'] = user_data
-                user_profile, created = UserProfile.objects.get_or_create(
+                user_profile, _ = UserProfile.objects.get_or_create(
                     user=user
                 )
-                del created
                 user_profile.receive_emails = receive_emails
                 user_profile.language = Language.objects.get(code=language)
+                user_profile.referrer = referrer_user_profile
                 user_profile.save()
                 # Send confirmation email
                 token_salt = generate_token_salt(user)
