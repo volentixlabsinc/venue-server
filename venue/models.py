@@ -1,15 +1,16 @@
 import os
-from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
-from django.dispatch import receiver
-from django.utils import timezone
-from django.conf import settings
-from django.db import models
-from hashids import Hashids
+import uuid
+
+import celery
 from constance import config
 from dateutil import parser
-import celery
-import uuid
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
+from django.db import models
+from django.dispatch import receiver
+from django.utils import timezone
+from hashids import Hashids
 
 
 def compute_total_points():
@@ -102,6 +103,10 @@ class UserProfile(models.Model):
     enabled_2fa = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
     receive_emails = models.BooleanField(default=False)
+    referral_code = models.UUIDField(default=uuid.uuid4, unique=True)
+    referrer = models.ForeignKey('UserProfile', to_field='referral_code',
+                                 db_column='referrer', blank=True, null=True,
+                                 default=None, related_name='referrals')
 
     def __str__(self):
         return self.user.username
