@@ -6,12 +6,6 @@ jobs:
     steps:
     - checkout
     - setup_remote_docker
-    - restore_cache:
-        keys:
-        - v1-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}
-        paths:
-        - /caches/venueserver.tar
-
     - run:
         name: Load Docker image layer cache
         command: |
@@ -41,12 +35,6 @@ jobs:
         command: |
           mkdir -p /caches
           docker save -o /caches/venueserver.tar venueserver
-
-    - save_cache:
-        name: Save cache to the circle CI
-        key: v1-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}
-        paths:
-        - /caches/venueserver.tar
 
     - run:
         name: Tag image and push to server
