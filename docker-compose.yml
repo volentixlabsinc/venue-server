@@ -5,7 +5,7 @@ services:
     expose:
       - '6379'
     environment:
-      REDIS_PASSWORD: '4e7a84d5'
+      REDIS_PASSWORD: 'badpassword'
   postgres:
     image: 'postgres'
     expose:
@@ -13,7 +13,7 @@ services:
     environment:
       POSTGRES_DB: 'venuepostgress'
       POSTGRES_USER: 'venueadmin'
-      POSTGRES_PASSWORD: 'BxKkpaihl67B'
+      POSTGRES_PASSWORD: 'badpassword'
   web:
     build: .
     restart: 'always'

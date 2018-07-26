@@ -21,14 +21,23 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
+from django.core.management.utils import get_random_secret_key
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'a85zgf@jc^_!8jcu-(j9l7p5z%ck+rwhceff2=@(n8o00%j2%o'
+SECRET_KEY = config('DJANGO_SECRET_KEY', default=get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '.volentix.com', '.volentix.io', '.venue.ninja', 'venue-service','.dev.vlabs.ninja', '.vlabs.ninja']
+ALLOWED_HOSTS = [
+    'localhost',
+    '.volentix.com',
+    '.volentix.io',
+    '.venue.ninja',
+    'venue-service',
+    '.dev.vlabs.ninja',
+    '.vlabs.ninja'
+]
 
 # Application definition
 
@@ -44,7 +53,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'knox',
-    # 'rest_framework.authtoken',
     'corsheaders',
     'constance',
     'ws4redis',
@@ -53,8 +61,6 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'rest_framework.authentication.SessionAuthentication',
-        # 'rest_framework.authentication.TokenAuthentication',
         'knox.auth.TokenAuthentication',
     ),
     # Use Django's standard `django.contrib.auth` permissions,
@@ -90,15 +96,6 @@ CONSTANCE_CONFIG = {
     'CLOSED_BETA_MODE': (False, 'Enable closed beta mode'),
     'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield'),
     'ENABLE_CLICK_TRACKING': (False, 'Enable tracking of clicks in signature links')
-}
-
-REDIS_PASSWORD = config('REDIS_PASSWORD', default='4e7a84d5')
-
-CONSTANCE_REDIS_CONNECTION = {
-    'password': REDIS_PASSWORD,
-    'host': config('REDIS_HOST', default='redis'),
-    'port': 6379,
-    'db': 0,
 }
 
 MIDDLEWARE = [
@@ -144,7 +141,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': config('POSTGRES_NAME', default='venuepostgress'),
         'USER': config('POSTGRES_USER', default='venueadmin'), 
-        'PASSWORD': config('POSTGRES_PASSWORD', default='BxKkpaihl67B'),
+        'PASSWORD': config('POSTGRES_PASSWORD', default='badpassword'),
         'HOST': config('POSTGRES_HOST', default='postgres')
     }
 }
@@ -186,16 +183,38 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
+
+# Media files settings
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 MEDIA_URL = '/media/'
 
-CELERY_BROKER_URL = 'redis://:4e7a84d5@redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://:4e7a84d5@redis:6379/1'
+
+# Redis generic settings
+
+REDIS_PASSWORD = config('REDIS_PASSWORD', default='badpassword')
+
+REDIS_HOST = config('REDIS_HOST', default='redis')
+
+REDIS_PORT = config('REDIS_PORT', default=6379)
+
+
+# Celery settings
+
+REDIS_URL = 'redis://:{}@{}:{}'.format(REDIS_PASSWORD, REDIS_HOST, REDIS_PORT)
+
+CELERY_BROKER_URL = REDIS_URL + '/0'
+
+CELERY_RESULT_BACKEND = REDIS_URL+ '/1'
+
 CELERY_TIMEZONE = 'UTC'
 
 USER_SCRAPE_INTERVAL = 300  # seconds
+
 CELERY_BEAT_SCHEDULE = {
     'periodic-data-update': {
         'task': 'venue.tasks.update_data',
@@ -207,18 +226,67 @@ CELERY_BEAT_SCHEDULE = {
     }
 }
 
-POSTMARK_TOKEN = '53ac5b12-1edc-43bc-9581-561c143f7352'
-POSTMARK_SENDER_EMAIL = 'venue@volentix.io'
+
+# Constance celery backend settings
+
+CONSTANCE_REDIS_CONNECTION = {
+    'password': REDIS_PASSWORD,
+    'host': REDIS_HOST,
+    'port': REDIS_PORT,
+    'db': 0,
+}
+
+
+# Websocket settings
+
+WEBSOCKET_URL = '/ws/'
+
+WS4REDIS_PREFIX = 'ws'
+
+WS4REDIS_CONNECTION = {
+    'host': REDIS_HOST,
+    'port': REDIS_PORT,
+    'db': 3,
+    'password': REDIS_PASSWORD
+}
+
+WS4REDIS_EXPIRE = 0  # Messages expire immediately
+
+
+# Redis key-value DB settings
+
+REDIS_DB = redis.StrictRedis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    db=4,
+    password=REDIS_PASSWORD,
+    decode_responses=True
+)
+
+
+# Postmark settings
+
+POSTMARK_TOKEN = config('POSTMARK_TOKEN', default='POSTMARK_API_TEST')
+
+POSTMARK_SENDER_EMAIL = config('POSTMARK_SENDER_EMAIL', default='sender@example.com')
+
+
+# CORS settings
 
 CORS_ORIGIN_WHITELIST = ('localhost:8080', 'localhost:8000', 'venue.volentix.io')
+
 CORS_ORIGIN_ALLOW_ALL = True
+
 CSRF_COOKIE_NAME = "csrftoken"
 
 
-# Send error logs to rollbar only in production (i.e. DEBUG = False)
+# Rollbar settings
+
+ROLLBAR_TOKEN = config('ROLLBAR_TOKEN', default='')
+
 if not DEBUG:
     ROLLBAR = {
-        'access_token': '529481318c454550884186f042d9b4bc',
+        'access_token': ROLLBAR_TOKEN,
         'environment': 'development' if DEBUG else 'production',
         'branch': 'master',
         'root': BASE_DIR,
@@ -226,7 +294,7 @@ if not DEBUG:
 
 
     rollbar.init(
-        '529481318c454550884186f042d9b4bc',
+        ROLLBAR_TOKEN,
         environment='development' if DEBUG else 'production'
     )
 
@@ -240,44 +308,19 @@ if not DEBUG:
 
 
 # Create the logs folder if it does not exist yet
+
 log_folder = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(log_folder):
     os.mkdir(log_folder)
 
 
-if DEBUG:
-    VENUE_DOMAIN = 'http://localhost:8000'
-    VENUE_FRONTEND = 'http://localhost:3000'
-else:
-    VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.dev.vlabs.ninja')
-    VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.dev.vlabs.ninja')
-    # VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.volentix.io')
-    # VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.volentix.io')
+# Venue domain and venue frontend URLs
 
-# if not DEBUG: 
-#     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-#     SECURE_SSL_REDIRECT = True
-#     SESSION_COOKIE_SECURE = True
-#     CSRF_COOKIE_SECURE = True
-
-WEBSOCKET_URL = '/ws/'
-WS4REDIS_PREFIX = 'ws'
-WS4REDIS_CONNECTION = {
-    'host': 'redis',
-    'port': 6379,
-    'db': 3,
-    'password': REDIS_PASSWORD
-}
-WS4REDIS_EXPIRE = 0  # Messages expire immediately
+VENUE_DOMAIN = config('VENUE_DOMAIN', default='http://localhost:8000')
+VENUE_FRONTEND = config('VENUE_FRONTEND', default='http://localhost:3000')
 
 
-REDIS_DB = redis.StrictRedis(
-    host='redis',
-    port=6379,
-    db=4,
-    password=REDIS_PASSWORD,
-    decode_responses=True
-)
+# Languages
 
 LANGUAGES = (
     'en',

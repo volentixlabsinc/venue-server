@@ -60,7 +60,7 @@ http://localhost:8000/api/retrieve/leaderboard-data/
 
 Login to the admin:
   * **User:** admin
-  * **Password:** default2018
+  * **Password:** admin
 ```
 http://localhost:8000/admin
 ```
