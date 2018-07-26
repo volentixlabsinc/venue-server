@@ -63,7 +63,7 @@ def add_languages(apps, schema_editor):
 # Admin superuser
 USERS = [
     {
-        'password': 'default2018',
+        'password': 'admin',
         'is_superuser': True,
         'username': 'admin',
         'email': 'joemar.ct+admin@gmail.com',

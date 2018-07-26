@@ -21,9 +21,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
+from django.core.management.utils import get_random_secret_key
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('DJANGO_SECRET_KEY', default='m)S%z12SAU@4C*wUv,1,ZEj;&qdPD`:_/UB+4Zy9t7ea(Z.f\)')
+SECRET_KEY = config('DJANGO_SECRET_KEY', default=get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -140,7 +141,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': config('POSTGRES_NAME', default='venuepostgress'),
         'USER': config('POSTGRES_USER', default='venueadmin'), 
-        'PASSWORD': config('POSTGRES_PASSWORD', default='BxKkpaihl67B'),
+        'PASSWORD': config('POSTGRES_PASSWORD', default='badpassword'),
         'HOST': config('POSTGRES_HOST', default='postgres')
     }
 }
@@ -195,7 +196,7 @@ MEDIA_URL = '/media/'
 
 # Redis generic settings
 
-REDIS_PASSWORD = config('REDIS_PASSWORD', default='4e7a84d5')
+REDIS_PASSWORD = config('REDIS_PASSWORD', default='badpassword')
 
 REDIS_HOST = config('REDIS_HOST', default='redis')
 
@@ -315,12 +316,8 @@ if not os.path.exists(log_folder):
 
 # Venue domain and venue frontend URLs
 
-if DEBUG:
-    VENUE_DOMAIN = 'http://localhost:8000'
-    VENUE_FRONTEND = 'http://localhost:3000'
-else:
-    VENUE_DOMAIN = config('VENUE_DOMAIN', default='https://venue.dev.vlabs.ninja')
-    VENUE_FRONTEND = config('VENUE_FRONTEND', default='https://venue.dev.vlabs.ninja')
+VENUE_DOMAIN = config('VENUE_DOMAIN', default='http://localhost:8000')
+VENUE_FRONTEND = config('VENUE_FRONTEND', default='http://localhost:3000')
 
 
 # Languages
