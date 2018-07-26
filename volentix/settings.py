@@ -196,7 +196,7 @@ MEDIA_URL = '/media/'
 
 # Redis generic settings
 
-REDIS_PASSWORD = config('REDIS_PASSWORD', default='badpassword')
+REDIS_PASSWORD = config('REDIS_PASSWORD', default='4e7a84d5')
 
 REDIS_HOST = config('REDIS_HOST', default='redis')
 
