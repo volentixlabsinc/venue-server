@@ -141,7 +141,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': config('POSTGRES_NAME', default='venuepostgress'),
         'USER': config('POSTGRES_USER', default='venueadmin'), 
-        'PASSWORD': config('POSTGRES_PASSWORD', default='badpassword'),
+        'PASSWORD': config('POSTGRES_PASSWORD', default='BxKkpaihl67B'),
         'HOST': config('POSTGRES_HOST', default='postgres')
     }
 }
