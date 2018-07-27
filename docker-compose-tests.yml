@@ -5,7 +5,7 @@ services:
     expose:
       - '6379'
     environment:
-      REDIS_PASSWORD: 'badpassword'
+      REDIS_PASSWORD: '4e7a84d5'
   postgres:
     image: 'postgres'
     expose:
