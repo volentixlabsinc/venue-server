@@ -1,15 +1,18 @@
 import os
-from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
-from django.dispatch import receiver
-from django.utils import timezone
-from django.conf import settings
-from django.db import models
-from hashids import Hashids
+import uuid
+
+import celery
 from constance import config
 from dateutil import parser
-import celery
-import uuid
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
+from django.db import models
+from django.dispatch import receiver
+from django.utils import timezone
+from hashids import Hashids
+
+from venue.tasks import compute_ranking
 
 
 def compute_total_points():
@@ -246,6 +249,7 @@ class ForumProfile(models.Model):
 
     def save(self, *args, **kwargs):
         self.date_updated = timezone.now()
+        before_save = type(self).objects.get(pk=self.pk) if self.pk else None
         super(ForumProfile, self).save(*args, **kwargs)
         if not self.verification_code:
             hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -254,6 +258,8 @@ class ForumProfile(models.Model):
                 forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
+        if before_save and before_save.active != self.active:
+            compute_ranking.apply_async()
 
     def get_last_scrape(self):
         if self.last_scrape:
