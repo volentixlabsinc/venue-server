@@ -247,7 +247,10 @@ class ForumProfile(models.Model):
 
     def save(self, *args, **kwargs):
         self.date_updated = timezone.now()
-        before_save = type(self).objects.get(pk=self.pk) if self.pk else None
+        try:
+            before_save = type(self).objects.get(pk=self.pk) if self.pk else None
+        except self.DoesNotExist:
+            before_save = None
         super(ForumProfile, self).save(*args, **kwargs)
         if not self.verification_code:
             hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -433,7 +436,10 @@ def trigger_compute_ranking(*args, **kwargs):
 @receiver(models.signals.pre_save, sender=User)
 def trigger_compute_ranking_on_user_change(*args, instance, **kwargs):
     from venue.tasks import compute_ranking
-    before_save = User.objects.get(pk=instance.pk) if instance.pk else None
+    try:
+        before_save = User.objects.get(pk=instance.pk) if instance.pk else None
+    except User.DoesNotExist:
+        before_save = None
     if not before_save or before_save.is_active != instance.is_active:
         # 5 seconds because we want to be sure that model is saved
         compute_ranking.apply_async(coundown=5)
