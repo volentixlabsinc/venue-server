@@ -2507,6 +2507,35 @@ def get_points_breakdown(request):
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_information_about_referrals(request):
+    """ Retrieves information about referrals
+
+        ### Response
+
+        * Status code 200
+
+                {
+                    "referrals": [
+                        {
+                            "user_id" : <string>,
+                            "username": <string>,
+                            "amount": <float>
+                        },
+                        ...
+                    ]
+                }
+            * `referrals` - an array with information about all the
+                            referrals
+                * `user_id` - UUID of the user's profile
+                * `username` - Registered username
+                * `amount` - Amount of bonuses from this referral (0 if signature is not verified)
+
+            <br>If user doesn't have referrals response will be:
+
+                {
+                    "referrals": []
+                }
+
+        """
     user_profile = request.user.profiles.last()
     referrals_from_db = user_profile.referrals.order_by(
         'created_at'
