@@ -12,8 +12,6 @@ from django.dispatch import receiver
 from django.utils import timezone
 from hashids import Hashids
 
-from venue.tasks import compute_ranking
-
 
 def compute_total_points():
     total_points = settings.REDIS_DB.get('global_total_points')
@@ -258,7 +256,8 @@ class ForumProfile(models.Model):
                 forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
-        if before_save and before_save.active != self.active:
+        if not before_save or before_save.active != self.active:
+            from venue.tasks import compute_ranking
             compute_ranking.apply_async()
 
     def get_last_scrape(self):
@@ -429,3 +428,12 @@ def trigger_compute_ranking(*args, **kwargs):
         queue='compute'
     )
     job.get()
+
+
+@receiver(models.signals.pre_save, sender=User)
+def trigger_compute_ranking_on_user_change(*args, instance, **kwargs):
+    from venue.tasks import compute_ranking
+    before_save = User.objects.get(pk=instance.pk) if instance.pk else None
+    if not before_save or before_save.is_active != instance.is_active:
+        # 5 seconds because we want to be sure that model is saved
+        compute_ranking.apply_async(coundown=5)
