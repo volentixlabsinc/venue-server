@@ -3,39 +3,39 @@ Volentix VENUE
 View functions 
 """
 
-from operator import itemgetter
-from datetime import timedelta
 import re
-import pyotp
-import coreschema
+from datetime import timedelta
+from operator import itemgetter
+
 import coreapi
-from django.shortcuts import redirect
-from constance import config
-from celery.result import AsyncResult
-from django.utils import timezone
-from django.http import HttpResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.contrib.auth.models import User
-from django.conf import settings
-from knox.settings import CONSTANTS as KNOX_CONSTANTS
-from django.db.models import Sum
-from venue.utils import encrypt_data, decrypt_data
-from rest_framework import status
-from knox.models import AuthToken
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, schema
-from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import permission_classes
-from rest_framework.schemas import AutoSchema
-from .tasks import (verify_profile_signature, get_user_position, update_data,
-                    send_email_confirmation, send_deletion_confirmation,
-                    send_email_change_confirmation, send_reset_password,
-                    set_scraping_rate, update_data)
-from .models import (UserProfile, ForumSite, ForumProfile, Notification, ForumPost,
-                     Language, Signature, ForumUserRank, compute_total_points)
-from .utils import RedisTemp
+import coreschema
+import pyotp
 import shortuuid
+from celery.result import AsyncResult
+from constance import config
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
+from knox.models import AuthToken
+from knox.settings import CONSTANTS as KNOX_CONSTANTS
+from rest_framework import serializers, status
+from rest_framework.decorators import api_view, permission_classes, schema
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.schemas import AutoSchema
+
+from venue.models import Referral
+from venue.utils import decrypt_data, encrypt_data
+from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Language, Notification, Signature, UserProfile,
+                     compute_total_points)
+from .tasks import (get_user_position, send_deletion_confirmation, send_email_change_confirmation,
+                    send_email_confirmation, send_reset_password, set_scraping_rate, update_data,
+                    verify_profile_signature)
+from .utils import RedisTemp
 
 
 def generate_token_salt(user):
@@ -353,9 +353,8 @@ def create_user(request):
     response = {'success': False}
     proceed = True
     # get referrer profile
-    referral_code = data.pop('referral_code', None)
+    referral_code = data.pop('referral_code', None) or request.GET.get('referral_code')
     referrer_user_profile = UserProfile.get_by_referral_code(referral_code)
-
     if config.CLOSED_BETA_MODE:
         if not data['email'] in config.SIGN_UP_WHITELIST.splitlines():
             proceed = False
@@ -394,8 +393,14 @@ def create_user(request):
                 )
                 user_profile.receive_emails = receive_emails
                 user_profile.language = Language.objects.get(code=language)
-                user_profile.referrer = referrer_user_profile
                 user_profile.save()
+
+                if referral_code and referrer_user_profile:
+                    referral = Referral.objects.create(
+                        referral=user_profile,
+                        referrer=referrer_user_profile
+                    )
+
                 # Send confirmation email
                 token_salt = generate_token_salt(user)
                 send_email_confirmation.delay(user.email, user.username, token_salt, language)
@@ -2162,8 +2167,10 @@ def get_forum_profiles(request):
 
 def inject_verification_code(sig_code, verification_code):
     """ Helper function for injecting verification code to signature """
+
     def repl(m):
         return '%s?vcode=%s' % (m.group(), verification_code)
+
     if 'http' in sig_code:
         pattern = r'http[s]?://([a-z.])*volentix([a-z./-?=&])+'
         return re.sub(pattern, repl, sig_code)

@@ -97,7 +97,7 @@ CONSTANCE_CONFIG = {
     'SIGN_UP_WHITELIST': ('', 'Sign up whitelist', 'textfield'),
     'ENABLE_CLICK_TRACKING': (False, 'Enable tracking of clicks in signature links'),
     'MAX_REFERRALS': (100, 'How many referrals give points to user'),
-    'POINTS_PER_REFERRALS': (10, 'Points for each new referral'),
+    'BONUSES_PER_REFERRALS': (10, 'Count of bonuses for each new referral'),
 }
 
 MIDDLEWARE = [

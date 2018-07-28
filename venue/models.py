@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Coalesce
 from django.dispatch import receiver
 from django.utils import timezone
 from hashids import Hashids
@@ -105,9 +106,6 @@ class UserProfile(models.Model):
     email_confirmed = models.BooleanField(default=False)
     receive_emails = models.BooleanField(default=False)
     referral_code = models.UUIDField(default=uuid.uuid4, unique=True)
-    referrer = models.ForeignKey('UserProfile', to_field='referral_code',
-                                 db_column='referrer', blank=True, null=True,
-                                 default=None, related_name='referrals')
 
     def __str__(self):
         return self.user.username
@@ -202,26 +200,21 @@ class UserProfile(models.Model):
         points = 0
         for fp in self.forum_profiles.filter(active=True, verified=True):
             points += fp.total_points
-        points += self.referrals_points
         return round(float(points), 2)
 
     @property
-    def referrals_points(self):
+    def referrals_bonuses(self):
         """
         Points from the referrals links
         :return: number of point from the referrals
         """
-        active_referrals_count = self.referrals.filter(
-            forum_profiles__signature__isnull=False,
-            forum_profiles__active=True,
-            forum_profiles__verified=True,
-            forum_profiles__dummy=False
-        ).count()
-        active_referrals_count = (active_referrals_count
-                                  if config.MAX_REFERRALS > active_referrals_count
-                                  else config.MAX_REFERRALS)
-        points_for_referrals = active_referrals_count * config.POINTS_PER_REFERRALS
-        return round(float(points_for_referrals))
+        bonuses_for_referrals = self.referrals.filter(
+            referral__forum_profiles__verified=True,
+            referral__forum_profiles__active=True,
+            referral__forum_profiles__dummy=False
+        ).aggregate(bonuses=Coalesce(models.Sum('bonus'), 0.0))
+        # TODO: limit by config.MAX_REFERRALS
+        return float(bonuses_for_referrals['bonuses'])
 
     @property
     def total_tokens(self):
@@ -230,6 +223,7 @@ class UserProfile(models.Model):
         if global_total_pts:
             pct_contrib = self.total_points / global_total_pts
             tokens = pct_contrib * config.VTX_AVAILABLE
+        tokens += self.referrals_bonuses
         return int(round(tokens, 0))
 
 
@@ -285,6 +279,10 @@ class ForumProfile(models.Model):
 
     def save(self, *args, **kwargs):
         self.date_updated = timezone.now()
+        try:
+            before_save = type(self).objects.get(pk=self.pk) if self.pk else None
+        except self.DoesNotExist:
+            before_save = None
         super(ForumProfile, self).save(*args, **kwargs)
         if not self.verification_code:
             hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -293,6 +291,26 @@ class ForumProfile(models.Model):
                 forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
+        # add bonus to referrer
+        object_is_created_or_changed = before_save is None or before_save.verified != self.verified
+        # need to add bonus only once and when profile is verified
+        # be careful, we don't verify dummy and active profile here,
+        # because we want to keep all the history,
+        # this part will be checked during request execution
+        if self.verified and object_is_created_or_changed:
+            referral_obj = Referral.objects.filter(referral=self.user_profile)
+            # check if referrer exist
+            if not len(referral_obj):
+                return
+            referral_obj = referral_obj[0]
+            # check if user already get a bonus
+            if referral_obj.granted:
+                return
+            # add a current amount of bonuses from the settings
+            referral_obj.bonus = config.BONUSES_PER_REFERRALS
+            referral_obj.granted = True
+            referral_obj.granted_at = timezone.now()
+            referral_obj.save()
 
     def get_last_scrape(self):
         if self.last_scrape:
@@ -446,6 +464,20 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class Referral(models.Model):
+    referral = models.ForeignKey(UserProfile, unique=True, related_name='referrer',
+                                 help_text='User, that was registered with a referral code')
+    referrer = models.ForeignKey(UserProfile, help_text='Owner of a referral code',
+                                 related_name='referrals')
+    bonus = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+    granted = models.BooleanField(default=False)
+    granted_at = models.DateTimeField(default=None, null=True, blank=True)
 
 
 # --------------------

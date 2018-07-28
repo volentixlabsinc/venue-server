@@ -31,10 +31,5 @@ class Migration(migrations.Migration):
             model_name='userprofile',
             name='referral_code',
             field=models.UUIDField(default=uuid.uuid4, unique=True),
-        ),
-        migrations.AddField(
-            model_name='userprofile',
-            name='referrer',
-            field=models.ForeignKey(blank=True, db_column='referrer', default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='referrals', to='venue.UserProfile', to_field='referral_code'),
-        ),
+        )
     ]
