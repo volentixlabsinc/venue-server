@@ -228,7 +228,7 @@ def send_websocket_signal(signal):
 
 @shared_task(queue='compute')
 def compute_ranking():
-    users = UserProfile.objects.all()
+    users = UserProfile.objects.filter(user__is_active=True)
     user_points = []
     for user in users:
         if user.with_forum_profile:
