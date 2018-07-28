@@ -2499,6 +2499,31 @@ def get_points_breakdown(request):
         response = {'error_code': 'forum_site_not_found'}
         return Response(response, status.HTTP_400_BAD_REQUEST)
 
+# ------------------------
+# Referrals views
+# ------------------------
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_information_about_referrals(request):
+    user_profile = request.user.profiles.last()
+    referrals_from_db = user_profile.referrals.order_by(
+        'granted_at'
+    ).order_by(
+        '-granted_at'
+    ).values(
+        'bonus', 'referral__user__username', 'referral__id'
+    )
+    referrals = [
+        {
+            'user_id': referral['referral__id'],
+            'username': referral['referral__user__username'],
+            'amount': referral['bonus']
+        }
+        for referral in referrals_from_db
+    ]
+    return Response({'referrals': referrals})
 
 # ------------------------
 # Debugging view functions
