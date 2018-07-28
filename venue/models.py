@@ -113,6 +113,10 @@ class UserProfile(models.Model):
         else:
             return False
 
+    @property
+    def user_email(self):
+        return self.user.email
+
     def get_num_posts(self, date=None):
         if date:
             date = parser.parse(date).date()
