@@ -2509,9 +2509,7 @@ def get_points_breakdown(request):
 def get_information_about_referrals(request):
     user_profile = request.user.profiles.last()
     referrals_from_db = user_profile.referrals.order_by(
-        'granted_at'
-    ).order_by(
-        '-granted_at'
+        'created_at'
     ).values(
         'bonus', 'referral__user__username', 'referral__id'
     )
