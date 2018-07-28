@@ -466,8 +466,9 @@ class Notification(models.Model):
 
 
 class Referral(models.Model):
-    referral = models.ForeignKey(UserProfile, unique=True, related_name='referrer',
-                                 help_text='User, that was registered with a referral code')
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    referral = models.OneToOneField(UserProfile, unique=True, related_name='referrer',
+                                    help_text='User, that was registered with a referral code')
     referrer = models.ForeignKey(UserProfile, help_text='Owner of a referral code',
                                  related_name='referrals')
     bonus = models.DecimalField(
@@ -477,6 +478,7 @@ class Referral(models.Model):
     )
     granted = models.BooleanField(default=False)
     granted_at = models.DateTimeField(default=None, null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
 
 # --------------------
