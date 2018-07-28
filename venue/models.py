@@ -205,14 +205,11 @@ class UserProfile(models.Model):
     @property
     def referrals_bonuses(self):
         """
-        Points from the referrals links
+        Tokens from the referrals links
         :return: number of point from the referrals
         """
         bonuses_for_referrals = self.referrals.filter(
             granted=True,
-            referral__forum_profiles__verified=True,
-            referral__forum_profiles__active=True,
-            referral__forum_profiles__dummy=False
         ).order_by('granted_at')[:config.MAX_REFERRALS].aggregate(
             bonuses=Coalesce(models.Sum('bonus'), 0.0)
         )
