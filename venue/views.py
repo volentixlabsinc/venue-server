@@ -2553,6 +2553,91 @@ def get_information_about_referrals(request):
     return Response({'referrals': referrals})
 
 # ------------------------
+# Referrals views
+# ------------------------
+SEND_EMAILS_SCHEMA = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'emails',
+            required=False,
+            location='form',
+            schema=coreschema.Array(description='A list of email'),
+        ),
+        coreapi.Field(
+            'email',
+            required=False,
+            location='form',
+            schema=coreschema.String(description='A single email')
+        )
+    ]
+)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+@schema(SEND_EMAILS_SCHEMA)
+def send_emails_with_referral_code(request):
+    """ Send email with referral code
+    One of two fields (`email` or `emails`) should be filled.
+
+    ### Response
+
+    * Status code 200 (at least one message was sent)
+
+            {
+                "success": <boolean: true>,
+                "result": <list: EmailSentResult>
+            }
+
+        * `success` - Result of the request
+        * Each `EmailSentResult` array contains the following info
+
+                {
+                    "email": <string>,
+                    "sent": <boolean>,
+                    "error": <string>
+                }
+
+            * `email` - email address that was used
+            * `sent` - result of the execution for this email
+            * `error` - error for this email, filled only if `sent` is `false
+
+    * Status code 422 (wrong payload structure is provided)
+
+            {
+                "success": <boolean: false>,
+                "error": <string>
+            }
+
+        * `success` - Result of the request (false)
+        * `error` - description of an error
+
+
+    * Status code 400 (no messages have been sent)
+
+            {
+                "success": <boolean: false>,
+                "result": <list: EmailSentResult>
+                "error": <string>
+            }
+
+        * `success` - Result of the request (false)
+        * `error` - description of an error
+        * Each `EmailSentResult` array contains the following info
+
+                {
+                    "email": <string>,
+                    "sent": <boolean>,
+                    "error": <string>
+                }
+
+            * `email` - email address that was used
+            * `sent` - result of the execution for this email
+            * `error` - error for this email
+    """
+    return Response({})
+
+# ------------------------
 # Debugging view functions
 # ------------------------
 

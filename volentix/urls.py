@@ -23,10 +23,9 @@ from venue.views import (
     get_notifications, dismiss_notification, create_forum_profile,
     get_forum_sites, get_forum_profiles, get_signatures, get_points_breakdown,
     confirm_email_change, trigger_data_update, check_task_status, logout_user,
-    get_information_about_referrals
+    send_emails_with_referral_code, get_information_about_referrals
 )
 from rest_framework.documentation import include_docs_urls
-from django.views.static import serve
 from django.conf.urls import url
 from django.conf import settings
 from django.contrib import admin
@@ -76,7 +75,8 @@ urlpatterns = [
     url(r'^api/manage/delete-account/', delete_account),
     url(r'^api/manage/verify-otp-code/', verify_2fa_code),
     url(r'^api/manage/disable-two-factor-auth/', disable_2fa),
-    url(r'^api/manage/dismiss-notification/', dismiss_notification)
+    url(r'^api/manage/dismiss-notification/', dismiss_notification),
+    url(r'^api/manage/send-referrals/', send_emails_with_referral_code),
 ]
 
 
