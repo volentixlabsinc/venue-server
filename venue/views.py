@@ -29,6 +29,7 @@ from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
 
 from venue.models import Referral
+from venue.tasks import send_email
 from venue.utils import decrypt_data, encrypt_data
 from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Language, Notification, Signature, UserProfile,
                      compute_total_points)
@@ -2562,12 +2563,18 @@ SEND_EMAILS_SCHEMA = AutoSchema(
             required=False,
             location='form',
             schema=coreschema.Array(description='A list of email'),
+            type='array',
+            description='A list of email',
+            example='["some@email.com", "some@email2.com", "some@email2.com"]'
         ),
         coreapi.Field(
             'email',
             required=False,
             location='form',
-            schema=coreschema.String(description='A single email')
+            schema=coreschema.String(description='A single email'),
+            type='string',
+            description='Email',
+            example='some@email.com'
         )
     ]
 )
@@ -2577,65 +2584,92 @@ SEND_EMAILS_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(SEND_EMAILS_SCHEMA)
 def send_emails_with_referral_code(request):
-    """ Send email with referral code
-    One of two fields (`email` or `emails`) should be filled.
+    """ Send email with referral code. <br>
+    At least one field (`email` or `emails`) should be filled.
 
     ### Response
 
-    * Status code 200 (at least one message was sent)
+    * Status code `200` (at least one message was sent)
 
             {
                 "success": <boolean: true>,
-                "result": <list: EmailSentResult>
+                "message": <str>
             }
 
-        * `success` - Result of the request
-        * Each `EmailSentResult` array contains the following info
+        * `success` - Result of the request (true)
+        * `message` - Information about the result
 
-                {
-                    "email": <string>,
-                    "sent": <boolean>,
-                    "error": <string>
-                }
 
-            * `email` - email address that was used
-            * `sent` - result of the execution for this email
-            * `error` - error for this email, filled only if `sent` is `false
-
-    * Status code 422 (wrong payload structure is provided)
+    * Status code `422` (wrong payload structure is provided)
 
             {
                 "success": <boolean: false>,
-                "error": <string>
+                "message": <str>
             }
 
         * `success` - Result of the request (false)
-        * `error` - description of an error
+        * `message` - Error description
 
-
-    * Status code 400 (no messages have been sent)
-
-            {
-                "success": <boolean: false>,
-                "result": <list: EmailSentResult>
-                "error": <string>
-            }
-
-        * `success` - Result of the request (false)
-        * `error` - description of an error
-        * Each `EmailSentResult` array contains the following info
-
-                {
-                    "email": <string>,
-                    "sent": <boolean>,
-                    "error": <string>
-                }
-
-            * `email` - email address that was used
-            * `sent` - result of the execution for this email
-            * `error` - error for this email
     """
-    return Response({})
+    # group all emails to one list
+    email = request.data.get('email')
+    emails = request.data.get('emails', [])
+
+    if not isinstance(emails, list):
+        return Response(
+            {
+                'result': True,
+                'message': '`emails should be a list not {} type'.format(type(emails))
+            },
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+
+    if email:
+        emails.append(email)
+
+    # if emails list is empty return 422
+    if not emails:
+        return Response(
+            {
+                'result': True,
+                'message': 'at least one email address is required'
+            },
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+    # if there is at least on email treat it and prepare to send
+    emails = ','.join([e.lower().strip() for e in emails if e])
+    try:
+        # try to send it
+        # use the same language code for emails as for a current user
+        user_profile = request.user.profiles.first()
+        emails_result = send_email(
+            template='venue/reset_password.html',
+            email=emails,
+            language=user_profile.language.code,
+            subject='Some subject'  # TODO: add real subject
+        )
+        response_result = not emails_result.get('ErrorCode')
+        # 200 if `ErrorCode` in payload == 0 else 422
+        response_status_code = (status.HTTP_200_OK
+                                if response_result
+                                else status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return Response(
+            {
+                'result': response_result,
+                'message': emails_result.get('Message', '')
+            },
+            status=response_status_code
+        )
+    except Exception as e:
+        # 422 if there is some troubles with email sending
+        return Response(
+            {
+                'result': False,
+                'message': str(e)
+            },
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+
 
 # ------------------------
 # Debugging view functions

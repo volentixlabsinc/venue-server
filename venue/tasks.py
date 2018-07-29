@@ -397,24 +397,18 @@ def send_reset_password(email, name, code, language):
     )
 
 
-def send_email(*, template, email, name, code, subject, language):
+def send_email(*, template, email, subject, language, **kwargs):
     """
     Generic function to send email
     :param template: path to template to be used
     :param email: email to send
-    :param name: user name
-    :param code:
     :param subject: email subject
     :param language: language code (en, fr, etc..)
     :return:
     """
+    kwargs['domain'] = settings.VENUE_FRONTEND,
     with translation_on(language):
-        context = {
-            'domain': settings.VENUE_FRONTEND,
-            'name': name,
-            'code': code
-        }
-        html = get_template(template).render(context)
+        html = get_template(template).render(kwargs)
         mail = postmark.emails.send(
             From=settings.POSTMARK_SENDER_EMAIL,
             To=email,
