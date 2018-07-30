@@ -40,7 +40,7 @@ Before running Venue, make sure you have the following installed on your machine
 ### Running
 
 Note that at the time of writting, the app does not have a set up for local development other than the docker compose script. Future iterations are expected to provide this capability.
-
+ 
 To run the application:
 ```
 docker-compose up
