@@ -1,15 +1,16 @@
 import os
-from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
-from django.dispatch import receiver
-from django.utils import timezone
-from django.conf import settings
-from django.db import models
-from hashids import Hashids
+import uuid
+
+import celery
 from constance import config
 from dateutil import parser
-import celery
-import uuid
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
+from django.db import models
+from django.dispatch import receiver
+from django.utils import timezone
+from hashids import Hashids
 
 
 def compute_total_points():
@@ -246,6 +247,10 @@ class ForumProfile(models.Model):
 
     def save(self, *args, **kwargs):
         self.date_updated = timezone.now()
+        try:
+            before_save = type(self).objects.get(pk=self.pk) if self.pk else None
+        except self.DoesNotExist:
+            before_save = None
         super(ForumProfile, self).save(*args, **kwargs)
         if not self.verification_code:
             hashids = Hashids(min_length=8, salt=settings.SECRET_KEY)
@@ -254,6 +259,9 @@ class ForumProfile(models.Model):
                 forum_profile_id, int(forum_user_id))
             ForumProfile.objects.filter(id=self.id).update(
                 verification_code=verification_code)
+        if not before_save or before_save.active != self.active:
+            from venue.tasks import compute_ranking
+            compute_ranking.apply_async()
 
     def get_last_scrape(self):
         if self.last_scrape:
@@ -423,3 +431,15 @@ def trigger_compute_ranking(*args, **kwargs):
         queue='compute'
     )
     job.get()
+
+
+@receiver(models.signals.pre_save, sender=User)
+def trigger_compute_ranking_on_user_change(*args, instance, **kwargs):
+    from venue.tasks import compute_ranking
+    try:
+        before_save = User.objects.get(pk=instance.pk) if instance.pk else None
+    except User.DoesNotExist:
+        before_save = None
+    if not before_save or before_save.is_active != instance.is_active:
+        # 5 seconds because we want to be sure that model is saved
+        compute_ranking.apply_async(coundown=5)
