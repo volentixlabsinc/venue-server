@@ -198,7 +198,7 @@ MEDIA_URL = '/media/'
 
 # Redis generic settings
 
-REDIS_PASSWORD = config('REDIS_PASSWORD', default='4e7a84d5')
+REDIS_PASSWORD = config('REDIS_PASSWORD', default='badpassword')
 
 REDIS_HOST = config('REDIS_HOST', default='redis')
 
@@ -213,11 +213,8 @@ except ValueError:
 
 REDIS_URL = 'redis://:{}@{}:{}'.format(REDIS_PASSWORD, REDIS_HOST, REDIS_PORT)
 
-# CELERY_BROKER_URL = REDIS_URL + '/0'
-
-# CELERY_RESULT_BACKEND = REDIS_URL+ '/1'
-CELERY_BROKER_URL = 'redis://:4e7a84d5@redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://:4e7a84d5@redis:6379/1'
+CELERY_BROKER_URL = REDIS_URL + '/0'
+CELERY_RESULT_BACKEND = REDIS_URL+ '/1'
 
 CELERY_TIMEZONE = 'UTC'
 
