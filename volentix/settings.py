@@ -202,6 +202,10 @@ REDIS_HOST = config('REDIS_HOST', default='redis')
 
 REDIS_PORT = config('REDIS_PORT', default=6379)
 
+try:
+    REDIS_PORT = int(REDIS_PORT)
+except ValueError:
+    REDIS_PORT = 6379
 
 # Celery settings
 
