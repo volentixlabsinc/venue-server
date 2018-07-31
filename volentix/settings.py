@@ -222,15 +222,11 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'venue.tasks.update_data',
         'schedule': USER_SCRAPE_INTERVAL
     },
-    # detect spammers doesn't exist
+    # # detect spammers doesn't exist
     # 'periodic-spam-detection': {
     #     'task': 'venue.tasks.detect_spammers',
     #     'schedule': 3600 * 6  # Every 6 hours
-    # },
-    'periodic-total-points-update': {
-        'task': 'venue.tasks.compute_ranking',
-        'schedule': 3600 * 24  # Every 6 hours
-    }
+    # }
 }
 
 
