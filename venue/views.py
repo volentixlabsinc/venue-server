@@ -894,7 +894,10 @@ def get_leaderboard_data(request):
         * `value` - Number of users for the forum
     """
     response = {}
-    user_profiles = UserProfile.objects.filter(email_confirmed=True)
+    user_profiles = UserProfile.objects.filter(
+        user__is_active=True,
+        email_confirmed=True,
+    )
     leaderboard_data = []
     for user_profile in user_profiles:
         fps = user_profile.forum_profiles.filter(active=True, verified=True)
@@ -936,7 +939,11 @@ def get_leaderboard_data(request):
     colors = ['#2a96b6', '#5a2998', '#b62da9']
     for i, site in enumerate(sites):
         total_posts = 0
-        fps = site.forum_profiles.filter(verified=True)
+        fps = site.forum_profiles.filter(
+            user_profile__user__is_active=True,
+            active=True
+            verified=True
+        )
         for fp in fps:
             total_posts += fp.total_posts
         total_users = fps.count()
