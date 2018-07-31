@@ -353,7 +353,7 @@ def create_user(request):
     response = {'success': False}
     proceed = True
     # get referrer profile
-    referral_code = data.pop('referral_code', None) or request.GET.get('referral_code')
+    referral_code = data.pop('referral_code', None)
     referrer_user_profile = UserProfile.get_by_referral_code(referral_code)
     if config.CLOSED_BETA_MODE:
         if not data['email'] in config.SIGN_UP_WHITELIST.splitlines():
