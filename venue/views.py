@@ -2553,28 +2553,17 @@ def get_information_about_referrals(request):
     ]
     return Response({'referrals': referrals})
 
-# ------------------------
-# Referrals views
-# ------------------------
+
 SEND_EMAILS_SCHEMA = AutoSchema(
     manual_fields=[
         coreapi.Field(
             'emails',
-            required=False,
+            required=True,
             location='form',
             schema=coreschema.Array(description='A list of email'),
             type='array',
             description='A list of email',
             example='["some@email.com", "some@email2.com", "some@email2.com"]'
-        ),
-        coreapi.Field(
-            'email',
-            required=False,
-            location='form',
-            schema=coreschema.String(description='A single email'),
-            type='string',
-            description='Email',
-            example='some@email.com'
         )
     ]
 )
@@ -2612,20 +2601,16 @@ def send_emails_with_referral_code(request):
 
     """
     # group all emails to one list
-    email = request.data.get('email')
     emails = request.data.get('emails', [])
 
-    if not isinstance(emails, list):
+    if not isinstance(emails, (list, tuple)):
         return Response(
             {
                 'result': True,
-                'message': '`emails should be a list not {} type'.format(type(emails))
+                'message': "'emails' should be a list not {} type".format(type(emails))
             },
             status=status.HTTP_422_UNPROCESSABLE_ENTITY
         )
-
-    if email:
-        emails.append(email)
 
     # if emails list is empty return 422
     if not emails:
@@ -2643,10 +2628,11 @@ def send_emails_with_referral_code(request):
         # use the same language code for emails as for a current user
         user_profile = request.user.profiles.first()
         emails_result = send_email(
-            template='venue/reset_password.html',
+            template='venue/email_referral.html',
             email=emails,
             language=user_profile.language.code,
-            subject='Some subject'  # TODO: add real subject
+            subject='Sign Up Subject',  # TODO: add real subject,
+            code=user_profile.referral_code
         )
         response_result = not emails_result.get('ErrorCode')
         # 200 if `ErrorCode` in payload == 0 else 422
