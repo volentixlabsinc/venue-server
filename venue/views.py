@@ -941,7 +941,7 @@ def get_leaderboard_data(request):
         total_posts = 0
         fps = site.forum_profiles.filter(
             user_profile__user__is_active=True,
-            active=True
+            active=True,
             verified=True
         )
         for fp in fps:
