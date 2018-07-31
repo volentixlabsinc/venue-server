@@ -44,7 +44,11 @@ admin.site.register(Language, LanguageAdmin)
 
 
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'email_confirmed', 'receive_emails']
+    list_display = ['user', 'email_confirmed', 'receive_emails', 'user_email']
+    fields = ['user', 'language', 'otp_secret',
+              'enabled_2fa', 'email_confirmed',
+              'receive_emails', 'user_email']
+    readonly_fields = ('user_email', )
 
 
 admin.site.register(UserProfile, UserProfileAdmin)
