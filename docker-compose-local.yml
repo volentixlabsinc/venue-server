@@ -1,0 +1,8 @@
+version: '3'
+services:
+  web:
+    restart: on-failure
+    command: supervisord -c ./supervisord_local.conf --nodaemon
+  postgres:
+    ports:
+      - '5432:5432'
