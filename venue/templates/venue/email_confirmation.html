@@ -1,0 +1,36 @@
+{% extends 'venue/base_email.html' %}
+{% load i18n %}
+
+{% block title %}{% blocktrans %}Email confirmation{% endblocktrans %}{% endblock %}
+{% block preheader %}{% blocktrans %}Confirm your email to complete the sign up.{% endblocktrans %}{% endblock %}
+{% block media_content %}
+    <tr>
+        <td class="wrapper">
+            <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td>
+                        <p>{% blocktrans %}Hi {{ name }},{% endblocktrans %}</p>
+                        <p>{% blocktrans %}Thank you for signing up to use Venue!{% endblocktrans %}</p>
+                        <p>{% blocktrans %}Kindly press the confirm button below and start using Venue right away.{% endblocktrans %}</p>
+                        <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+                            <tbody>
+                            <tr>
+                                <td align="left">
+                                    <table border="0" cellpadding="0" cellspacing="0">
+                                        <tbody>
+                                        <tr>
+                                            <td><a href="{{ domain }}/api/manage/confirm-email/?code={{ code }}"
+                                                   target="_blank">{% blocktrans %}Confirm{% endblocktrans %}</a></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+{% endblock %}

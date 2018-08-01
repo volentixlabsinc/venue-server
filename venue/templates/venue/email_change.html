@@ -1,0 +1,36 @@
+{% extends 'venue/base_email.html' %}
+{% load i18n %}
+
+{% block title %}{% blocktrans %}Email change confirmation{% endblocktrans %}{% endblock %}
+{% block preheader %}{% blocktrans %}Confirm your email to complete the sign up.{% endblocktrans %}{% endblock %}
+{% block media_content %}
+    <tr>
+        <td class="wrapper">
+            <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td>
+                        <p>{% blocktrans %}Hi {{ name }},{% endblocktrans %}</p>
+                        <p>{% blocktrans %}You initiated a change of email of your account in Volentix Venue! Confirm this new email now by clicking the button below.{% endblocktrans %}</p>
+                        <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+                            <tbody>
+                            <tr>
+                                <td align="left">
+                                    <table border="0" cellpadding="0" cellspacing="0">
+                                        <tbody>
+                                        <tr>
+                                            <td><a href="{{ domain }}/api/manage/confirm-change-email/?code={{ code }}"
+                                                   target="_blank">{% blocktrans %}Confirm Email Change{% endblocktrans %}</a></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <p>{% blocktrans %}By clicking the button, you confirm that you want to use this email for your account.{% endblocktrans %}</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+{% endblock %}

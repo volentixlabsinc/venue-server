@@ -1,0 +1,38 @@
+version: '3'
+services:
+  redis:
+    image: 'bitnami/redis:latest'
+    expose:
+      - '6379'
+    environment:
+      REDIS_PASSWORD: 'badpassword'
+  postgres:
+    image: 'postgres'
+    expose:
+      - '5432'
+    environment:
+      POSTGRES_DB: 'venuepostgress'
+      POSTGRES_USER: 'venueadmin'
+      POSTGRES_PASSWORD: 'badpassword'
+  web:
+    build: .
+    restart: 'always'
+    expose:
+      - '8000'
+      - '9000'
+      - '5555'
+    ports:
+      - '8000:8000'
+      - '9000:9000'
+      - '5555:5555'
+    volumes:
+      - '.:/code'
+    stdin_open: true
+    tty: true
+    entrypoint: '/entrypoint.sh'
+    command: supervisord -c ./supervisord.conf --nodaemon
+    environment:
+      DEBUG: 1
+    depends_on:
+      - postgres
+      - redis

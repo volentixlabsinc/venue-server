@@ -1,0 +1,42 @@
+{% extends 'venue/base_email.html' %}
+{% load i18n %}
+
+{% block title %}{% blocktrans %}Account Deletion Confirmation{% endblocktrans %}{% endblock %}
+{% block preheader %}{% blocktrans %}Confirm your email to complete the sign up.{% endblocktrans %}{% endblock %}
+{% block media_content %}
+    <!-- START MAIN CONTENT AREA -->
+    <tr>
+        <td class="wrapper">
+            <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td>
+                        <p>{% blocktrans %}Hi {{ name }},{% endblocktrans %}</p>
+                        <p>{% blocktrans %}You initiated an account deletion process in Volentix Venue. Please click on the button below to proceed.{% endblocktrans %}</p>
+                        <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+                            <tbody>
+                            <tr>
+                                <td align="left">
+                                    <table border="0" cellpadding="0" cellspacing="0">
+                                        <tbody>
+                                        <tr>
+                                            <td>
+                                                <a href="{{ domain }}/delete-account/?code={{ code }}" target="_blank">
+                                                    {% blocktrans %}Delete Account{% endblocktrans %}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <p>
+                            {% blocktrans %}By clicking on the button, you agree to permanently delete your account from our system.{% endblocktrans %}
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+{% endblock %}
