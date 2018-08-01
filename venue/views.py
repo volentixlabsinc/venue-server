@@ -15,6 +15,7 @@ from celery.result import AsyncResult
 from constance import config
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -2146,25 +2147,32 @@ def get_forum_profiles(request):
     data = request.query_params
     response = {'success': False}
     forum_id = data.get('forum_id')
-    if str(forum_id) == '1':
-        forum_site = ForumSite.objects.get(name='bitcointalk.org')
-        forum_id = str(forum_site.id)
-    forum_profiles = ForumProfile.objects.filter(
-        forum_id=forum_id
-    )
-    if data.get('forum_user_id'):
-        forum_profiles = forum_profiles.filter(
-            forum_user_id=data.get('forum_user_id')
+    resp_status = status.HTTP_400_BAD_REQUEST
+    try:
+        if str(forum_id) == '1':
+            forum_site = ForumSite.objects.get(name='bitcointalk.org')
+            forum_id = str(forum_site.id)
+        forum_profiles = ForumProfile.objects.filter(
+            forum_id=forum_id,
+            user_profile__user=request.user
         )
-    if forum_profiles.count():
-        response['success'] = True
-        serializer = ForumProfileSerializer(forum_profiles, many=True)
-        response['forum_profiles'] = serializer.data
-        resp_status = status.HTTP_200_OK
-    else:
-        resp_status = status.HTTP_400_BAD_REQUEST
+        if data.get('forum_user_id'):
+            forum_profiles = forum_profiles.filter(
+                forum_user_id=data.get('forum_user_id')
+            )
+        if forum_profiles:
+            response['success'] = True
+            serializer = ForumProfileSerializer(forum_profiles, many=True)
+            response['forum_profiles'] = serializer.data
+            resp_status = status.HTTP_200_OK
+        else:
+            resp_status = status.HTTP_400_BAD_REQUEST
+            response['message'] = 'forum_profiles_not_found'
+    except ValidationError:
         response['message'] = 'forum_profiles_not_found'
-    return Response(response, status=resp_status)
+        resp_status = status.HTTP_400_BAD_REQUEST
+    finally:
+        return Response(response, status=resp_status)
 
 
 # -----------------------
@@ -2499,6 +2507,7 @@ def get_points_breakdown(request):
         response = {'error_code': 'forum_site_not_found'}
         return Response(response, status.HTTP_400_BAD_REQUEST)
 
+
 # ------------------------
 # Referrals views
 # ------------------------
@@ -2551,6 +2560,7 @@ def get_information_about_referrals(request):
         for referral in referrals_from_db
     ]
     return Response({'referrals': referrals})
+
 
 # ------------------------
 # Debugging view functions
