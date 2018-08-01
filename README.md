@@ -9,7 +9,9 @@
 
 > The backend services for Venue, a community engagement platform for the Volentix community
 
-With Venue, members can post campaigns and bounties for work needed -- for example, fixing bugs, creating content, or promoting Volentix -- and anyone may claim a bounty in exchange for their efforts. Venue provides real time metrics on VTX rewards earned by participants and incentivizes the adoption of VTX.
+With Venue, members can post campaigns and bounties for work needed -- for example, fixing bugs, creating content, or 
+promoting Volentix -- and anyone may claim a bounty in exchange for their efforts. Venue provides real time metrics 
+on VTX rewards earned by participants and incentivizes the adoption of VTX.
 
 This backend is a REST API server which receives, processes, and/or serves data for the Venue frontend.
 
@@ -47,7 +49,8 @@ Before running Venue, make sure you have the following installed on your machine
 
 ### Running
 
-Note that at the time of writting, the app does not have a set up for local development other than the docker compose script. Future iterations are expected to provide this capability.
+Note that at the time of writting, the app does not have a set up for local development other than the docker compose script. 
+Future iterations are expected to provide this capability.
  
 To run the application:
 ```
@@ -144,17 +147,26 @@ docker exec -it venue-server_web_1 pytest
 
 ## Bitcointalk Signature Campaign
 
-The first ever campaign launched in Venue is a signature campaign in Bitcointalk.org forum site. In this campaign, users who have accounts in the forum can sign up in Venue and join the campaign where it is possible to choose from a selection of signature codes. The code is a BBCode for a Volentix ad banner, which will be shown as signature in each of the user's posts and the user earns VTX tokens as a reward.
+The first ever campaign launched in Venue is a signature campaign in Bitcointalk.org forum site. In this campaign, 
+users who have accounts in the forum can sign up in Venue and join the campaign where it is possible to choose from 
+a selection of signature codes. The code is a BBCode for a Volentix ad banner, which will be shown as signature in each 
+of the user's posts and the user earns VTX tokens as a reward.
 
-Only members of the higher Bitcointalk positions are allowed to participate in the campaign -- namely Member, Full Member, Sr. Member, Hero, and Legendary.
+Only members of the higher Bitcointalk positions are allowed to participate in the campaign -- namely Member, Full Member, 
+Sr. Member, Hero, and Legendary.
 
 ### Forum Account Verification
 
-When a Venue user joins the campaign, he/she will be asked for Bitcointalk user ID. The system validates this ID -- checks if it exists and if the position is high enough to be allowed to participate in the campaign. When allowed, the user is asked to choose a signature. The code for the selected signature then needs to be copied and placed in the user's Bitcointalk profile. The system then verifies the placement of the signature. The integrity of the signature placed in the profile is checked simply by checking if it contains the expected links.
+When a Venue user joins the campaign, he/she will be asked for Bitcointalk user ID. The system validates this ID -- checks 
+if it exists and if the position is high enough to be allowed to participate in the campaign. When allowed, the user is 
+asked to choose a signature. The code for the selected signature then needs to be copied and placed in the user's 
+Bitcointalk profile. The system then verifies the placement of the signature. The integrity of the signature placed in the 
+profile is checked simply by checking if it contains the expected links.
 
 ### Points System
 
-The campaign is pre-set to have a fixed amount of total VTX tokens as reward. Participants will get their share from this total reward proportional to their number of posts plus some bonus according to their forum positions. This is all tracked using a point system, which is described below.
+The campaign has a fixed number of total VTX tokens as reward. Participants will earn their share proportional to their 
+number of posts plus some bonus according to their forum positions. This is all tracked using a point system, which is described below.
 
 Some settings that affect the behavior of point system are made configurable through the admin interface (`/admin/constance/config/`):
 
@@ -165,11 +177,13 @@ Some settings that affect the behavior of point system are made configurable thr
 
 This is how the point system works:
 
-Every new post by a user that bears the signature is automatically credited 100 base points (defined by `POST_POINTS_MULTIPLIER`) plus bonus points, which is a percentage of the base points based on the user's forum position. This new post is monitored roughly every 5 minutes for up to 24 hours (`MATURATION_PERIOD`) to check for signature removal. The time elapsed when the signature is not found is recorded as invalid signature minutes (i.e. signature downtime). If the signature downtime exceeds a threshold, the points for the post is removed.
+Every new post by a user that bears the signature is automatically credited 100 base points (defined by `POST_POINTS_MULTIPLIER`) plus
+a multiplier based on the user's forum position. This new post is monitored roughly every 5 minutes for up to 24 hours (`MATURATION_PERIOD`)
+to check for signature removal. The time elapsed when the signature is not found is recorded as invalid signature minutes (i.e. signature downtime). 
+During this `MATURATION_PERIOD` hour period, the signature must be in place a minimum of `UPTIME_PERCENTAGE_THRESHOLD` percent, otherwise
+the points for the post are removed.
 
-The downtime threshold is 100 minus `UPTIME_PERCENTAGE_THRESHOLD` percent of the `MATURATION_PERIOD`.
-
-The bonus points percentage are as follows:
+The default bonus points percentage are as follows (these are configurable at `/admin/venue/forumuserrank/`):
 
 1. Member - no bonus
 2. Full Member - 1%
@@ -178,7 +192,10 @@ The bonus points percentage are as follows:
 
 ### Scraping and Calculations
 
-Scraping of the users' profiles and their posts in Bitcointalk is done regularly in the background at a regular interval of roughly 5 minutes. Upon completion of every scraping round, the total points are calculated which is the basis for the ranking and the dynamic computation of VTX tokens earned by each user. All these cascade of background tasks are executed automatically by a periodic call to the `update_data()` function in `venue/tasks.py`.
+Scraping of the users' profiles and their posts in Bitcointalk is done regularly in the background
+roughly every 5 minutes. Upon completion of every scraping round, the total points are calculated which is the basis for 
+the ranking and the dynamic computation of VTX tokens earned by each user. All these cascade of background tasks are 
+executed automatically by a periodic call to the `update_data()` function in `venue/tasks.py`.
 
 ## Maintainers
 
