@@ -7,9 +7,15 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
 
-> The backend services for Venue, a community engagement platform for the Volentix community    
+> The backend services for Venue, a community engagement platform for the Volentix community
 
-This Python server provides the services for Venue. Major dependencies are:
+With Venue, members can post campaigns and bounties for work needed -- for example, fixing bugs, creating content, or 
+promoting Volentix -- and anyone may claim a bounty in exchange for their efforts. Venue provides real time metrics 
+on VTX rewards earned by participants and incentivizes the adoption of VTX.
+
+This backend is a REST API server which receives, processes, and/or serves data for the Venue frontend.
+
+The major dependencies are:
   * [Python 3](https://www.python.org/)
   * [Django](https://www.djangoproject.com/)
   * [PostgreSQL](https://www.postgresql.org/)
@@ -24,6 +30,10 @@ This Python server provides the services for Venue. Major dependencies are:
   - [Running](#running)
   - [Troubleshooting](#troubleshooting)
   - [Testing](#testing)
+- [Bitcointalk Signature Campaign](#bitcointalk-signature-campaign)
+  - [Forum Account Verification](#forum-account-verification)
+  - [Points System](#points-system)
+  - [Scraping and Calculations](#scraping-and-calculations)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
 - [License](#license)
@@ -33,13 +43,14 @@ This Python server provides the services for Venue. Major dependencies are:
 Before running Venue, make sure you have the following installed on your machine.
 
   * [Docker](https://www.docker.com/) (tested with version 18.03.1-ce)
-  * [Docker Compose (if not installed along with Docker)](https://docs.docker.com/compose/) (tested with version 1.21.1)
+  * [Docker Compose](https://docs.docker.com/compose/) (if not installed along with Docker, tested with version 1.21.1)
 
 ## Usage
 
 ### Running
 
-Note that at the time of writting, the app does not have a set up for local development other than the docker compose script. Future iterations are expected to provide this capability.
+Note that at the time of writting, the app does not have a set up for local development other than the docker compose script. 
+Future iterations are expected to provide this capability.
  
 To run the application:
 ```
@@ -71,6 +82,7 @@ http://localhost:8000/docs/
 ```
 
 ### Troubleshooting
+
 #### Postgres error
 
 If you get this error while trying to run docker on your machine:
@@ -121,6 +133,7 @@ sudo systemctl restart docker
 Run docker again after restarting the daemon and the error should be fixed.
 
 
+
 ### Testing
 
 Run the tests
@@ -128,6 +141,61 @@ Run the tests
 docker-compose up  # If the containers are not running yet
 docker exec -it venue-server_web_1 pytest
 ```
+
+
+
+
+## Bitcointalk Signature Campaign
+
+The first ever campaign launched in Venue is a signature campaign in Bitcointalk.org forum site. In this campaign, 
+users who have accounts in the forum can sign up in Venue and join the campaign where it is possible to choose from 
+a selection of signature codes. The code is a BBCode for a Volentix ad banner, which will be shown as signature in each 
+of the user's posts and the user earns VTX tokens as a reward.
+
+Only members of the higher Bitcointalk positions are allowed to participate in the campaign -- namely Member, Full Member, 
+Sr. Member, Hero, and Legendary.
+
+### Forum Account Verification
+
+When a Venue user joins the campaign, he/she will be asked for Bitcointalk user ID. The system validates this ID -- checks 
+if it exists and if the position is high enough to be allowed to participate in the campaign. When allowed, the user is 
+asked to choose a signature. The code for the selected signature then needs to be copied and placed in the user's 
+Bitcointalk profile. The system then verifies the placement of the signature. The integrity of the signature placed in the 
+profile is checked simply by checking if it contains the expected links.
+
+### Points System
+
+The campaign has a fixed number of total VTX tokens as reward. Participants will earn their share proportional to their 
+number of posts plus some bonus according to their forum positions. This is all tracked using a point system, which is described below.
+
+Some settings that affect the behavior of point system are made configurable through the admin interface (`/admin/constance/config/`):
+
+1. `VTX_AVAILABLE` [default: 120,000] - Total VTX tokens available
+2. `POST_POINTS_MULTIPLIER` [default: 100] - Points for each new post
+3. `MATURATION_PERIOD` [default: 24] - Post maturation period in hours
+4. `UPTIME_PERCENTAGE_THRESHOLD` [default: 90] - Percentage of uptime required
+
+This is how the point system works:
+
+Every new post by a user that bears the signature is automatically credited 100 base points (defined by `POST_POINTS_MULTIPLIER`) plus
+a multiplier based on the user's forum position. This new post is monitored roughly every 5 minutes for up to 24 hours (`MATURATION_PERIOD`)
+to check for signature removal. The time elapsed when the signature is not found is recorded as invalid signature minutes (i.e. signature downtime). 
+During this `MATURATION_PERIOD` hour period, the signature must be in place a minimum of `UPTIME_PERCENTAGE_THRESHOLD` percent, otherwise
+the points for the post are removed.
+
+The default bonus points percentage are as follows (these are configurable at `/admin/venue/forumuserrank/`):
+
+1. Member - no bonus
+2. Full Member - 1%
+3. Sr. Member - 2%
+4. Hero/Legendary - 5%
+
+### Scraping and Calculations
+
+Scraping of the users' profiles and their posts in Bitcointalk is done regularly in the background
+roughly every 5 minutes. Upon completion of every scraping round, the total points are calculated which is the basis for 
+the ranking and the dynamic computation of VTX tokens earned by each user. All these cascade of background tasks are 
+executed automatically by a periodic call to the `update_data()` function in `venue/tasks.py`.
 
 ## Maintainers
 
