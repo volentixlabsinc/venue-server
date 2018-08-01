@@ -30,7 +30,7 @@ The major dependencies are:
   - [Testing](#testing)
 - [Bitcointalk Signature Campaign](#bitcointalk-signature-campaign)
   - [Forum Account Verification](#forum-account-verification)
-  - [Point System](#point-system)
+  - [Points System](#points-system)
   - [Scraping and Calculations](#scraping-and-calculations)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
@@ -152,7 +152,7 @@ Only members of the higher Bitcointalk positions are allowed to participate in t
 
 When a Venue user joins the campaign, he/she will be asked for Bitcointalk user ID. The system validates this ID -- checks if it exists and if the position is high enough to be allowed to participate in the campaign. When allowed, the user is asked to choose a signature. The code for the selected signature then needs to be copied and placed in the user's Bitcointalk profile. The system then verifies the placement of the signature. The integrity of the signature placed in the profile is checked simply by checking if it contains the expected links.
 
-### Point System
+### Points System
 
 The campaign is pre-set to have a fixed amount of total VTX tokens as reward. Participants will get their share from this total reward proportional to their number of posts plus some bonus according to their forum positions. This is all tracked using a point system, which is described below.
 
