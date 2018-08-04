@@ -485,6 +485,50 @@ class Referral(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
+class CampaignType(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.TextField()
+    description = models.TextField()
+
+    def __str__(self):
+        return "{} ({})".format(self.name, self.description[:30])
+
+
+class Campaign(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.TextField()
+    description = models.TextField()
+    campaign_type = models.ForeignKey(CampaignType, on_delete=models.CASCADE)
+    implemented = models.BooleanField(default=False)
+    meta = JSONField(default={}, null=True, blank=True)
+    start_at = models.DateTimeField(default=None, null=True, blank=True)
+    end_at = models.DateTimeField(default=None, null=True, blank=True)
+    created_at = models.DateTimeField(auto_created=True, auto_now_add=True, editable=False, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    forum_site = models.ManyToManyField(ForumSite, through='ForumSiteCampaign')
+    users = models.ManyToManyField(UserProfile, through='UserCampaign')
+
+    def __str__(self):
+        return "{} ({})".format(self.name, self.description[:30])
+
+
+class UserCampaign(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    user_joined_at = models.DateTimeField(auto_created=True, editable=False, null=True, blank=True)
+
+    class Meta:
+        unique_together = (('user', 'campaign'),)
+
+
+class ForumSiteCampaign(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    campaign = models.OneToOneField(Campaign, on_delete=models.CASCADE)
+    forum_site = models.ForeignKey(ForumSite, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_created=True, editable=False)
+
+
 # --------------------
 # Model change signals
 # --------------------

@@ -1,6 +1,7 @@
 from venue.models import (
     ForumSite, Signature, UserProfile, Ranking, ForumProfile,
-    Language, ForumUserRank, ForumPost, Notification
+    Language, ForumUserRank, ForumPost, Notification,
+    Campaign, CampaignType
 )
 from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
@@ -116,3 +117,6 @@ class RankingAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Ranking, RankingAdmin)
+
+admin.site.register(Campaign)
+admin.site.register(CampaignType)
