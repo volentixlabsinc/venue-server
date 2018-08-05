@@ -351,7 +351,11 @@ def create_user(request):
     """
     data = request.data
     data['email'] = data['email'].lower()
-    user_check = User.objects.filter(email=data['email'])
+    # Check if a user with confirmed email same as the given already exists
+    user_check = UserProfile.objects.filter(
+        user__email__iexact=data['email'].strip(),
+        email_confirmed=True
+    )
     response = {'success': False}
     proceed = True
     # get referrer profile
@@ -375,9 +379,8 @@ def create_user(request):
             if 'receive_emails' in data.keys():
                 receive_emails = data['receive_emails']
                 del data['receive_emails']
-            if user_check.exists():
+            if user_check:
                 response['message'] = 'user_already_exists'
-                # user = user_check.first()
                 resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
             # referral_code exists but wrong
             elif referral_code is not None and referrer_user_profile is None:
@@ -398,7 +401,7 @@ def create_user(request):
                 user_profile.save()
 
                 if referral_code and referrer_user_profile:
-                    referral = Referral.objects.create(
+                    Referral.objects.create(
                         referral=user_profile,
                         referrer=referrer_user_profile
                     )
@@ -1105,7 +1108,7 @@ def change_email(request):
     data = request.data
     user = request.user
     response = {'success': False}
-    email_check = User.objects.filter(email=data['email'])
+    email_check = User.objects.filter(email=data['email'].strip())
     if email_check.exists():
         response['message'] = 'email_exists'
         resp_status = status.HTTP_302_FOUND
@@ -1230,7 +1233,7 @@ def change_username(request):
     data = request.data
     user = request.user
     response = {'success': False}
-    username_check = User.objects.filter(username=data['username'])
+    username_check = User.objects.filter(username__iexact=data['username'].strip())
     if username_check.exists():
         response['message'] = 'username_exists'
         resp_status = status.HTTP_302_FOUND
@@ -1564,18 +1567,12 @@ def check_email_exists(request):
     data = request.query_params
     response = {'success': True, 'email_exists': False}
     if data.get('email'):
-        user_check = User.objects.filter(
-            email__iexact=data.get('email').strip()
+        user_check = UserProfile.objects.filter(
+            user__email__iexact=data.get('email').strip(),
+            email_confirmed=True
         )
-        if user_check.exists():
-            try:
-                user_profile = UserProfile.objects.get(
-                    user=user_check.last()
-                )
-                if user_profile.email_confirmed:
-                    response['email_exists'] = True
-            except UserProfile.DoesNotExist:
-                pass
+        if user_check:
+            response['email_exists'] = True
     return Response(response)
 
 
@@ -1616,7 +1613,7 @@ def check_username_exists(request):
     data = request.query_params
     response = {'success': True, 'username_exists': False}
     if data.get('username'):
-        user_check = User.objects.filter(username=data.get('username').lower())
+        user_check = User.objects.filter(username__iexact=data.get('username').strip())
         if user_check.exists():
             response['username_exists'] = True
     return Response(response)
