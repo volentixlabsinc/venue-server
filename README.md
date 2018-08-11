@@ -34,7 +34,7 @@ The major dependencies are:
   - [Forum Account Verification](#forum-account-verification)
   - [Points System](#points-system)
   - [Scraping and Calculations](#scraping-and-calculations)
-- [API] (#api)
+- [API](#api)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
 - [License](#license)
