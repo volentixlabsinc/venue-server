@@ -34,6 +34,7 @@ The major dependencies are:
   - [Forum Account Verification](#forum-account-verification)
   - [Points System](#points-system)
   - [Scraping and Calculations](#scraping-and-calculations)
+- [API] (#api)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
 - [License](#license)
@@ -196,6 +197,16 @@ Scraping of the users' profiles and their posts in Bitcointalk is done regularly
 roughly every 5 minutes. Upon completion of every scraping round, the total points are calculated which is the basis for 
 the ranking and the dynamic computation of VTX tokens earned by each user. All these cascade of background tasks are 
 executed automatically by a periodic call to the `update_data()` function in `venue/tasks.py`.
+
+## API
+
+The API is available from a server running locally at http://localhost:8000/docs. The documentation 
+is also usually available in the [Volentix Venue UAT environment](https://venue-uat.volentix.io/docs).
+
+One nice feature of the docs is the ability to perform API calls on that server. Copy a token (one can be 
+retrieved using `authenticate > create`), then choose `Authenticate > token` from the bottom of the screen.
+Enter `Token` as the Scheme and paste the token in the next field. All subsequent calls will use this token
+to perform calls. It's a great way to practice sending and receiving data to and from the server.
 
 ## Maintainers
 
