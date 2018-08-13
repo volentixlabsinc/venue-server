@@ -413,6 +413,6 @@ def send_email(*, template, email, subject, language, **kwargs):
             From=settings.POSTMARK_SENDER_EMAIL,
             To=email,
             Subject=subject,
-            ReplyTo=settings.POSTMARK_SENDER_EMAIL,
+            ReplyTo=settings.POSTMARK_REPLY_EMAIL,
             HtmlBody=html)
         return mail

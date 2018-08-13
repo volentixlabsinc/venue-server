@@ -27,6 +27,7 @@ The major dependencies are:
 
 - [Install](#install)
 - [Usage](#usage)
+  - [Configuration](#configuration)
   - [Running](#running)
   - [Troubleshooting](#troubleshooting)
   - [Testing](#testing)
@@ -47,6 +48,19 @@ Before running Venue, make sure you have the following installed on your machine
   * [Docker Compose](https://docs.docker.com/compose/) (if not installed along with Docker, tested with version 1.21.1)
 
 ## Usage
+
+### Configuration
+
+You must create a file named `.env` and place it in the root directory. There are a number of
+configuration values available (for details, see the code), but in order to have email confirmations
+sent correctly, you must set:
+
+```
+# Server token from [Postmark](https://postmarkapp.com/)
+POSTMARK_SERVER_TOKEN=<server_token>
+```
+
+Other values can be found in [settings.py](https://github.com/Volentix/venue-server/blob/master/volentix/settings.py)
 
 ### Running
 
