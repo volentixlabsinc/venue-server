@@ -282,7 +282,7 @@ REDIS_DB = redis.StrictRedis(
 
 # Postmark settings
 
-POSTMARK_TOKEN = config('POSTMARK_SERVER_TOKEN', default='')
+POSTMARK_TOKEN = config('POSTMARK_SERVER_TOKEN', default='this-token-does-not-work')
 
 POSTMARK_SENDER_EMAIL = config('POSTMARK_SENDER_EMAIL', default='venue@volentix.io')
 POSTMARK_REPLY_EMAIL = config('POSTMARK_REPLY_EMAIL', default='noreply@volentix.io')
