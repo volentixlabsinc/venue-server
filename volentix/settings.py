@@ -71,12 +71,23 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': (
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle'
-    ),
-    'DEFAULT_THROTTLE_RATES': {
+    )
+}
+
+
+THROTTLE_API_REQUESTS = config(
+    'THROTTLE_API_REQUESTS',
+    default=False,
+    cast=bool
+)
+
+
+if THROTTLE_API_REQUESTS:
+    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
         'anon': '100/hour',
         'user': '1000/hour'
     }
-}
+
 
 CONSTANCE_ADDITIONAL_FIELDS = {
     'textfield': [
