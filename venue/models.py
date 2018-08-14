@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
+from django.db import connection
 from django.db import models
 from django.db.models.functions import Coalesce
 from django.dispatch import receiver
@@ -22,6 +23,17 @@ def compute_total_points():
     return round(float(total_points), 2)
 
 
+def dict_fetchall(cursor):
+    """
+    Returns all rows from a cursor as a dict
+    """
+    desc = cursor.description
+    return [
+        dict(zip([col[0] for col in desc], row))
+        for row in cursor.fetchall()
+    ]
+
+
 class ForumSite(models.Model):
     """ Forum site names and addresses """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -31,6 +43,12 @@ class ForumSite(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_stats(cls):
+        with connection.cursor() as c:
+            c.callproc('forum_stats')
+            return dict_fetchall(c)
 
 
 class ForumUserRank(models.Model):
@@ -109,6 +127,15 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+    @classmethod
+    def get_leader_board_data(cls):
+        total_points = compute_total_points()
+        vtx_available = config.VTX_AVAILABLE
+        max_referrals = config.MAX_REFERRALS
+        with connection.cursor() as c:
+            c.callproc('leader_board_data', [total_points, vtx_available, max_referrals])
+            return dict_fetchall(c)
 
     @classmethod
     def get_by_referral_code(cls, referral_code):

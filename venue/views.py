@@ -921,68 +921,47 @@ def get_leaderboard_data(request):
         * `value` - Number of users for the forum
     """
     response = {}
-    user_profiles = UserProfile.objects.filter(
-        user__is_active=True,
-        email_confirmed=True,
-    )
-    leaderboard_data = []
-    for user_profile in user_profiles:
-        fps = user_profile.forum_profiles.filter(active=True, verified=True)
-        if fps.count():
-            user_data = {
-                'username': user_profile.user.username,
-                'rank': user_profile.get_ranking(),
-                'total_posts': user_profile.total_posts,
-                'total_points': user_profile.total_points,
-                'total_tokens': user_profile.total_tokens
-            }
-            leaderboard_data.append(user_data)
+    leader_board_data = UserProfile.get_leader_board_data()
     # Get site-wide stats
-    users_with_fp = [x for x in user_profiles if x.with_forum_profile]
     response['sitewide'] = {
         'available_tokens': '{:,}'.format(config.VTX_AVAILABLE),
-        'total_users': len(users_with_fp),
-        'total_posts': int(sum([x.total_posts for x in users_with_fp])),
-        'total_points': int(sum([x.total_points for x in users_with_fp]))
+        'total_users': len(leader_board_data),
+        'total_posts': int(sum([x['total_posts'] for x in leader_board_data])),
+        'total_points': int(sum([x['total_points'] for x in leader_board_data]))
     }
     # Order according to amount of tokens
-    if leaderboard_data:
-        leaderboard_data = sorted(leaderboard_data, key=itemgetter('rank'))
-        response['rankings'] = leaderboard_data
+    if leader_board_data:
+        leader_board_data = sorted(leader_board_data, key=itemgetter('rank'))
+        response['rankings'] = leader_board_data
         if request.user.is_anonymous():
             response['userstats'] = {}
         else:
-            user_profile = UserProfile.objects.get(user=request.user)
-            total_tokens = user_profile.total_tokens
+            user_data = next(
+                (i for i in leader_board_data if i['username'] == request.user.username),
+                {}
+            )
             response['userstats'] = {
-                'overall_rank': user_profile.get_ranking(),
-                'total_tokens': int(round(total_tokens, 0))
+                'overall_rank': user_data.get('username'),
+                'total_tokens': int(round(user_data.get('total_tokens'), 0))
             }
     # Generate forum stats
     forum_stats = {
         'posts': [],
-        'users': []}
-    sites = ForumSite.objects.all()
+        'users': []
+    }
+    sites_stats = ForumSite.get_stats()
     colors = ['#2a96b6', '#5a2998', '#b62da9']
-    for i, site in enumerate(sites):
-        total_posts = 0
-        fps = site.forum_profiles.filter(
-            user_profile__user__is_active=True,
-            active=True,
-            verified=True
-        )
-        for fp in fps:
-            total_posts += fp.total_posts
-        total_users = fps.count()
+    colors_count = len(colors)
+    for i, site_data in enumerate(sites_stats):
         forum_stats['posts'].append({
-            'forumSite': site.name,
-            'value': total_posts,
-            'color': colors[i]
+            'forumSite': site_data['site_name'],
+            'value': site_data['total_posts'],
+            'color': colors[i % colors_count]
         })
         forum_stats['users'].append({
-            'forumSite': site.name,
-            'value': total_users,
-            'color': colors[i]
+            'forumSite': site_data['site_name'],
+            'value': site_data['total_users'],
+            'color': colors[i % colors_count]
         })
     response['forumstats'] = forum_stats
     response['success'] = True
@@ -2637,8 +2616,9 @@ def send_emails_with_referral_code(request):
             template='venue/email_referral.html',
             email=emails,
             language=user_profile.language.code,
-            subject='Sign Up Subject',  # TODO: add real subject,
-            code=user_profile.referral_code
+            subject='You have been referred to our Bitcoin Talk signature campaign!',
+            code=user_profile.referral_code,
+            referrer_name=request.user.username
         )
         response_result = not emails_result.get('ErrorCode')
         # 200 if `ErrorCode` in payload == 0 else 422
