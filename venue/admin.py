@@ -1,3 +1,5 @@
+from django.http import HttpResponseRedirect
+
 from venue.models import (
     ForumSite, Signature, UserProfile, Ranking, ForumProfile,
     Language, ForumUserRank, ForumPost, Notification
@@ -48,7 +50,31 @@ class UserProfileAdmin(admin.ModelAdmin):
     fields = ['user', 'language', 'otp_secret',
               'enabled_2fa', 'email_confirmed',
               'receive_emails', 'user_email']
+    change_list_template = 'admin/userprofile_change_list.html'
     readonly_fields = ('user_email', )
+
+    def get_urls(self):
+        from functools import update_wrapper
+        from django.conf.urls import url
+        urls = super().get_urls()
+
+        def wrap(view):
+            def wrapper(*args, **kwargs):
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+            wrapper.model_admin = self
+            return update_wrapper(wrapper, view)
+
+        urlpatterns = [
+            url(r'^clean-campaigns-data/$', wrap(self.clean_campaigns_data), name='clean-campaigns-data'),
+        ]
+        return urlpatterns + urls
+
+    def clean_campaigns_data(self, request):
+        ForumPost.objects.all().delete()
+        Ranking.objects.all().delete()
+
+        self.message_user(request, "Campaigns data is cleaned up")
+        return HttpResponseRedirect("../")
 
 
 admin.site.register(UserProfile, UserProfileAdmin)
