@@ -6,7 +6,7 @@ import redis
 import rncryptor
 from django.utils import translation
 
-
+ 
 class RedisTemp(object):
 
     def __init__(self, namespace):

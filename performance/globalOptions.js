@@ -5,7 +5,9 @@ export default {
     {},
     basicInstance.threshold
   ),
-  vus: 1,
-  iterations: 10,
+  stages: [
+    { duration: "30s", target: 10 },
+    { duration: "1m", target: 10 }
+  ],
   noUsageReport: true,
 };
