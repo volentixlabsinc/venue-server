@@ -34,6 +34,7 @@ class Basic extends BaseTest {
             "lang is en": (b) => b.language === 'en'
         });
         
+        
         // now lets get the stats
         var params =  { 
             headers: { 
@@ -51,6 +52,22 @@ class Basic extends BaseTest {
             "stats user bct userid correct": (b) => b.stats.profile_level[0].forumUserId === '1216831',
             "stats user bct user rank correct": (b) => b.stats.profile_level[0].forumUserRank === 'Legendary'
         });
+
+        /*
+        var params =  { 
+            headers: { 
+                "Content-Type": "application/json"
+            } 
+        };
+        var responseLeaderboard = http.get(`${BASE_URL}/api/retrieve/leaderboard-data/`, params);
+        check(responseLeaderboard, {
+            "is statsstatus 200": (r) => r.status === 200
+        });
+
+
+
+/*
+
         
         var params =  { 
             headers: { 
@@ -66,6 +83,7 @@ class Basic extends BaseTest {
         check(statslogout, {
             "is logout success true": (b) => b.success === true
         });
+*/
     });
   }
 }
