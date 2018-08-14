@@ -57,3 +57,8 @@ spec:
               secretKeyRef:
                 name: redis-credentials
                 key: password
+          - name: POSTMARK_SERVER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: postman-credentials
+                key: token
