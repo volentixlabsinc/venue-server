@@ -2616,8 +2616,9 @@ def send_emails_with_referral_code(request):
             template='venue/email_referral.html',
             email=emails,
             language=user_profile.language.code,
-            subject='Sign Up Subject',  # TODO: add real subject,
-            code=user_profile.referral_code
+            subject='You have been referred to our Bitcoin Talk signature campaign!',
+            code=user_profile.referral_code,
+            referrer_name=request.user.username
         )
         response_result = not emails_result.get('ErrorCode')
         # 200 if `ErrorCode` in payload == 0 else 422
