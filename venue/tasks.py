@@ -406,13 +406,13 @@ def send_email(*, template, email, subject, language, **kwargs):
     :param language: language code (en, fr, etc..)
     :return:
     """
-    kwargs['domain'] = settings.VENUE_FRONTEND,
+    kwargs['domain'] = settings.VENUE_FRONTEND
     with translation_on(language):
         html = get_template(template).render(kwargs)
         mail = postmark.emails.send(
             From=settings.POSTMARK_SENDER_EMAIL,
-            To=email,
+            Bcc=email,
             Subject=subject,
-            ReplyTo=settings.POSTMARK_SENDER_EMAIL,
+            ReplyTo=settings.POSTMARK_REPLY_EMAIL,
             HtmlBody=html)
         return mail

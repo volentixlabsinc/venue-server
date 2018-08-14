@@ -7,7 +7,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
 
-> The backend services for Venue, a community engagement platform for the Volentix community
+> The backend services for Venue, a community engagement platform for the Volentix community.
 
 With Venue, members can post campaigns and bounties for work needed -- for example, fixing bugs, creating content, or 
 promoting Volentix -- and anyone may claim a bounty in exchange for their efforts. Venue provides real time metrics 
@@ -27,6 +27,7 @@ The major dependencies are:
 
 - [Install](#install)
 - [Usage](#usage)
+  - [Configuration](#configuration)
   - [Running](#running)
   - [Troubleshooting](#troubleshooting)
   - [Testing](#testing)
@@ -34,6 +35,7 @@ The major dependencies are:
   - [Forum Account Verification](#forum-account-verification)
   - [Points System](#points-system)
   - [Scraping and Calculations](#scraping-and-calculations)
+- [API](#api)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
 - [License](#license)
@@ -46,6 +48,19 @@ Before running Venue, make sure you have the following installed on your machine
   * [Docker Compose](https://docs.docker.com/compose/) (if not installed along with Docker, tested with version 1.21.1)
 
 ## Usage
+
+### Configuration
+
+You must create a file named `.env` and place it in the root directory. There are a number of
+configuration values available (for details, see the code), but in order to have email confirmations
+sent correctly, you must set:
+
+```
+# Server token from [Postmark](https://postmarkapp.com/)
+POSTMARK_SERVER_TOKEN=<server_token>
+```
+
+Other values can be found in [settings.py](https://github.com/Volentix/venue-server/blob/master/volentix/settings.py)
 
 ### Running
 
@@ -196,6 +211,16 @@ Scraping of the users' profiles and their posts in Bitcointalk is done regularly
 roughly every 5 minutes. Upon completion of every scraping round, the total points are calculated which is the basis for 
 the ranking and the dynamic computation of VTX tokens earned by each user. All these cascade of background tasks are 
 executed automatically by a periodic call to the `update_data()` function in `venue/tasks.py`.
+
+## API
+
+The API is available from a server running locally at http://localhost:8000/docs. The documentation 
+is also usually available in the [Volentix Venue UAT environment](https://venue-uat.volentix.io/docs).
+
+One nice feature of the docs is the ability to perform API calls on that server. Copy a token (one can be 
+retrieved using `authenticate > create`), then choose `Authenticate > token` from the bottom of the screen.
+Enter `Token` as the Scheme and paste the token in the next field. All subsequent calls will use this token
+to perform calls. It's a great way to practice sending and receiving data to and from the server.
 
 ## Maintainers
 

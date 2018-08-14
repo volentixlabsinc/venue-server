@@ -71,12 +71,23 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': (
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle'
-    ),
-    'DEFAULT_THROTTLE_RATES': {
+    )
+}
+
+
+THROTTLE_API_REQUESTS = config(
+    'THROTTLE_API_REQUESTS',
+    default=False,
+    cast=bool
+)
+
+
+if THROTTLE_API_REQUESTS:
+    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
         'anon': '100/hour',
         'user': '1000/hour'
     }
-}
+
 
 CONSTANCE_ADDITIONAL_FIELDS = {
     'textfield': [
@@ -271,9 +282,10 @@ REDIS_DB = redis.StrictRedis(
 
 # Postmark settings
 
-POSTMARK_TOKEN = config('POSTMARK_TOKEN', default='POSTMARK_API_TEST')
+POSTMARK_TOKEN = config('POSTMARK_SERVER_TOKEN', default='this-token-does-not-work')
 
-POSTMARK_SENDER_EMAIL = config('POSTMARK_SENDER_EMAIL', default='sender@example.com')
+POSTMARK_SENDER_EMAIL = config('POSTMARK_SENDER_EMAIL', default='venue@volentix.io')
+POSTMARK_REPLY_EMAIL = config('POSTMARK_REPLY_EMAIL', default='noreply@volentix.io')
 
 
 # CORS settings

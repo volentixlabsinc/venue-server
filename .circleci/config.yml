@@ -69,7 +69,7 @@ jobs:
     - run: kops export kubecfg
     - run: |
         TAG=v0.1.$CIRCLE_PREVIOUS_BUILD_NUM
-        sed 's/CI_DB_SERVICE_ENDPOINT/'$CI_DB_SERVICE_ENDPOINT'/; s/CI_REDIS_HOST/'$CI_REDIS_HOST'/; s/CI_REDIS_PASSWORD/'$CI_REDIS_PASSWORD'/; s/IMAGE_VERSION/'$TAG'/; s/CI_POSTGRES_USER/'$CI_POSTGRES_USER'/; s/CI_POSTGRES_PASSWORD/'$CI_POSTGRES_PASSWORD'/; s/CI_POSTGRES_NAME/'$CI_POSTGRES_NAME'/' kube/dev.yml.template > kube/dev.yml
+        sed 's/IMAGE_VERSION/'$TAG'/' kube/dev.yml.template > kube/dev.yml
         kubectl apply -f kube/dev.yml
 
 workflows:
