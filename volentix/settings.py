@@ -156,7 +156,7 @@ DATABASES = {
         'USER': config('POSTGRES_USER', default='venueadmin'), 
         'PASSWORD': config('POSTGRES_PASSWORD', default='badpassword'),
         'HOST': config('POSTGRES_HOST', default='postgres'),
-        'CONN_MAX_AGE': config('DB_CON_MAX_AGE', default=30000)
+        'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=3000)
     }
 }
 
