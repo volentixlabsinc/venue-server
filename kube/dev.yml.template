@@ -61,4 +61,4 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: postman-credentials
-                key: token2
+                key: token
