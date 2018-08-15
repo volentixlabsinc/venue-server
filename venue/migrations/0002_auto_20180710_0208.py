@@ -676,6 +676,7 @@ USERS += [
     }
 ]
 
+
 def add_users(apps, schema_editor):
     User = apps.get_model('auth', 'User')
     for user_details in USERS:
