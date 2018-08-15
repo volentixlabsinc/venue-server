@@ -1,0 +1,159 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-07-22 23:51+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: venue/templates/admin/custom_index.html:20
+#, python-format
+msgid "Models in the %(name)s application"
+msgstr "Þu kiþinin baþvurusundaki modeller: %(name)"
+
+#: venue/templates/admin/custom_index.html:31
+msgid "Add"
+msgstr "Ekle"
+
+#: venue/templates/admin/custom_index.html:37
+msgid "Change"
+msgstr "Deðiþtir"
+
+#: venue/templates/admin/custom_index.html:47
+msgid "You don't have permission to edit anything."
+msgstr "Düzenleme yapmak için yetkili deðilsiniz."
+
+#: venue/templates/admin/userprofile_change_list.html:46
+msgid "Home"
+msgstr "Giriþ"
+
+#: venue/templates/admin/userprofile_change_list.html:64
+#, python-format
+msgid "Add %(name)s"
+msgstr "Þu kiþiyi ekle: %(name)"
+
+#: venue/templates/admin/userprofile_change_list.html:73
+msgid "Please correct the error below."
+msgstr "Lütfen aþaðýdaki hatayý düzeltin."
+
+#: venue/templates/admin/userprofile_change_list.html:73
+msgid "Please correct the errors below."
+msgstr "Lütfen aþaðýdaki hatalarý düzeltin."
+
+#: venue/templates/admin/userprofile_change_list.html:84
+msgid "Filter"
+msgstr "Filtre"
+
+#: venue/templates/venue/deletion_confirmation.html:4
+msgid "Account Deletion Confirmation"
+msgstr "Hesap Silinmesi Onayý"
+
+#: venue/templates/venue/deletion_confirmation.html:5
+#: venue/templates/venue/email_change.html:5
+#: venue/templates/venue/email_confirmation.html:5
+msgid "Confirm your email to complete the sign up."
+msgstr "Kaydolma iþlemini tamamlamak için, eposta adresinizi doðrulayýn."
+
+#: venue/templates/venue/deletion_confirmation.html:13
+#: venue/templates/venue/email_change.html:12
+#: venue/templates/venue/email_confirmation.html:12
+#: venue/templates/venue/reset_password.html:12
+#, python-format
+msgid "Hi %(name)s,"
+msgstr "Merhaba %(name),"
+
+#: venue/templates/venue/deletion_confirmation.html:14
+msgid ""
+"You initiated an account deletion process in Volentix Venue. Please click on "
+"the button below to proceed."
+msgstr ""
+"Volentix Venue hesap silinmesi sürecini baþlattýnýz. Devam etmek için, "
+"lütfen aþaðýdaki düðmeye týklayýn."
+
+#: venue/templates/venue/deletion_confirmation.html:24
+msgid "Delete Account"
+msgstr "Hesabý Sil"
+
+#: venue/templates/venue/deletion_confirmation.html:35
+msgid ""
+"By clicking on the button, you agree to permanently delete your account from "
+"our system."
+msgstr ""
+"Bu düðmeye týklayarak, hesabýnýzýn sistemimizden kalýcý olarak silinmesine "
+"onay vermiþ olursunuz."
+
+#: venue/templates/venue/email_change.html:4
+msgid "Email change confirmation"
+msgstr "Eposta deðiþikliði onayý"
+
+#: venue/templates/venue/email_change.html:13
+msgid ""
+"You initiated a change of email of your account in Volentix Venue! Confirm "
+"this new email now by clicking the button below."
+msgstr ""
+"Volentix Venue eposta adresi deðiþikliði sürecini baþlattýnýz. Lütfen aþaðýdaki düðmeye týklayarak "
+"yeni eposta adresinizi doðrulayýn."
+
+#: venue/templates/venue/email_change.html:22
+msgid "Confirm Email Change"
+msgstr "Eposta Adresi Deðiþikliðini Doðrula"
+
+#: venue/templates/venue/email_change.html:30
+msgid ""
+"By clicking the button, you confirm that you want to use this email for your "
+"account."
+msgstr ""
+"Aþaðýdaki düðmeye týklayarak, hesabýnýz için bu eposta adresini kullanmaya karar verdiðinizi "
+"onaylamýþ olursunuz."
+
+#: venue/templates/venue/email_confirmation.html:4
+#: venue/templates/venue/reset_password.html:4
+msgid "Email confirmation"
+msgstr "Eposta doðrulamasý"
+
+#: venue/templates/venue/email_confirmation.html:13
+msgid "Thank you for signing up to use Venue!"
+msgstr "Venue'ye kaydolduðunuz için teþekkür ederiz!"
+
+#: venue/templates/venue/email_confirmation.html:14
+msgid "Kindly press the confirm button below and start using Venue right away."
+msgstr "Venue'yi hemen kullanmaya baþlamak için lütfen aþaðýdaki onay düðmesine týklayýn."
+
+#: venue/templates/venue/email_confirmation.html:23
+msgid "Confirm"
+msgstr "Onayla"
+
+#: venue/templates/venue/reset_password.html:5
+msgid "Reset your current password."
+msgstr "Þu anki þifreyi sýfýrla."
+
+#: venue/templates/venue/reset_password.html:13
+msgid ""
+"You have requested to reset your password. Please click on the button below "
+"to proceed:"
+msgstr ""
+"Þifrenizi sýfýrlama isteði gönderdiniz. Devam etmek için, lütfen "
+"aþaðýdaki düðmeye týklayýn:"
+
+#: venue/templates/venue/reset_password.html:23
+msgid "Reset Password"
+msgstr "Þifreyi Sýfýrla"
+
+#: venue/templates/venue/reset_password.html:33
+msgid "You will be asked to set a new password to access your account."
+msgstr "Hesabýnýza eriþmek için yeni bir þifre belirlemeniz istenecek."
+
+#: venue/templates/venue/reset_password.html:34
+msgid "Good luck!"
+msgstr "Bol þans!"
