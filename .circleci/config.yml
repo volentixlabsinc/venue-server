@@ -8,7 +8,8 @@ jobs:
     - setup_remote_docker
     - restore_cache:
         keys:
-        - v1-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}
+        - venue-server-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}-{{ .Branch }}
+        - venue-server-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}-master
         paths:
         - /caches/venueserver.tar
 
@@ -44,7 +45,7 @@ jobs:
 
     - save_cache:
         name: Save cache to the circle CI
-        key: v1-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}
+        key: venue-server-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}-{{ .Branch }}
         paths:
         - /caches/venueserver.tar
 
