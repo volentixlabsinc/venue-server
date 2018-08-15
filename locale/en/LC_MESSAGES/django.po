@@ -70,7 +70,7 @@ msgstr ""
 #: venue/templates/venue/email_confirmation.html:12
 #: venue/templates/venue/reset_password.html:12
 #, python-format
-msgid "Hi %(name),"
+msgid "Hi %(name)s,"
 msgstr ""
 
 #: venue/templates/venue/deletion_confirmation.html:14
