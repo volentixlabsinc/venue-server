@@ -2,8 +2,10 @@ var fs = require('fs')
 const uuidv4 = require('uuid/v4');
 const Mustache = require('mustache')
 
+let USERS = process.env.USERS || 10;
+USERS++;
+
 var template = fs.readFileSync(__dirname + '/0002_auto_20180710_0208.py.template', 'utf8');
-//console.log(template)
 
 let form_records = [];
 let users = [];
@@ -17,7 +19,7 @@ var rankIds = [
     '14d22df0-3462-492b-81c5-b5812d3ef777'
 ]
 
-for (let i = 1; i < 101; i += 1) {
+for (let i = 1; i < USERS; i += 1) {
 
     users.push({
         'password': 'default2018',
@@ -30,8 +32,6 @@ for (let i = 1; i < 101; i += 1) {
     var profileid = uuidv4();
     var ran = Math.round(Math.random() * Math.floor(4));
     var rankid = rankIds[ran];
-    console.log(ran)
-    //console.log(rankid + " ::::::::::::::" + ran);
     form_records.push(
     {
         'id': profileid,
