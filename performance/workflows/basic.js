@@ -18,7 +18,7 @@ class Basic extends BaseTest {
 
   test() {
     group(this.TEST_NAME, () => {
-        /*
+        
         var payload = nextUser().rstring
         //console.log(payload);
         var params1 =  { headers: { "Content-Type": "application/json" } }
@@ -34,7 +34,6 @@ class Basic extends BaseTest {
        check(responseLogin, {
             "is status 200": (r) => r.status === 200
         });
-        
         var body = JSON.parse(responseLogin.body);
         var token = body.token;
         check(body, {
@@ -43,7 +42,7 @@ class Basic extends BaseTest {
             "lang is en": (b) => b.language === 'en'
         });
         
-      
+        sleep(Math.random() * Math.floor(3));
         // now lets get the stats
         var params2 =  { 
             headers: { 
@@ -64,7 +63,7 @@ class Basic extends BaseTest {
             "stats user bct user rank correct": (b) => b.stats.profile_level[0].forumUserRank === 'Legendary'
         });
 
-       */
+       
         var params3 =  { 
             headers: { 
                 "Content-Type": "application/json"
@@ -76,7 +75,8 @@ class Basic extends BaseTest {
             "is statsstatus 200": (r) => r.status === 200
         });
         
-       /*
+        sleep(Math.random() * Math.floor(3));
+        
         var params4 =  { 
             headers: { 
                 "Content-Type": "application/json" ,
@@ -97,7 +97,6 @@ class Basic extends BaseTest {
         check(statslogout, {
             "is logout success true": (b) => b.success === true
         });
-        */
     });
   }
 }

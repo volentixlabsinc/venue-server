@@ -2,7 +2,7 @@ let currentUser = 1;
 
 
 function nextUser() {
-    if (currentUser >= 1000 ) {
+    if (currentUser >= 90 ) {
         currentUser = 1;
     }
     currentUser++;
