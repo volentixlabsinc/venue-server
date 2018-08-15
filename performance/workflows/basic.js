@@ -5,6 +5,8 @@ import { API_NAME, BASE_URL } from '../constants.js';
 
 import {nextUser} from '../users.js';
 
+// let count = 1;
+
 class Basic extends BaseTest {
   constructor() {
     super('Fetch Comments');
@@ -16,6 +18,7 @@ class Basic extends BaseTest {
 
   test() {
     group(this.TEST_NAME, () => {
+        /*
         var payload = nextUser().rstring
         //console.log(payload);
         var params1 =  { headers: { "Content-Type": "application/json" } }
@@ -40,7 +43,7 @@ class Basic extends BaseTest {
             "lang is en": (b) => b.language === 'en'
         });
         
-      /*
+      
         // now lets get the stats
         var params2 =  { 
             headers: { 
@@ -61,18 +64,19 @@ class Basic extends BaseTest {
             "stats user bct user rank correct": (b) => b.stats.profile_level[0].forumUserRank === 'Legendary'
         });
 
-       
+       */
         var params3 =  { 
             headers: { 
                 "Content-Type": "application/json"
             } 
         };
         var responseLeaderboard = http.get(`${BASE_URL}/api/retrieve/leaderboard-data/`, params3);
+        //console.log("Status: " + responseLeaderboard.status + " Count: " + count++)
         check(responseLeaderboard, {
             "is statsstatus 200": (r) => r.status === 200
         });
-        */
-       
+        
+       /*
         var params4 =  { 
             headers: { 
                 "Content-Type": "application/json" ,
@@ -93,7 +97,7 @@ class Basic extends BaseTest {
         check(statslogout, {
             "is logout success true": (b) => b.success === true
         });
-
+        */
     });
   }
 }
