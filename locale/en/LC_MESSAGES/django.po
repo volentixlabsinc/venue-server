@@ -20,40 +20,40 @@ msgstr ""
 #: venue/templates/admin/custom_index.html:20
 #, python-format
 msgid "Models in the %(name)s application"
-msgstr ""
+msgstr "Models in the %(name)s application"
 
 #: venue/templates/admin/custom_index.html:31
 msgid "Add"
-msgstr ""
+msgstr "Add"
 
 #: venue/templates/admin/custom_index.html:37
 msgid "Change"
-msgstr ""
+msgstr "Change"
 
 #: venue/templates/admin/custom_index.html:47
 msgid "You don't have permission to edit anything."
-msgstr ""
+msgstr "You don't have permission to edit anything."
 
 #: venue/templates/admin/userprofile_change_list.html:46
 msgid "Home"
-msgstr ""
+msgstr "Home"
 
 #: venue/templates/admin/userprofile_change_list.html:64
 #, python-format
 msgid "Add %(name)s"
-msgstr ""
+msgstr "Add %(name)s"
 
 #: venue/templates/admin/userprofile_change_list.html:73
 msgid "Please correct the error below."
-msgstr ""
+msgstr "Please correct the error below."
 
 #: venue/templates/admin/userprofile_change_list.html:73
 msgid "Please correct the errors below."
-msgstr ""
+msgstr "Please correct the errors below."
 
 #: venue/templates/admin/userprofile_change_list.html:84
 msgid "Filter"
-msgstr ""
+msgstr "Filter"
 
 #: venue/templates/venue/deletion_confirmation.html:4
 msgid "Account Deletion Confirmation"
@@ -70,7 +70,7 @@ msgstr ""
 #: venue/templates/venue/email_confirmation.html:12
 #: venue/templates/venue/reset_password.html:12
 #, python-format
-msgid "Hi %(name)s,"
+msgid "Hi %(name),"
 msgstr ""
 
 #: venue/templates/venue/deletion_confirmation.html:14
