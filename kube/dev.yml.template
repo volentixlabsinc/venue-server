@@ -62,3 +62,8 @@ spec:
               secretKeyRef:
                 name: postman-credentials
                 key: token
+          - name: ROLLBAR_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: rollbar-credentials
+                key: token
