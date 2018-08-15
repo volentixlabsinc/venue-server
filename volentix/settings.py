@@ -341,6 +341,7 @@ VENUE_FRONTEND = config('VENUE_FRONTEND', default='http://localhost:3000')
 
 LANGUAGES = (
     'en',
+    'tr'
 )
 
 LOCALE_PATHS = (
