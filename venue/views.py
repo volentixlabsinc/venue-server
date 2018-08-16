@@ -787,23 +787,26 @@ def get_stats(request):
                 fp_data['VTX_Tokens'] = int(round(fp_tokens, 0))
             profile_stats.append(fp_data)
         stats['profile_level'] = profile_stats
+
         # --------------------------
         # Generate user-level stats
         # --------------------------
         userlevel_stats = {}
         # Get the date string for the last seven days
         now = timezone.now()
-        days = [now - timedelta(days=x) for x in range(7)]
+        days = (now - timedelta(days=x) for x in range(7))
         days = [str(x.date()) for x in days]
-        user_profile = UserProfile.objects.get(user=request.user)
+        user_profile = UserProfile.objects.prefetch_related('posts', 'rankings').get(user=request.user)
         userlevel_stats['daily_stats'] = []
         # Iterate over the reversed list
         for day in days[::-1]:
-            data = {}
-            data['posts'] = user_profile.get_num_posts(date=day)
-            data['rank'] = user_profile.get_ranking(date=day)
-            data['date'] = day
-            userlevel_stats['daily_stats'].append(data)
+            rank_obj = user_profile.rankings.filter(timestamp__date__lte=day).order_by('-timestamp').first()
+            rank = rank_obj.rank if rank_obj is not None else 0
+            # posts = user_profile.posts.filter(timestamp__date=day, forum_profile__verified=True).count()
+            posts = user_profile.get_num_posts(date=day)
+            userlevel_stats['daily_stats'].append(
+                {'posts': posts, 'rank': rank, 'date': day}
+            )
         # Points, tokens, and overall user rank
         userlevel_stats['total_posts'] = user_profile.get_num_posts()['total']
         total_points = user_profile.total_points
@@ -813,18 +816,19 @@ def get_stats(request):
         else:
             pct_contrib = 0
         userlevel_stats['total_points_pct'] = int(round(pct_contrib * 100, 0))
-        userlevel_stats['total_tokens'] = user_profile.total_tokens
+        userlevel_stats['total_tokens'] = user_profile.total_tokens + user_profile.referrals_bonuses
         userlevel_stats['overall_rank'] = user_profile.get_ranking()
         stats['user_level'] = userlevel_stats
         # -------------------------
         # Generate site-wide stats
         # -------------------------
         sitewide_stats = {}
-        users = UserProfile.objects.filter(email_confirmed=True)
-        users_with_fp = [x.id for x in users if x.with_forum_profile]
-        total_posts = [x.get_num_posts()['total'] for x in users]
-        sitewide_stats['total_users'] = len(users_with_fp)
-        sitewide_stats['total_posts'] = int(sum(total_posts))
+        users_with_fp_count = UserProfile.objects.filter(
+            forum_profiles__active=True, forum_profiles__verified=True
+        ).count()
+        total_posts = ForumPost.objects.filter(forum_profile__verified=True).count()
+        sitewide_stats['total_users'] = users_with_fp_count
+        sitewide_stats['total_posts'] = total_posts
         available_tokens = '{:,}'.format(config.VTX_AVAILABLE)
         sitewide_stats['available_tokens'] = available_tokens
         stats['sitewide'] = sitewide_stats
