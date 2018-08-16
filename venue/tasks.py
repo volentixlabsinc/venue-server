@@ -272,6 +272,8 @@ def compute_ranking():
             send_websocket_signal('refresh')
     # Save the global total points in redis
     settings.REDIS_DB.set('global_total_points', global_total)
+    # Remove useless data from the table
+    Ranking.clean_ranking()
     return {'total': global_total, 'points': user_points}
 
 
