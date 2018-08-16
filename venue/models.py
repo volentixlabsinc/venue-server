@@ -253,7 +253,6 @@ class UserProfile(models.Model):
         if global_total_pts:
             pct_contrib = self.total_points / global_total_pts
             tokens = pct_contrib * config.VTX_AVAILABLE
-        tokens += self.referrals_bonuses
         return int(round(tokens, 0))
 
 
