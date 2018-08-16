@@ -8,8 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
-from django.db import connection
-from django.db import models
+from django.db import models, connection
 from django.db.models.functions import Coalesce
 from django.dispatch import receiver
 from django.utils import timezone
@@ -270,6 +269,25 @@ class Ranking(models.Model):
 
     class Meta:
         get_latest_by = 'timestamp'
+
+    @classmethod
+    def clean_ranking(cls):
+        """
+        Remove duplicated lines for each day
+        :return: removed ids
+        """
+        sql = """
+        WITH RANK_LINES AS (SELECT id, user_profile_id, "timestamp",
+                           row_number() OVER (PARTITION BY user_profile_id ORDER BY "timestamp" DESC) AS rank_count
+                    FROM venue_ranking)
+        DELETE
+        FROM venue_ranking
+        WHERE id IN (SELECT id FROM RANK_LINES WHERE rank_count > 1)
+            RETURNING id;
+        """
+        with connection.cursor() as c:
+            c.execute(sql)
+            return c.fetchall()
 
 
 class ForumProfile(models.Model):
