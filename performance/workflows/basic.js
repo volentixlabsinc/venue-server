@@ -5,8 +5,6 @@ import { API_NAME, BASE_URL } from '../constants.js';
 
 import {nextUser} from '../users.js';
 
-// let count = 1;
-
 class Basic extends BaseTest {
   constructor() {
     super('Fetch Comments');
@@ -23,16 +21,17 @@ class Basic extends BaseTest {
         //console.log(payload);
         var params1 =  { headers: { "Content-Type": "application/json" } }
         
+        var datestart = new Date();
         var date1 = new Date();
         var responseLogin = http.post(this.URL, payload, params1);
         var date2 = new Date();
-        console.log("Login took: " + (date2.getTime() - date1.getTime()));
+        //console.log("Login took: " + (date2.getTime() - date1.getTime()));
         
        
         if (responseLogin.status != 200 ) {
             console.log("Status Logout: " + responseLogin.status);
             console.log(payload);
-            console.log(responseLogin.body)
+            console.log(JSON.stringify(responseLogin, null, 4))
         }
 
        check(responseLogin, {
@@ -52,7 +51,7 @@ class Basic extends BaseTest {
         date1 = new Date();var date1 = new Date();
         var responseStats = http.get(`${BASE_URL}/api/retrieve/stats/`, params2);
         date2 = new Date();
-        console.log("Stats took: " + (date2.getTime() - date1.getTime()));
+        //console.log("Stats took: " + (date2.getTime() - date1.getTime()));
         
         check(responseStats, {
             "is statsstatus 200": (r) => r.status === 200
@@ -68,7 +67,7 @@ class Basic extends BaseTest {
         date1 = new Date();var date1 = new Date();
         var responseLeaderboard = http.get(`${BASE_URL}/api/retrieve/leaderboard-data/`, params3);
         date2 = new Date();
-        console.log("leaderboard took: " + (date2.getTime() - date1.getTime()));
+        //console.log("leaderboard took: " + (date2.getTime() - date1.getTime()));
         //console.log("Status: " + responseLeaderboard.status + " Count: " + count++)
         check(responseLeaderboard, {
             "is statsstatus 200": (r) => r.status === 200
@@ -83,8 +82,12 @@ class Basic extends BaseTest {
         date1 = new Date();var date1 = new Date();
         var responseLogout = http.get(`${BASE_URL}/api/logout/`, params4);
         date2 = new Date();
-        console.log("logout took: " + (date2.getTime() - date1.getTime()));
+        //console.log("logout took: " + (date2.getTime() - date1.getTime()));
         
+        var datestop = new Date();
+        console.log("roundtrip took: " + (datestop.getTime() - datestart.getTime()));
+        
+
         if (responseLogout.status != 200 ) {
             console.log("Status Logout: " + responseLogout.status);
             console.log(responseLogout.body)
