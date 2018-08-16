@@ -6,7 +6,7 @@ export default {
     basicInstance.threshold
   ),
   stages: [
-    { duration: "30s", target: 10 }
+    { duration: "30s", target: 3 }
   ],
   noUsageReport: true,
 };

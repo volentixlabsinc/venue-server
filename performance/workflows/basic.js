@@ -22,8 +22,12 @@ class Basic extends BaseTest {
         var payload = nextUser().rstring
         //console.log(payload);
         var params1 =  { headers: { "Content-Type": "application/json" } }
+        
+        var date1 = new Date();
         var responseLogin = http.post(this.URL, payload, params1);
-
+        var date2 = new Date();
+        console.log("Login took: " + (date2.getTime() - date1.getTime()));
+        
        
         if (responseLogin.status != 200 ) {
             console.log("Status Logout: " + responseLogin.status);
@@ -36,13 +40,7 @@ class Basic extends BaseTest {
         });
         var body = JSON.parse(responseLogin.body);
         var token = body.token;
-        check(body, {
-            "is success true": (b) => b.success === true,
-            "email is confirmed": (b) => b.email_confirmed === true,
-            "lang is en": (b) => b.language === 'en'
-        });
         
-        sleep(Math.random() * Math.floor(3));
         // now lets get the stats
         var params2 =  { 
             headers: { 
@@ -51,16 +49,13 @@ class Basic extends BaseTest {
             } 
         };
 
-         
+        date1 = new Date();var date1 = new Date();
         var responseStats = http.get(`${BASE_URL}/api/retrieve/stats/`, params2);
+        date2 = new Date();
+        console.log("Stats took: " + (date2.getTime() - date1.getTime()));
+        
         check(responseStats, {
             "is statsstatus 200": (r) => r.status === 200
-        });
-        var statsBody = JSON.parse(responseStats.body);
-        check(statsBody, {
-            "is stats success true": (b) => b.success === true,
-            "stats user bct userid correct": (b) => b.stats.profile_level[0].forumUserId === '1216831',
-            "stats user bct user rank correct": (b) => b.stats.profile_level[0].forumUserRank === 'Legendary'
         });
 
        
@@ -69,13 +64,15 @@ class Basic extends BaseTest {
                 "Content-Type": "application/json"
             } 
         };
+
+        date1 = new Date();var date1 = new Date();
         var responseLeaderboard = http.get(`${BASE_URL}/api/retrieve/leaderboard-data/`, params3);
+        date2 = new Date();
+        console.log("leaderboard took: " + (date2.getTime() - date1.getTime()));
         //console.log("Status: " + responseLeaderboard.status + " Count: " + count++)
         check(responseLeaderboard, {
             "is statsstatus 200": (r) => r.status === 200
         });
-        
-        sleep(Math.random() * Math.floor(3));
         
         var params4 =  { 
             headers: { 
@@ -83,8 +80,11 @@ class Basic extends BaseTest {
                 "authorization": "Token " + body.token
             } 
         };
+        date1 = new Date();var date1 = new Date();
         var responseLogout = http.get(`${BASE_URL}/api/logout/`, params4);
-
+        date2 = new Date();
+        console.log("logout took: " + (date2.getTime() - date1.getTime()));
+        
         if (responseLogout.status != 200 ) {
             console.log("Status Logout: " + responseLogout.status);
             console.log(responseLogout.body)
