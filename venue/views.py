@@ -816,7 +816,7 @@ def get_stats(request):
         else:
             pct_contrib = 0
         userlevel_stats['total_points_pct'] = int(round(pct_contrib * 100, 0))
-        userlevel_stats['total_tokens'] = user_profile.total_tokens
+        userlevel_stats['total_tokens'] = user_profile.total_tokens + user_profile.referrals_bonuses
         userlevel_stats['overall_rank'] = user_profile.get_ranking()
         stats['user_level'] = userlevel_stats
         # -------------------------
