@@ -15,7 +15,8 @@ services:
       POSTGRES_USER: 'venueadmin'
       POSTGRES_PASSWORD: 'badpassword'
   web:
-    image: volentixlabs/venueserver:v0.1.311
+    build: .
+    restart: 'always'
     expose:
       - '8000'
       - '9000'
