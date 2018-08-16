@@ -19,11 +19,6 @@ def leader_board_procedure():
                        FROM venue_forumpost P
                        WHERE credited = TRUE
                        GROUP BY P.forum_profile_id),
-             REFERREALS AS (SELECT referrer_id, coalesce(bonus, 0) AS bonus
-                            FROM (SELECT bonus, referrer_id,
-                                         row_number() OVER (PARTITION BY referrer_id ORDER BY granted_at) AS rownum
-                                  FROM venue_referral) tmp
-                            WHERE ROWNUM <= P_MAX_REFERRALS),
              RANK AS (SELECT rank :: INT, user_profile_id
                       FROM (SELECT id, rank, timestamp, user_profile_id, row_number() OVER (
                         PARTITION BY user_profile_id ORDER BY timestamp DESC
@@ -36,15 +31,13 @@ def leader_board_procedure():
                CASE WHEN P_TOTAL_POINTS = 0
                THEN 0
                ELSE
-               coalesce(coalesce(sum(P.total_points), 0) / P_TOTAL_POINTS * P_VTX_AVAILABLE + coalesce(sum(R.bonus), 0),
-                        0)
+               coalesce(coalesce(sum(P.total_points), 0) / P_TOTAL_POINTS * P_VTX_AVAILABLE, 0)
                END :: BIGINT AS total_tokens,
                coalesce(RK.rank, 0)
         FROM venue_userprofile UP
                JOIN venue_forumprofile FP ON UP.id = FP.user_profile_id
                JOIN auth_user U ON UP.user_id = U.id
                LEFT JOIN POSTS AS P ON FP.id = P.forum_profile_id
-               LEFT JOIN REFERREALS R ON UP.id = R.referrer_id
                LEFT JOIN RANK RK ON UP.id = RK.user_profile_id
         WHERE FP.active IS TRUE AND verified IS TRUE AND U.is_active IS TRUE AND UP.email_confirmed IS TRUE
         GROUP BY U.id, RK.RANK;
