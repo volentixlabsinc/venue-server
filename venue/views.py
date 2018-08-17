@@ -2620,7 +2620,7 @@ def send_emails_with_referral_code(request):
             template='venue/email_referral.html',
             email=emails,
             language=user_profile.language.code,
-            subject='You have been referred to our Bitcoin Talk signature campaign!',
+            subject='Referral to Volentix Bitcointalk.org signature campaign',
             code=user_profile.referral_code,
             referrer_name=request.user.username
         )
