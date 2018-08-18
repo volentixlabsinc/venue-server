@@ -29,15 +29,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
 
-from venue.models import Referral
-from venue.tasks import send_email
-from venue.utils import decrypt_data, encrypt_data
-from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Language, Notification, Signature, UserProfile,
-                     compute_total_points)
+from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Notification, Signature, UserProfile,
+                     compute_total_points, Referral)
 from .tasks import (get_user_position, send_deletion_confirmation, send_email_change_confirmation,
                     send_email_confirmation, send_reset_password, set_scraping_rate, update_data,
-                    verify_profile_signature)
-from .utils import RedisTemp
+                    verify_profile_signature, send_email)
+from .utils import RedisTemp, decrypt_data, encrypt_data, check_language_exists
 
 
 def generate_token_salt(user):
@@ -180,7 +177,7 @@ def authenticate(request):
                         'email': user.email,
                         'user_profile_id': user_profile.id,
                         'email_confirmed': user_profile.email_confirmed,
-                        'language': user_profile.language.code
+                        'language': user_profile.language
                     }
                     resp_status = status.HTTP_200_OK
             else:
@@ -258,7 +255,7 @@ def get_user(request):
             'found': True,
             'username': request.user.username,
             'email': request.user.email,
-            'language': user_profile.language.code,
+            'language': user_profile.language,
             'email_confirmed': user_profile.email_confirmed,
             'enabled_2fa': user_profile.enabled_2fa,
             'referral_code': user_profile.referral_code
@@ -346,6 +343,7 @@ def create_user(request):
             - not_whitelisted
             - username_too_long
             - user_already_exists
+            - wrong_language
 
     * Status code 403 (When the user is not allowed to register)
     """
@@ -371,14 +369,17 @@ def create_user(request):
             proceed = False
             response['message'] = 'username_too_long'
             resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    language = data.pop('language', None)
+    language = settings.LANGUAGE_CODE if language is None else language
+    if not check_language_exists(language):
+        proceed = False
+        response['message'] = 'wrong_language'
+        resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
+
     if proceed:
         try:
-            language = data['language']
-            del data['language']
-            receive_emails = False
-            if 'receive_emails' in data.keys():
-                receive_emails = data['receive_emails']
-                del data['receive_emails']
+            receive_emails = data.pop('receive_emails', False)
             if user_check:
                 response['message'] = 'user_already_exists'
                 resp_status = status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -397,7 +398,7 @@ def create_user(request):
                     user=user
                 )
                 user_profile.receive_emails = receive_emails
-                user_profile.language = Language.objects.get(code=language)
+                user_profile.language = language
                 user_profile.save()
 
                 if referral_code and referrer_user_profile:
@@ -1021,10 +1022,10 @@ def delete_account(request):
     response = {'success': False}
     if request.method == 'POST':
         user = request.user
-        user_profile = user.profiles.select_related('language').first()
+        user_profile = user.profiles.first()
 
         token_salt = generate_token_salt(user)
-        language_code = user_profile.language.code
+        language_code = user_profile.language
 
         send_deletion_confirmation.delay(
             user.email,
@@ -1103,12 +1104,12 @@ def change_email(request):
     else:
         token_salt = generate_token_salt(user)
         rtemp.store(token_salt, data['email'])
-        user_profile = user.profiles.select_related('language').first()
+        user_profile = user.profiles.first()
         send_email_change_confirmation.delay(
             data['email'],
             user.username,
             token_salt,
-            user_profile.language.code
+            user_profile.language
         )
         response['success'] = True
         resp_status = status.HTTP_202_ACCEPTED
@@ -1327,15 +1328,27 @@ def change_language(request):
             }
 
         * `success` - Whether the change request succeeded or not
+
+    * Status code 400 (When old password is incorrect)
+
+            {
+                "success": <boolean: false>,
+                "message": <string: "wrong_language">
+            }
     """
     response = {'success': False}
     data = request.data
     user = request.user
     user_profile = user.profiles.first()
-    user_profile.language = Language.objects.get(code=data['language'])
-    user_profile.save()
-    response['success'] = True
-    return Response(response)
+    language = data['language']
+    if check_language_exists(language):
+        user_profile.language = data['language']
+        user_profile.save()
+        response['success'] = True
+        return Response(response)
+    else:
+        response['message'] = 'wrong_language'
+        return Response(response, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 # -----------------------
@@ -1425,13 +1438,13 @@ def reset_password(request):
     if data['action'] == 'request':
         try:
             user = User.objects.select_related(
-                'profiles', 'profiles__language'
+                'profiles'
             ).get(email=data['email'])
             token_salt = generate_token_salt(user)
             user_profile = user.profiles.first()
             send_reset_password.delay(
                 user.email, user.username, token_salt,
-                user_profile.language.code
+                user_profile.language
             )
             response['success'] = True
             resp_status = status.HTTP_202_ACCEPTED
@@ -1632,9 +1645,12 @@ def get_languages(request):
         * `value` - Language code (e.g. en, jp, fr)
         * `text` - Full language name (e.g. English, Japanese, French)
     """
-    languages = Language.objects.filter(active=True)
-    languages = [{'value': x.code, 'text': x.name} for x in languages]
-    return Response(languages)
+    return Response(
+        [
+            {'value': language[0], 'text': language[1]}
+            for language in settings.LANGUAGES
+        ]
+    )
 
 
 # -------------------------
@@ -2624,7 +2640,7 @@ def send_emails_with_referral_code(request):
         emails_result = send_email(
             template='venue/email_referral.html',
             email=emails,
-            language=user_profile.language.code,
+            language=user_profile.language,
             subject='Referral to Volentix Bitcointalk.org signature campaign',
             code=user_profile.referral_code,
             referrer_name=request.user.username
