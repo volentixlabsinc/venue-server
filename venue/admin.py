@@ -2,7 +2,7 @@ from django.http import HttpResponseRedirect
 
 from venue.models import (
     ForumSite, Signature, UserProfile, Ranking, ForumProfile,
-    Language, ForumUserRank, ForumPost, Notification
+    ForumUserRank, ForumPost, Notification
 )
 from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
@@ -36,13 +36,6 @@ admin.site.index_template = 'admin/custom_index.html'
 
 admin.site.register(ForumSite)
 admin.site.register(Signature)
-
-
-class LanguageAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'active']
-
-
-admin.site.register(Language, LanguageAdmin)
 
 
 class UserProfileAdmin(admin.ModelAdmin):

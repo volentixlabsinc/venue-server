@@ -5,6 +5,7 @@ from contextlib import contextmanager
 import redis
 import rncryptor
 from django.utils import translation
+from django.conf import settings
 
 
 class RedisTemp(object):
@@ -61,3 +62,12 @@ def translation_on(locale):
     translation.activate(locale)
     yield
     translation.deactivate()
+
+
+def check_language_exists(language_code):
+    """
+    Check language code exists in the settings
+    :param language_code: e.g. 'en'
+    :return: bool
+    """
+    return language_code in [l[0] for l in settings.LANGUAGES]
