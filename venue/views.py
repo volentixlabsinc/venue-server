@@ -944,9 +944,14 @@ def get_leaderboard_data(request):
                 (i for i in leader_board_data if i['username'] == request.user.username),
                 {}
             )
+            try:
+                total_tokens = user_data.get('total_tokens', 0)
+                total_tokens = 0 if total_tokens is None else int(total_tokens)
+            except ValueError:
+                total_tokens = 0
             response['userstats'] = {
                 'overall_rank': user_data.get('username'),
-                'total_tokens': int(round(user_data.get('total_tokens'), 0))
+                'total_tokens': total_tokens
             }
     # Generate forum stats
     forum_stats = {
