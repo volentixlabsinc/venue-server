@@ -348,3 +348,14 @@ LANGUAGES = (
 LOCALE_PATHS = (
     os.path.join(BASE_DIR, 'locale'),
 )
+
+# crawlera settings
+CRAWLERA_AUTH_TOKEN = config('CRAWLERA_AUTH_TOKEN', default='this-token-does-not-work')
+CRAWLERA_PROXY_HOST = 'proxy.crawlera.com'
+CRAWLERA_PROXY_PORT = '8010'
+
+CRAWLERA_PROXIES = {
+    "https": f"https://{CRAWLERA_AUTH_TOKEN}:@{CRAWLERA_PROXY_HOST}:{CRAWLERA_PROXY_PORT}/",
+    "http": f"http://{CRAWLERA_AUTH_TOKEN}:@{CRAWLERA_PROXY_HOST}:{CRAWLERA_PROXY_PORT}/"
+}
+# EOF crawlera settings

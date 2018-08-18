@@ -32,6 +32,7 @@ class BitcoinTalk(object):
         self.soup = None
         self.test = test
         self.test_signature = test_signature
+        self.response_text = None
 
     def list_forum_positions(self):
         positions = [
@@ -59,18 +60,15 @@ class BitcoinTalk(object):
         self.status_code = response.status_code
         self.soup = BeautifulSoup(response.content, 'html.parser')
         if len(self.soup.select('div.cf-im-under-attack')) > 0:
-            driver = webdriver.Remote(
-                'http://127.0.0.1:4444/wd/hub',
-                DesiredCapabilities.CHROME
+            # try to get data using crawlera
+            proxies = settings.CRAWLERA_PROXIES
+            response = requests.get(
+                profile_url, headers=self.headers, proxies=proxies
             )
-            driver.get(profile_url)
-            # Sleep to wait for the page to load
-            time.sleep(6)
-            self.soup = BeautifulSoup(driver.page_source, 'html.parser')
-            if self.get_username():
-                self.status_code = 200
-            driver.close()
-            driver.quit()
+            response.raise_for_status()
+            self.response_text = response.text
+            self.status_code = response.status_code
+            self.soup = BeautifulSoup(response.content, 'html.parser')
         # Check if profile exists
         body_area = self.soup.find('div', {'id': 'bodyarea'})
         if body_area:
