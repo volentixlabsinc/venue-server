@@ -13,3 +13,4 @@ WORKDIR /code
 
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+RUN python manage.py compilemessages
