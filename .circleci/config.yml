@@ -52,6 +52,7 @@ jobs:
         name: Tag image and push to server
         command: |
           if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              docker-compose run --rm web django-admin compilemessages
               TAG=v0.1.$CIRCLE_BUILD_NUM
               docker build --cache-from=venueserver -t volentixlabs/venueserver:$TAG .
               echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
