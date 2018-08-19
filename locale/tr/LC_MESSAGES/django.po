@@ -162,8 +162,8 @@ msgstr "Bol þans!"
 
 #: volentix/settings.py:193
 msgid "English"
-msgstr ""
+msgstr "İngiliz"
 
 #: volentix/settings.py:194
 msgid "Turkish"
-msgstr ""
+msgstr "Türk"
