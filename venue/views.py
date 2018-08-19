@@ -34,7 +34,7 @@ from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Notifica
 from .tasks import (get_user_position, send_deletion_confirmation, send_email_change_confirmation,
                     send_email_confirmation, send_reset_password, set_scraping_rate, update_data,
                     verify_profile_signature, send_email)
-from .utils import RedisTemp, decrypt_data, encrypt_data, check_language_exists
+from .utils import RedisTemp, decrypt_data, encrypt_data, check_language_exists, translation_on
 
 
 def generate_token_salt(user):
@@ -1645,12 +1645,14 @@ def get_languages(request):
         * `value` - Language code (e.g. en, jp, fr)
         * `text` - Full language name (e.g. English, Japanese, French)
     """
-    return Response(
-        [
-            {'value': language[0], 'text': language[1]}
-            for language in settings.LANGUAGES
-        ]
-    )
+    user_profile = request.user.profiles.first()
+    with translation_on(user_profile.language):
+        return Response(
+            [
+                {'value': language[0], 'text': str(language[1])}
+                for language in settings.LANGUAGES
+            ]
+        )
 
 
 # -------------------------
