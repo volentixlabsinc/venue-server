@@ -14,10 +14,10 @@ import os
 import redis
 import rollbar
 from decouple import config
+from django.utils.translation import ugettext_lazy as _
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -74,13 +74,11 @@ REST_FRAMEWORK = {
     )
 }
 
-
 THROTTLE_API_REQUESTS = config(
     'THROTTLE_API_REQUESTS',
     default=False,
     cast=bool
 )
-
 
 if THROTTLE_API_REQUESTS:
     REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
@@ -88,10 +86,9 @@ if THROTTLE_API_REQUESTS:
         'user': '1000/hour'
     }
 
-
 CONSTANCE_ADDITIONAL_FIELDS = {
     'textfield': [
-        'django.forms.CharField', 
+        'django.forms.CharField',
         {'widget': 'django.forms.Textarea', 'required': False}
     ]
 }
@@ -145,7 +142,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'volentix.wsgi_django.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
@@ -153,13 +149,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': config('POSTGRES_NAME', default='venuepostgress'),
-        'USER': config('POSTGRES_USER', default='venueadmin'), 
+        'USER': config('POSTGRES_USER', default='venueadmin'),
         'PASSWORD': config('POSTGRES_PASSWORD', default='badpassword'),
         'HOST': config('POSTGRES_HOST', default='postgres'),
         'CONN_MAX_AGE': config('DB_CON_MAX_AGE', default=30000)
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -179,11 +174,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en'
 
 TIME_ZONE = 'UTC'
 
@@ -193,6 +187,16 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Languages
+
+LANGUAGES = (
+    ('en', _('English')),
+    ('tr', _('Turkish')),
+)
+
+LOCALE_PATHS = (
+    os.path.join(BASE_DIR, 'locale'),
+)
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
@@ -200,13 +204,11 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-
 # Media files settings
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
-
 
 # Redis generic settings
 
@@ -226,7 +228,7 @@ except ValueError:
 REDIS_URL = 'redis://:{}@{}:{}'.format(REDIS_PASSWORD, REDIS_HOST, REDIS_PORT)
 
 CELERY_BROKER_URL = REDIS_URL + '/0'
-CELERY_RESULT_BACKEND = REDIS_URL+ '/1'
+CELERY_RESULT_BACKEND = REDIS_URL + '/1'
 
 CELERY_TIMEZONE = 'UTC'
 
@@ -243,7 +245,6 @@ CELERY_BEAT_SCHEDULE = {
     }
 }
 
-
 # Constance celery backend settings
 
 CONSTANCE_REDIS_CONNECTION = {
@@ -252,7 +253,6 @@ CONSTANCE_REDIS_CONNECTION = {
     'port': REDIS_PORT,
     'db': 0,
 }
-
 
 # Websocket settings
 
@@ -269,7 +269,6 @@ WS4REDIS_CONNECTION = {
 
 WS4REDIS_EXPIRE = 0  # Messages expire immediately
 
-
 # Redis key-value DB settings
 
 REDIS_DB = redis.StrictRedis(
@@ -280,14 +279,12 @@ REDIS_DB = redis.StrictRedis(
     decode_responses=True
 )
 
-
 # Postmark settings
 
 POSTMARK_TOKEN = config('POSTMARK_SERVER_TOKEN', default='this-token-does-not-work')
 
 POSTMARK_SENDER_EMAIL = config('POSTMARK_SENDER_EMAIL', default='venue@volentix.io')
 POSTMARK_REPLY_EMAIL = config('POSTMARK_REPLY_EMAIL', default='noreply@volentix.io')
-
 
 # CORS settings
 
@@ -296,7 +293,6 @@ CORS_ORIGIN_WHITELIST = ('localhost:8080', 'localhost:8000', 'venue.volentix.io'
 CORS_ORIGIN_ALLOW_ALL = True
 
 CSRF_COOKIE_NAME = "csrftoken"
-
 
 # Rollbar settings
 
@@ -309,7 +305,6 @@ if not DEBUG:
         'branch': 'master',
         'root': BASE_DIR,
     }
-
 
     rollbar.init(
         ROLLBAR_TOKEN,
@@ -324,30 +319,17 @@ if not DEBUG:
 
     rollbar.BASE_DATA_HOOK = celery_base_data_hook
 
-
 # Create the logs folder if it does not exist yet
 
 log_folder = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(log_folder):
     os.mkdir(log_folder)
 
-
 # Venue domain and venue frontend URLs
 
 VENUE_DOMAIN = config('VENUE_DOMAIN', default='http://localhost:8000')
 VENUE_FRONTEND = config('VENUE_FRONTEND', default='http://localhost:3000')
 
-
-# Languages
-
-LANGUAGES = (
-    'en',
-    'tr'
-)
-
-LOCALE_PATHS = (
-    os.path.join(BASE_DIR, 'locale'),
-)
 
 # crawlera settings
 CRAWLERA_AUTH_TOKEN = config('CRAWLERA_AUTH_TOKEN', default='this-token-does-not-work')

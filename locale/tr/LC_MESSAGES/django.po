@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-08-17 21:23+0000\n"
+"POT-Creation-Date: 2018-08-18 22:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -159,3 +159,11 @@ msgstr "Hesabýnýza eriþmek için yeni bir þifre belirlemeniz istenecek."
 #: venue/templates/venue/reset_password.html:34
 msgid "Good luck!"
 msgstr "Bol þans!"
+
+#: volentix/settings.py:193
+msgid "English"
+msgstr "İngiliz"
+
+#: volentix/settings.py:194
+msgid "Turkish"
+msgstr "Türk"
