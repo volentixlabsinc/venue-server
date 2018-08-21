@@ -11,6 +11,8 @@ import coreapi
 import coreschema
 import pyotp
 import shortuuid
+import rollbar
+
 from celery.result import AsyncResult
 from constance import config
 from django.conf import settings
@@ -547,13 +549,19 @@ def check_profile(request):
         if info['status_code'] == 200 and info['position']:
             resp_status = status.HTTP_200_OK
             response['position'] = info['position']
-            forum_rank = ForumUserRank.objects.get(
-                forum_site=forum,
-                name__iexact=info['position'].strip()
-            )
             allowed = False
-            if forum_rank.allowed or config.TEST_MODE:
-                allowed = True
+            try:
+                forum_rank = ForumUserRank.objects.get(
+                    forum_site=forum,
+                    name__iexact=info['position'].strip()
+                )
+                if forum_rank.allowed or config.TEST_MODE:
+                    allowed = True
+            except ForumUserRank.DoesNotExist as exc:
+                rollbar.report_message(
+                    f'{exc}, username: {user}, user_id: {user.id}, info: {info}',
+                    'warning'
+                )
             response['position_allowed'] = allowed
             response['forum_user_id'] = info['forum_user_id']
             response['found'] = True
