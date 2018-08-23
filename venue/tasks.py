@@ -1,12 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
+import logging
 import re
+import uuid
+import time
 from datetime import timedelta
 from operator import itemgetter
 
 import rollbar
-from celery import shared_task
-from celery.result import AsyncResult, ResultSet
+from celery import chord, shared_task
 from celery.signals import task_failure
 from constance import config
 from django.conf import settings
@@ -18,6 +20,8 @@ from ws4redis.redis_store import RedisMessage
 
 from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Ranking, Signature, UserProfile)
 from venue.utils import translation_on
+
+logger = logging.getLogger(__name__)
 
 
 @task_failure.connect
@@ -57,6 +61,9 @@ def get_expected_links(code):
 
 @shared_task(queue='scrapers')
 def scrape_forum_profile(forum_profile_id, test_mode=None):
+    task_uuid = str(uuid.uuid4())
+    started_at = time.perf_counter()
+    logger.info(f'task_uuid: |{task_uuid} | started | 0 |')
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     if test_mode is None:
         test_mode = config.TEST_MODE
@@ -72,6 +79,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             vcode=forum_profile.verification_code,
             test_mode=test_mode,
             test_signature=forum_profile.signature.test_signature)
+        logger.info(f'task_uuid: |{task_uuid} | verify_and_scrape | {time.perf_counter() - started_at}|')
         status_code, page_ok, signature_found, total_posts, username, position = results
         del username
         # Update forum profile page status
@@ -89,6 +97,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         new_status_list.append(new_status)
         forum_profile.last_page_status = new_status_list
         forum_profile.save()
+        logger.info(f'task_uuid: | {task_uuid} | forum_profile.save() | {time.perf_counter() - started_at} |')
         # Update the forum user rank, if it changed
         forum_rank = ForumUserRank.objects.get(name=position)
         if forum_profile.forum_rank != forum_rank:
@@ -96,6 +105,8 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             forum_profile.save()
         # Get the current last scrape timestamp
         last_scrape = forum_profile.get_last_scrape()
+        logger.info(f'task_uuid: | {task_uuid} | forum_profile.get_last_scrape() | {time.perf_counter() - started_at} |')
+
         # Check posts that haven't reached maturatation
         tracked_posts = []
         for post in forum_profile.posts.filter(matured=False):
@@ -112,10 +123,12 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         # Get the latest posts from this forum profile
         # Latest means posts in the last 24 hours
         posts_scrape_start = last_scrape - timedelta(hours=24)
+        logger.info(f'task_uuid: | {task_uuid} | posts_scrape_start | {time.perf_counter() - started_at} |')
         posts = scraper.scrape_posts(
             forum_profile.forum_user_id,
             start=posts_scrape_start.replace(tzinfo=None)
         )
+        logger.info(f'task_uuid: | {task_uuid} | scraper.scrape_posts | {time.perf_counter() - started_at} |')
         # Save each new post
         message_ids = []
         for post in posts:
@@ -136,6 +149,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
                     timestamp=post['timestamp']
                 )
                 forum_post.save()
+        logger.info(f'task_uuid: | {task_uuid} | for post in posts: | {time.perf_counter() - started_at} |')
         # Check for post deletion
         deleted_posts = ForumPost.objects.filter(
             forum_profile=forum_profile,
@@ -158,6 +172,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         # Update the forum_profile's last scrape timestamp
         forum_profile.last_scrape = timezone.now()
         forum_profile.save()
+    logger.info(f'task_uuid: | {task_uuid} | executed | {time.perf_counter() - started_at} |')
 
 
 @shared_task(queue='scrapers')
@@ -278,36 +293,23 @@ def compute_ranking():
 
 
 @shared_task(queue='compute', bind=True, max_retries=600)
-def compute_points(self, subtasks=None):
-    proceed = False
-    if subtasks:
-        jobs = [AsyncResult(x) for x in subtasks]
-        results = ResultSet(jobs)
-        if results.ready():
-            proceed = True
-    else:
-        proceed = True
-    # Proceed to compute the points
-    if proceed:
-        posts = ForumPost.objects.filter(
-            forum_profile__user_profile__user__is_active=True,
-            forum_profile__active=True,
-            monitoring=True
-        )
-        for post in posts:
-            pct_threshold = config.UPTIME_PERCENTAGE_THRESHOLD
-            downtime_threshold_pct = (100 - pct_threshold)
-            maturation = config.MATURATION_PERIOD
-            downtime_pct = (post.invalid_sig_minutes / (maturation * 60))
-            downtime_pct *= 100
-            if downtime_pct >= downtime_threshold_pct:
-                post.credited = False
-                post.monitoring = False
-                post.save()
-        # Call the task to compute the ranking
-        compute_ranking.delay()
-    else:
-        self.retry(countdown=5)
+def compute_points(*args, **kwargs):
+    posts = ForumPost.objects.filter(
+        forum_profile__user_profile__user__is_active=True,
+        forum_profile__active=True,
+        monitoring=True
+    )
+    for post in posts:
+        pct_threshold = config.UPTIME_PERCENTAGE_THRESHOLD
+        downtime_threshold_pct = (100 - pct_threshold)
+        maturation = config.MATURATION_PERIOD
+        downtime_pct = (post.invalid_sig_minutes / (maturation * 60))
+        downtime_pct *= 100
+        if downtime_pct >= downtime_threshold_pct:
+            post.credited = False
+            post.monitoring = False
+            post.save()
+    compute_ranking.delay()
 
 
 @shared_task(queue='scrapers')
@@ -324,9 +326,10 @@ def update_data(forum_profile_id=None):
     # Send scraping tasks to the queue
     subtasks = []
     for profile in forum_profiles:
-        job = scrape_forum_profile.delay(profile.id)
-        subtasks.append(job.id)
-    compute_points.delay(subtasks)
+        subtasks.append(scrape_forum_profile.s(profile.id))
+
+    chord(subtasks)(compute_points.s())
+
     return subtasks
 
 
