@@ -1,9 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-import logging
 import re
-import uuid
-import time
 from datetime import timedelta
 from operator import itemgetter
 
@@ -20,8 +17,6 @@ from ws4redis.redis_store import RedisMessage
 
 from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Ranking, Signature, UserProfile)
 from venue.utils import translation_on
-
-logger = logging.getLogger(__name__)
 
 
 @task_failure.connect
@@ -61,9 +56,6 @@ def get_expected_links(code):
 
 @shared_task(queue='scrapers')
 def scrape_forum_profile(forum_profile_id, test_mode=None):
-    task_uuid = str(uuid.uuid4())
-    started_at = time.perf_counter()
-    logger.info(f'task_uuid: |{task_uuid} | started | 0 |')
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     if test_mode is None:
         test_mode = config.TEST_MODE
@@ -79,7 +71,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             vcode=forum_profile.verification_code,
             test_mode=test_mode,
             test_signature=forum_profile.signature.test_signature)
-        logger.info(f'task_uuid: |{task_uuid} | verify_and_scrape | {time.perf_counter() - started_at}|')
         status_code, page_ok, signature_found, total_posts, username, position = results
         del username
         # Update forum profile page status
@@ -97,7 +88,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         new_status_list.append(new_status)
         forum_profile.last_page_status = new_status_list
         forum_profile.save()
-        logger.info(f'task_uuid: | {task_uuid} | forum_profile.save() | {time.perf_counter() - started_at} |')
         # Update the forum user rank, if it changed
         forum_rank = ForumUserRank.objects.get(name=position)
         if forum_profile.forum_rank != forum_rank:
@@ -105,7 +95,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             forum_profile.save()
         # Get the current last scrape timestamp
         last_scrape = forum_profile.get_last_scrape()
-        logger.info(f'task_uuid: | {task_uuid} | forum_profile.get_last_scrape() | {time.perf_counter() - started_at} |')
 
         # Check posts that haven't reached maturatation
         tracked_posts = []
@@ -123,12 +112,10 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         # Get the latest posts from this forum profile
         # Latest means posts in the last 24 hours
         posts_scrape_start = last_scrape - timedelta(hours=24)
-        logger.info(f'task_uuid: | {task_uuid} | posts_scrape_start | {time.perf_counter() - started_at} |')
         posts = scraper.scrape_posts(
             forum_profile.forum_user_id,
             start=posts_scrape_start.replace(tzinfo=None)
         )
-        logger.info(f'task_uuid: | {task_uuid} | scraper.scrape_posts | {time.perf_counter() - started_at} |')
         # Save each new post
         message_ids = []
         for post in posts:
@@ -149,7 +136,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
                     timestamp=post['timestamp']
                 )
                 forum_post.save()
-        logger.info(f'task_uuid: | {task_uuid} | for post in posts: | {time.perf_counter() - started_at} |')
         # Check for post deletion
         deleted_posts = ForumPost.objects.filter(
             forum_profile=forum_profile,
@@ -172,7 +158,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         # Update the forum_profile's last scrape timestamp
         forum_profile.last_scrape = timezone.now()
         forum_profile.save()
-    logger.info(f'task_uuid: | {task_uuid} | executed | {time.perf_counter() - started_at} |')
 
 
 @shared_task(queue='scrapers')
