@@ -301,7 +301,7 @@ ROLLBAR_TOKEN = config('ROLLBAR_TOKEN', default='')
 if not DEBUG:
     rollbar.init(
         ROLLBAR_TOKEN,
-        environment=ENV
+        environment=config('ENV', default='dev')
     )
 
 
