@@ -8,7 +8,7 @@ RUN pip install --upgrade pip && \
 COPY ./requirements.txt /requirements.txt
 RUN pip install -r requirements.txt && \
     pip uninstall -y pycrypto && \
-    pip install -y pycryptodome==3.6.6
+    pip install pycryptodome==3.6.6
 
 ADD . /code
 WORKDIR /code
