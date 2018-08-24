@@ -299,16 +299,9 @@ CSRF_COOKIE_NAME = "csrftoken"
 ROLLBAR_TOKEN = config('ROLLBAR_TOKEN', default='')
 
 if not DEBUG:
-    ROLLBAR = {
-        'access_token': ROLLBAR_TOKEN,
-        'environment': 'development' if DEBUG else 'production',
-        'branch': 'master',
-        'root': BASE_DIR,
-    }
-
     rollbar.init(
         ROLLBAR_TOKEN,
-        environment='development' if DEBUG else 'production'
+        environment=ENV
     )
 
 
