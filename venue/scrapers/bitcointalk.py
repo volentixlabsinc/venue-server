@@ -7,14 +7,7 @@ from django.utils import timezone
 from datetime import datetime
 from dateutil import parser
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-
-
-class ProfileDoesNotExist(Exception):
-    pass
-
-
-class ScraperError(Exception):
-    pass
+from exceptions import ScraperError, ProfileDoesNotExist
 
 
 class BitcoinTalk(object):
@@ -52,20 +45,21 @@ class BitcoinTalk(object):
         self.forum_user_id = forum_user_id
         self.expected_links = expected_links
 
-    def get_profile(self, user_id):
+    def get_profile(self, user_id, fallback=False):
         profile_url = self.base_url + '/index.php?action=profile;u='
         profile_url += str(user_id)
-        response = requests.get(profile_url, headers=self.headers)
-        self.response_text = response.text
-        self.status_code = response.status_code
-        self.soup = BeautifulSoup(response.content, 'html.parser')
-        if len(self.soup.select('div.cf-im-under-attack')) > 0:
+        if fallback:
             # try to get data using crawlera
             proxies = settings.CRAWLERA_PROXIES
             response = requests.get(
                 profile_url, headers=self.headers, proxies=proxies, verify=False
             )
             response.raise_for_status()
+            self.response_text = response.text
+            self.status_code = response.status_code
+            self.soup = BeautifulSoup(response.content, 'html.parser')
+        else:
+            response = requests.get(profile_url, headers=self.headers)
             self.response_text = response.text
             self.status_code = response.status_code
             self.soup = BeautifulSoup(response.content, 'html.parser')
@@ -257,10 +251,11 @@ def verify_and_scrape(forum_profile_id,
                       expected_links,
                       vcode=None,
                       test_mode=False,
-                      test_signature=None):
+                      test_signature=None,
+                      fallback=False):
     scraper = BitcoinTalk(test=test_mode, test_signature=test_signature)
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
-    scraper.get_profile(forum_user_id)
+    scraper.get_profile(forum_user_id, fallback=fallback)
     username = scraper.get_username()
     position = scraper.get_user_position()
     page_ok, verified = scraper.check_signature(vcode=vcode)

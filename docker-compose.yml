@@ -33,6 +33,8 @@ services:
     command: supervisord -c ./supervisord.conf --nodaemon
     environment:
       DEBUG: 1
+      ENV: 'local'
+      LOGDNA_TOKEN: 'test-token-here'
     depends_on:
       - postgres
       - redis
