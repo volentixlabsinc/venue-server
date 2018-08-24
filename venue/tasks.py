@@ -87,13 +87,19 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
         else:
             scraper = load_scraper(forum_profile.forum.scraper_name)
             expected_links = get_expected_links(forum_profile.signature.code)
+            use_fallback = False
+            # Trigger the use of fallback scraping method after 3 retries
+            if scrape_forum_profile.request.retries > 3:
+                use_fallback = True
+            # Call the scraper
             results = scraper.verify_and_scrape(
                 forum_profile.id,
                 forum_profile.forum_user_id,
                 expected_links,
                 vcode=forum_profile.verification_code,
                 test_mode=test_mode,
-                test_signature=forum_profile.signature.test_signature)
+                test_signature=forum_profile.signature.test_signature,
+                fallback=use_fallback)
             status_code, page_ok, signature_found, total_posts, username, position = results
             del username
             # Update forum profile page status
