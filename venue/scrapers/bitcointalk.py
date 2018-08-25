@@ -63,7 +63,7 @@ class BitcoinTalk(object):
             # try to get data using crawlera
             proxies = settings.CRAWLERA_PROXIES
             response = requests.get(
-                profile_url, headers=self.headers, proxies=proxies
+                profile_url, headers=self.headers, proxies=proxies, verify=False
             )
             response.raise_for_status()
             self.response_text = response.text
