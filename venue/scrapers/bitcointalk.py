@@ -7,7 +7,9 @@ from django.utils import timezone
 from datetime import datetime
 from dateutil import parser
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from exceptions import ScraperError, ProfileDoesNotExist
+from .exceptions import ScraperError, ProfileDoesNotExist
+
+logger = settings.LOGGER
 
 
 class BitcoinTalk(object):
@@ -26,6 +28,10 @@ class BitcoinTalk(object):
         self.test = test
         self.test_signature = test_signature
         self.response_text = None
+        self.opts = {
+            'level': 'info',
+            'meta': {}
+        }
 
     def list_forum_positions(self):
         positions = [
@@ -44,22 +50,41 @@ class BitcoinTalk(object):
         self.forum_profile_id = forum_profile_id
         self.forum_user_id = forum_user_id
         self.expected_links = expected_links
+        self.opts['meta'] = {
+            'forum_profile_id': forum_profile_id,
+            'forum_user_id': forum_user_id
+        }
 
-    def get_profile(self, user_id, fallback=False):
+    def get_profile(self, user_id, fallback=None, test_config=None):
         profile_url = self.base_url + '/index.php?action=profile;u='
         profile_url += str(user_id)
-        if fallback:
+        if test_config:
+            profile_url = test_config['profile_url']
+        if fallback == 'crawlera':
+            logger.info('Fallback scraping method triggered: crawlera', self.opts)
             # try to get data using crawlera
             proxies = settings.CRAWLERA_PROXIES
             response = requests.get(
-                profile_url, headers=self.headers, proxies=proxies, verify=False
+                profile_url,
+                headers=self.headers,
+                proxies=proxies,
+                verify=False
             )
             response.raise_for_status()
             self.response_text = response.text
             self.status_code = response.status_code
             self.soup = BeautifulSoup(response.content, 'html.parser')
-        else:
-            response = requests.get(profile_url, headers=self.headers)
+        if fallback == 'crawlera+selenium':
+            logger.info('Fallback scraping method triggered: crawlera+selenium', self.opts)
+            # TODO -- This is a placeholder for the implementation of
+            # Crawlera+Selenium scraping fallback
+            pass
+        if not fallback:
+            response = requests.get(
+                profile_url,
+                headers=self.headers,
+                verify=False
+            )
             self.response_text = response.text
             self.status_code = response.status_code
             self.soup = BeautifulSoup(response.content, 'html.parser')
@@ -252,15 +277,28 @@ def verify_and_scrape(forum_profile_id,
                       vcode=None,
                       test_mode=False,
                       test_signature=None,
-                      fallback=False):
+                      fallback=None,
+                      test_config=None):
     scraper = BitcoinTalk(test=test_mode, test_signature=test_signature)
     scraper.set_params(forum_profile_id, forum_user_id, expected_links)
-    scraper.get_profile(forum_user_id, fallback=fallback)
+    scraper.get_profile(
+        forum_user_id,
+        fallback=fallback,
+        test_config=test_config
+    )
     username = scraper.get_username()
     position = scraper.get_user_position()
     page_ok, verified = scraper.check_signature(vcode=vcode)
     posts = scraper.get_total_posts()
-    data = (scraper.status_code, page_ok, verified, posts, username, position)
+    data = (
+        scraper.status_code,
+        page_ok,
+        verified,
+        posts,
+        username,
+        position,
+        fallback
+    )
     return data
 
 

@@ -1,12 +1,11 @@
 from __future__ import absolute_import, unicode_literals
 
 import re
+import random
 from datetime import timedelta
 from operator import itemgetter
 
 import rollbar
-import logging
-from logdna import LogDNAHandler
 from celery import chord, shared_task
 from celery.signals import task_failure
 from celery.exceptions import MaxRetriesExceededError
@@ -19,19 +18,11 @@ from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
 from venue.scrapers.exceptions import ScraperError
 
-from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Ranking, Signature, UserProfile)
+from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank,
+                          Ranking, Signature, UserProfile)
 from venue.utils import translation_on
 
-
-options = {
-    'app': 'venue',
-    'env': settings.DEPLOYMENT_ENV,
-    'index_meta': True
-}
-handler = LogDNAHandler(settings.LOGDNA_TOKEN, options)
-log = logging.getLogger('logdna')
-log.setLevel(logging.DEBUG)
-log.addHandler(handler)
+logger = settings.LOGGER
 
 
 @task_failure.connect
@@ -40,8 +31,9 @@ def handle_task_failure(**kw):
 
 
 @shared_task(queue='scrapers')
-def multiplier(x, y, message=''):
-    log.info('Test multiplier task invoked: Yay, logging works! ' + message)
+def multiplier(x, y, message='', ran_from_tests=False):
+    if not ran_from_tests:
+        logger.info('Test multiplier task invoked: Yay, logging works! ' + message)
     return x * y
 
 
@@ -70,37 +62,50 @@ def get_expected_links(code):
     return set(links)
 
 
-@shared_task(queue='default')
-def report_error(message):
-    raise Exception(message)
+SCRAPING_MAX_RETRIES = 3
 
-
-@shared_task(queue='scrapers', autoretry_for=(ScraperError,), retry_backoff=True, 
-             retry_backoff_max=3600, retry_jitter=True)
-def scrape_forum_profile(forum_profile_id, test_mode=None):
-    try:
-        forum_profile = ForumProfile.objects.get(id=forum_profile_id)
-        if test_mode is None:
-            test_mode = config.TEST_MODE
+# TODO -- Investigate why celery does not raise MaxRetriesExceededError
+# even after max_retries number is reached
+@shared_task(queue='scrapers', max_retries=SCRAPING_MAX_RETRIES)
+def scrape_forum_profile(forum_profile_id, test_mode=None,
+                         test_scrape_config=None):
+    num_retries = scrape_forum_profile.request.retries
+    forum_profile = ForumProfile.objects.get(id=forum_profile_id)
+    opts = {
+        'level': 'info',
+        'meta': {
+            'username': forum_profile.user_profile.user.username,
+            'forum_profile_id': str(forum_profile.id),
+            'forum_user_id': forum_profile.forum_user_id
+        }
+    }
+    logger.info('Scraping forum profile started', opts)
+    if test_mode is None:
+        test_mode = config.TEST_MODE
+    if not test_scrape_config:
         if forum_profile.dummy:
-            pass
+            return 'dummy'
+    try:
+        scraper = load_scraper(forum_profile.forum.scraper_name)
+        expected_links = get_expected_links(forum_profile.signature.code)
+        fallback = None
+        # Trigger the use of fallback scraping method after 3 retries
+        if num_retries > 2:
+            fallback = 'crawlera'
+        # Call the scraper
+        results = scraper.verify_and_scrape(
+            forum_profile.id,
+            forum_profile.forum_user_id,
+            expected_links,
+            vcode=forum_profile.verification_code,
+            test_mode=test_mode,
+            test_signature=forum_profile.signature.test_signature,
+            fallback=fallback,
+            test_config=test_scrape_config)
+        if test_scrape_config:
+            return results
         else:
-            scraper = load_scraper(forum_profile.forum.scraper_name)
-            expected_links = get_expected_links(forum_profile.signature.code)
-            use_fallback = False
-            # Trigger the use of fallback scraping method after 3 retries
-            if scrape_forum_profile.request.retries > 3:
-                use_fallback = True
-            # Call the scraper
-            results = scraper.verify_and_scrape(
-                forum_profile.id,
-                forum_profile.forum_user_id,
-                expected_links,
-                vcode=forum_profile.verification_code,
-                test_mode=test_mode,
-                test_signature=forum_profile.signature.test_signature,
-                fallback=use_fallback)
-            status_code, page_ok, signature_found, total_posts, username, position = results
+            status_code, page_ok, signature_found, total_posts, username, position, fallback = results
             del username
             # Update forum profile page status
             status_list = forum_profile.last_page_status
@@ -177,7 +182,8 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
                 post.credited = False
                 post.monitoring = False
                 post.save()
-            # Update tracked posts
+            # Update tracked posts by saving it, whic will trigger
+            # post save logic where the updates are done
             for post in tracked_posts:
                 forum_post = ForumPost.objects.get(
                     message_id=post,
@@ -187,11 +193,18 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
             # Update the forum_profile's last scrape timestamp
             forum_profile.last_scrape = timezone.now()
             forum_profile.save()
-    except MaxRetriesExceededError:
-        message = 'Consistent forum profile scraping error: %s' % forum_profile_id
-        log.error(message)
-        # execute a task that will trigger a rollbar error
-        report_error.delay(message)
+            logger.info('Scraping forum profile completed', opts)
+    except ScraperError as exc:
+        try:
+            opts['level'] = 'error'
+            logger.info('Scraping forum profile failed: Retry %s' % num_retries, opts)
+            scrape_forum_profile.retry(
+                exc=exc,
+                max_retries=SCRAPING_MAX_RETRIES,
+                countdown=int(random.uniform(2, 4) ** num_retries)
+            )
+        except MaxRetriesExceededError:
+            return 'pass'
 
 
 @shared_task(queue='scrapers')
@@ -207,7 +220,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
         expected_links,
         test_mode=config.TEST_MODE,
         test_signature=signature.test_signature)
-    status_code, page_ok, verified, posts, username, position = results
+    status_code, page_ok, verified, posts, username, position, fallback = results
     del status_code, posts, position
     if verified:
         # Save the forum username
@@ -342,13 +355,13 @@ def update_data(forum_profile_id=None):
             active=True,
             verified=True
         )
-    # Send scraping tasks to the queue
+    # Collect the forum profile scraping subtasks
     subtasks = []
     for profile in forum_profiles:
         subtasks.append(scrape_forum_profile.s(profile.id))
-
-    chord(subtasks)(compute_points.si()).apply_async()
-
+    # Execute the subtasks in parallel then trigger the
+    # compute_points task afterwards
+    chord(subtasks)(compute_points.si())
     return subtasks
 
 

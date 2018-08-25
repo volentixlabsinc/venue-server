@@ -337,35 +337,17 @@ CRAWLERA_PROXIES = {
 }
 # EOF crawlera settings
 
+# LogDNA settings
 LOGGING_CONFIG = None
 LOGDNA_TOKEN = config('LOGDNA_TOKEN', default='this-token-does-not-work')
-DEPLOYMENT_ENV = config('ENV', default='dev')
 
-# # LogDNA settings
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'handlers': {
-#         'logdna': {
-#             'level': logging.DEBUG,
-#             'class': 'logging.handlers.LogDNAHandler',
-#             'key': config('LOGDNA_TOKEN', default='this-token-does-not-work'),
-#             'options': {
-#                 'app': 'venue',
-#                 'env': config('ENV', default='dev'),
-#                 'index_meta': True
-#             },
-#         },
-#     },
-#     'loggers': {
-#         '': {
-#             'handlers': ['logdna'],
-#         },
-#         'celery': {
-#             'handlers': ['logdna'],
-#             'level': 'DEBUG',
-#             'propagate': False
-#         }
-#     }
-# }
-# # EOF LogDNA settings
+options = {
+    'app': 'venue',
+    'env': config('ENV', default='dev'),
+    'index_meta': True
+}
+handler = LogDNAHandler(LOGDNA_TOKEN, options)
+LOGGER = logging.getLogger('logdna')
+LOGGER.setLevel(logging.DEBUG)
+LOGGER.addHandler(handler)
+# EOF LogDNA settings
