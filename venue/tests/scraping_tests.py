@@ -2,12 +2,11 @@ import pytest
 import unittest
 from venue.tasks import multiplier, scrape_forum_profile
 from venue.models import ForumProfile
-from django.conf import settings
 
 
 class BackgroundTaskExecutionTest(unittest.TestCase):
 
-    def test_task_exection(self):
+    def test_task_execution(self):
         # Send the task to queue
         task = multiplier.delay(10, 10, ran_from_tests=True)
         # Wait for the task to finish

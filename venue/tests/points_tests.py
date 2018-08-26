@@ -3,7 +3,6 @@ from venue.models import UserProfile, ForumProfile, ForumPost, \
 from django.test import TestCase
 from django.utils import timezone
 from constance import config
-import unittest.mock as mock
 from model_mommy import mommy
 from model_mommy.recipe import Recipe
 
