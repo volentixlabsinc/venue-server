@@ -6,9 +6,12 @@ jobs:
     steps:
     - checkout
     - setup_remote_docker
+    - run:
+        name: Configure env
+        command: echo $(date +%Y%V) > ~/.cache-date.txt
     - restore_cache:
         keys:
-        - v1-{{ checksum "requirements.txt" }}-{{ date +%Y%V }}
+        - v1-{{ checksum "requirements.txt" }}-{{ checksum "~/.cache-date.txt" }}
         paths:
         - /caches/venueserver.tar
 
@@ -45,7 +48,7 @@ jobs:
 
     - save_cache:
         name: Save cache to the circle CI
-        key: v1-{{ checksum "requirements.txt" }}-{{ date +%Y%V }}
+        key: v1-{{ checksum "requirements.txt" }}-{{ checksum "~/.cache-date.txt" }}
         paths:
         - /caches/venueserver.tar
 
