@@ -32,9 +32,15 @@ jobs:
             docker-compose==1.22.0
 
     - run:
+        name: Run application
+        command: |
+          docker-compose up
+
+    - run:
         name: Run tests
         command: |
-          docker-compose -f docker-compose-tests.yml run web pytest
+          # docker-compose -f docker-compose-tests.yml run web pytest
+          docker exec -it venue-server_web_1 pytest
 
     - run:
         name: Save Docker image layer cache

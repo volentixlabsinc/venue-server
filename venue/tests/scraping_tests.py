@@ -34,4 +34,6 @@ class ForumProfileScrapingTest(unittest.TestCase):
             test_scrape_config=config
         )
         self.assertEqual(task.ready(), False)
-        # TODO - Finish this test
+        # Wait for the result
+        task.get()
+        self.assertEqual(task.result, 'pass')
