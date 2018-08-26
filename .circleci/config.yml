@@ -34,12 +34,11 @@ jobs:
     - run:
         name: Run application
         command: |
-          docker-compose up
+          docker-compose -f docker-compose-tests.yml up
 
     - run:
         name: Run tests
         command: |
-          # docker-compose -f docker-compose-tests.yml run web pytest
           docker exec -it venue-server_web_1 pytest
 
     - run:
