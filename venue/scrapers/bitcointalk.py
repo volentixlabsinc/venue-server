@@ -28,6 +28,7 @@ class BitcoinTalk(object):
         self.test = test
         self.test_signature = test_signature
         self.response_text = None
+        self.opts = {}
 
     def list_forum_positions(self):
         positions = [
@@ -47,6 +48,17 @@ class BitcoinTalk(object):
         self.forum_user_id = forum_user_id
         self.expected_links = expected_links
 
+    def make_request(self, url, proxies=None, verify=True):
+        response = requests.get(
+            url,
+            headers=self.headers,
+            proxies=proxies,
+            verify=verify
+        )
+        self.response_text = response.text
+        self.status_code = response.status_code
+        self.soup = BeautifulSoup(response.content, 'html.parser')
+
     def get_profile(self, user_id, fallback=None, test_config=None):
         profile_url = self.base_url + '/index.php?action=profile;u='
         profile_url += str(user_id)
@@ -55,30 +67,14 @@ class BitcoinTalk(object):
         if fallback == 'crawlera':
             # try to get data using crawlera
             proxies = settings.CRAWLERA_PROXIES
-            response = requests.get(
-                profile_url,
-                headers=self.headers,
-                proxies=proxies,
-                verify=False
-            )
-            response.raise_for_status()
-            self.response_text = response.text
-            self.status_code = response.status_code
-            self.soup = BeautifulSoup(response.content, 'html.parser')
+            self.make_request(url=profile_url, proxies=proxies, verify=False)
         if fallback == 'crawlera+selenium':
             logger.info('Fallback scraping method triggered: crawlera+selenium', self.opts)
             # TODO -- This is a placeholder for the implementation of
             # Crawlera+Selenium scraping fallback
             pass
         if not fallback:
-            response = requests.get(
-                profile_url,
-                headers=self.headers,
-                verify=False
-            )
-            self.response_text = response.text
-            self.status_code = response.status_code
-            self.soup = BeautifulSoup(response.content, 'html.parser')
+            self.make_request(url=profile_url, verify=False)
         # Check if profile exists
         body_area = self.soup.find('div', {'id': 'bodyarea'})
         if body_area:

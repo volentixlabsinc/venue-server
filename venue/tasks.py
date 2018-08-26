@@ -73,6 +73,15 @@ def get_expected_links(code):
 #             return 'pass'
 
 
+def count_retry(task):
+    """
+    function to have possibility test it
+    :param task:
+    :return:
+    """
+    return task.request.retries + 1
+
+
 # TODO -- Investigate why celery does not raise MaxRetriesExceededError
 # even after max_retries number is reached
 @shared_task(queue='scrapers', bind=True, max_retries=3)
@@ -85,11 +94,11 @@ def scrape_forum_profile(self, forum_profile_id, test_mode=None,
         if forum_profile.dummy:
             return 'dummy'
     try:
+        fallback = None
         scraper = load_scraper(forum_profile.forum.scraper_name)
         expected_links = get_expected_links(forum_profile.signature.code)
-        fallback = None
         # Trigger the use of fallback scraping method on the third retry
-        retries_count = self.request.retries + 1
+        retries_count = count_retry(self)
         if retries_count >= 3:
             fallback = 'crawlera'
         # Call the scraper
