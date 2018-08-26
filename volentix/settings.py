@@ -334,3 +334,4 @@ CRAWLERA_PROXIES = {
     "http": f"http://{CRAWLERA_AUTH_TOKEN}:@{CRAWLERA_PROXY_HOST}:{CRAWLERA_PROXY_PORT}/"
 }
 # EOF crawlera settings
+FIXTURE_DIRS = [os.path.join(BASE_DIR, 'fixtures')]
