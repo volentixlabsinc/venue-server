@@ -1,13 +1,14 @@
 FROM python:3.6-alpine3.8
-RUN pip install --upgrade pip && \
-    apk --no-cache -U add gcc build-base linux-headers  \
+
+RUN apk --no-cache -U add gcc build-base linux-headers  \
     postgresql-dev ncurses-dev git gettext libffi-dev libressl-dev && \
     pip install git+https://github.com/Supervisor/supervisor.git@363283c71ed11054bdd8756b78e7777f160dcf05 && \
     apk del git
 
 COPY ./requirements.txt /requirements.txt
-RUN pip install -r requirements.txt && \
-    pip uninstall -y pycrypto && \
+RUN pip install -r requirements.txt
+
+RUN pip uninstall -y pycrypto && \
     pip install pycryptodome==3.6.6
 
 ADD . /code
