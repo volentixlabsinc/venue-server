@@ -1,0 +1,92 @@
+[
+  {
+    "model": "venue.forumuserrank",
+    "pk": "065d2e38-295e-4b31-9da8-2946aaee5be1",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Hero Member",
+      "bonus_percentage": "5.00",
+      "allowed": true
+    }
+  },
+  {
+    "model": "venue.forumuserrank",
+    "pk": "09a7ad5e-1da4-4e7b-8799-93cf70ceb6f0",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Member",
+      "bonus_percentage": "0.00",
+      "allowed": false
+    }
+  },
+  {
+    "model": "venue.forumuserrank",
+    "pk": "14d22df0-3462-492b-81c5-b5812d3ef777",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Legendary",
+      "bonus_percentage": "5.00",
+      "allowed": true
+    }
+  },
+  {
+    "model": "venue.forumuserrank",
+    "pk": "517e74d0-fd50-4043-b397-e70dc49d10f0",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Brand new",
+      "bonus_percentage": "0.00",
+      "allowed": false
+    }
+  },
+  {
+    "model": "venue.forumuserrank",
+    "pk": "80ab6f32-774a-4043-884c-203ac6b6e218",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Jr. Member",
+      "bonus_percentage": "0.00",
+      "allowed": false
+    }
+  },
+  {
+    "model": "venue.forumuserrank",
+    "pk": "99c3f7d6-8adf-4594-a7d3-b64d47488c5a",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Full Member",
+      "bonus_percentage": "0.00",
+      "allowed": true
+    }
+  },
+  {
+    "model": "venue.forumuserrank",
+    "pk": "bc8bb1b2-e056-47ab-bcf1-7967a27dd6b4",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Newbie",
+      "bonus_percentage": "0.00",
+      "allowed": false
+    }
+  },
+  {
+    "model": "venue.forumuserrank",
+    "pk": "dd1bbfa7-a3c3-4163-8c0d-b04eb84db9ad",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Sr. Member",
+      "bonus_percentage": "2.00",
+      "allowed": true
+    }
+  },
+  {
+    "model": "venue.forumuserrank",
+    "pk": "eb911ef1-f9f1-44dd-a832-4c28d5be77c1",
+    "fields": {
+      "forum_site": "4b8b11d1-14bb-46a7-ac8b-397587235b28",
+      "name": "Copper Member",
+      "bonus_percentage": "0.00",
+      "allowed": false
+    }
+  }
+]

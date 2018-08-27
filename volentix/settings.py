@@ -351,3 +351,5 @@ LOGGER = logging.getLogger('logdna')
 LOGGER.setLevel(logging.DEBUG)
 LOGGER.addHandler(handler)
 # EOF LogDNA settings
+
+FIXTURE_DIRS = [os.path.join(BASE_DIR, 'fixtures')]
