@@ -63,16 +63,6 @@ def get_expected_links(code):
     return set(links)
 
 
-# class GracefulRetriesExceededTask(celery.task.Task):
-#     abstract = True
-
-#     def after_return(self, status, retval, task_id, args, kwargs, einfo):
-#         if self.max_retries == self.request.retries:
-#             logger.info('Max retries reached!')
-#             # If max retries is equal to task retries do something
-#             return 'pass'
-
-
 def count_retry(task):
     """
     function to have possibility test it
@@ -82,8 +72,6 @@ def count_retry(task):
     return task.request.retries + 1
 
 
-# TODO -- Investigate why celery does not raise MaxRetriesExceededError
-# even after max_retries number is reached
 @shared_task(queue='scrapers', bind=True, max_retries=3)
 def scrape_forum_profile(self, forum_profile_id, test_mode=None,
                          test_scrape_config=None):
@@ -250,7 +238,9 @@ def get_user_position(forum_site_id, profile_url, user_id):
     scraper = load_scraper(forum.scraper_name)
     forum_user_id = scraper.extract_user_id(profile_url)
     try:
-        status_code, position, username = scraper.get_user_position(forum_user_id)
+        status_code, position, username = scraper.get_user_position(
+            forum_user_id
+        )
         result = {
             'status_code': status_code,
             'found': True,

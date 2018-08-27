@@ -28,7 +28,6 @@ class BitcoinTalk(object):
         self.test = test
         self.test_signature = test_signature
         self.response_text = None
-        self.opts = {}
 
     def list_forum_positions(self):
         positions = [
@@ -69,7 +68,6 @@ class BitcoinTalk(object):
             proxies = settings.CRAWLERA_PROXIES
             self.make_request(url=profile_url, proxies=proxies, verify=False)
         if fallback == 'crawlera+selenium':
-            logger.info('Fallback scraping method triggered: crawlera+selenium', self.opts)
             # TODO -- This is a placeholder for the implementation of
             # Crawlera+Selenium scraping fallback
             pass
