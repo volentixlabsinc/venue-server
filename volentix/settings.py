@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 import redis
 import rollbar
+import logging
+from logdna import LogDNAHandler
 from decouple import config
 from django.utils.translation import ugettext_lazy as _
 
@@ -334,4 +336,20 @@ CRAWLERA_PROXIES = {
     "http": f"http://{CRAWLERA_AUTH_TOKEN}:@{CRAWLERA_PROXY_HOST}:{CRAWLERA_PROXY_PORT}/"
 }
 # EOF crawlera settings
+
+# LogDNA settings
+LOGGING_CONFIG = None
+LOGDNA_TOKEN = config('LOGDNA_TOKEN', default='this-token-does-not-work')
+
+options = {
+    'app': 'venue',
+    'env': config('ENV', default='dev'),
+    'index_meta': True
+}
+handler = LogDNAHandler(LOGDNA_TOKEN, options)
+LOGGER = logging.getLogger('logdna')
+LOGGER.setLevel(logging.DEBUG)
+LOGGER.addHandler(handler)
+# EOF LogDNA settings
+
 FIXTURE_DIRS = [os.path.join(BASE_DIR, 'fixtures')]

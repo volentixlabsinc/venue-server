@@ -6,9 +6,12 @@ jobs:
     steps:
     - checkout
     - setup_remote_docker
+    - run:
+        name: Configure env
+        command: echo $(date +%Y%V) > ~/.cache-date.txt
     - restore_cache:
         keys:
-        - v1-{{ checksum "requirements.txt" }}
+        - v1-{{ checksum "requirements.txt" }}-{{ checksum "~/.cache-date.txt" }}
         paths:
         - /caches/venueserver.tar
 
@@ -34,7 +37,8 @@ jobs:
     - run:
         name: Run tests
         command: |
-          docker-compose -f docker-compose-tests.yml run web pytest
+          docker-compose -f docker-compose-tests.yml up -d
+          docker-compose -f docker-compose-tests.yml exec web pytest
 
     - run:
         name: Save Docker image layer cache
@@ -44,7 +48,7 @@ jobs:
 
     - save_cache:
         name: Save cache to the circle CI
-        key: v1-{{ checksum "requirements.txt" }}
+        key: v1-{{ checksum "requirements.txt" }}-{{ checksum "~/.cache-date.txt" }}
         paths:
         - /caches/venueserver.tar
 

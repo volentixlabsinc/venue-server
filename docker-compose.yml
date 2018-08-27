@@ -31,8 +31,7 @@ services:
     tty: true
     entrypoint: '/entrypoint.sh'
     command: supervisord -c ./supervisord.conf --nodaemon
-    environment:
-      DEBUG: 1
+    env_file: .env
     depends_on:
       - postgres
       - redis

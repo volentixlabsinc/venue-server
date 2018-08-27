@@ -1,12 +1,15 @@
 from __future__ import absolute_import, unicode_literals
 
 import re
+import random
 from datetime import timedelta
 from operator import itemgetter
 
 import rollbar
+import celery
 from celery import chord, shared_task
 from celery.signals import task_failure
+from celery.exceptions import MaxRetriesExceededError
 from constance import config
 from django.conf import settings
 from django.template.loader import get_template
@@ -14,9 +17,13 @@ from django.utils import timezone
 from postmarker.core import PostmarkClient
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
+from venue.scrapers.exceptions import ScraperError
 
-from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Ranking, Signature, UserProfile)
+from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank,
+                          Ranking, Signature, UserProfile)
 from venue.utils import translation_on
+
+logger = settings.LOGGER
 
 
 @task_failure.connect
@@ -25,7 +32,9 @@ def handle_task_failure(**kw):
 
 
 @shared_task(queue='scrapers')
-def multiplier(x, y):
+def multiplier(x, y, message='', ran_from_tests=False):
+    if not ran_from_tests:
+        logger.info('Test multiplier task invoked: Yay, logging works! ' + message)
     return x * y
 
 
@@ -54,110 +63,152 @@ def get_expected_links(code):
     return set(links)
 
 
-@shared_task(queue='scrapers')
-def scrape_forum_profile(forum_profile_id, test_mode=None):
+def count_retry(task):
+    """
+    function to have possibility test it
+    :param task:
+    :return:
+    """
+    return task.request.retries + 1
+
+
+@shared_task(queue='scrapers', bind=True, max_retries=3)
+def scrape_forum_profile(self, forum_profile_id, test_mode=None,
+                         test_scrape_config=None):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     if test_mode is None:
         test_mode = config.TEST_MODE
-    if forum_profile.dummy:
-        pass
-    else:
+    if not test_scrape_config:
+        if forum_profile.dummy:
+            return 'dummy'
+    try:
+        fallback = None
         scraper = load_scraper(forum_profile.forum.scraper_name)
         expected_links = get_expected_links(forum_profile.signature.code)
+        # Trigger the use of fallback scraping method on the third retry
+        retries_count = count_retry(self)
+        if retries_count >= 3:
+            fallback = 'crawlera'
+        # Call the scraper
         results = scraper.verify_and_scrape(
             forum_profile.id,
             forum_profile.forum_user_id,
             expected_links,
             vcode=forum_profile.verification_code,
             test_mode=test_mode,
-            test_signature=forum_profile.signature.test_signature)
-        status_code, page_ok, signature_found, total_posts, username, position = results
-        del username
-        # Update forum profile page status
-        status_list = forum_profile.last_page_status
-        if len(status_list):
-            old_status = status_list[-1]
-            new_status_list = [old_status]
+            test_signature=forum_profile.signature.test_signature,
+            fallback=fallback,
+            test_config=test_scrape_config)
+        if test_scrape_config:
+            return results
         else:
-            new_status_list = []
-        new_status = {
-            'status_code': status_code,
-            'page_ok': page_ok,
-            'signature_found': signature_found
-        }
-        new_status_list.append(new_status)
-        forum_profile.last_page_status = new_status_list
-        forum_profile.save()
-        # Update the forum user rank, if it changed
-        forum_rank = ForumUserRank.objects.get(name=position)
-        if forum_profile.forum_rank != forum_rank:
-            forum_profile.forum_rank = forum_rank
-            forum_profile.save()
-        # Get the current last scrape timestamp
-        last_scrape = forum_profile.get_last_scrape()
-
-        # Check posts that haven't reached maturatation
-        tracked_posts = []
-        for post in forum_profile.posts.filter(matured=False):
-            # Check if it's not due to mature yet
-            post_timestamp = post.timestamp.replace(tzinfo=None)
-            tdiff = timezone.now().replace(tzinfo=None) - post_timestamp
-            tdiff_hours = tdiff.total_seconds() / 3600
-            if tdiff_hours > config.MATURATION_PERIOD:
-                post.matured = True
-                post.date_matured = timezone.now()
-                post.save()
+            status_code, page_ok, signature_found, total_posts, _, position, fallback = results
+            # Update forum profile page status
+            status_list = forum_profile.last_page_status
+            if len(status_list):
+                old_status = status_list[-1]
+                new_status_list = [old_status]
             else:
-                tracked_posts.append(post.message_id)
-        # Get the latest posts from this forum profile
-        # Latest means posts in the last 24 hours
-        posts_scrape_start = last_scrape - timedelta(hours=24)
-        posts = scraper.scrape_posts(
-            forum_profile.forum_user_id,
-            start=posts_scrape_start.replace(tzinfo=None)
-        )
-        # Save each new post
-        message_ids = []
-        for post in posts:
-            message_ids.append(post['message_id'])
-            post_check = ForumPost.objects.filter(
-                forum_profile=forum_profile,
-                topic_id=post['topic_id'],
-                message_id=post['message_id'],
+                new_status_list = []
+            new_status = {
+                'status_code': status_code,
+                'page_ok': page_ok,
+                'signature_found': signature_found
+            }
+            new_status_list.append(new_status)
+            forum_profile.last_page_status = new_status_list
+            forum_profile.save()
+            # Update the forum user rank, if it changed
+            forum_rank = ForumUserRank.objects.get(name=position)
+            if forum_profile.forum_rank != forum_rank:
+                forum_profile.forum_rank = forum_rank
+                forum_profile.save()
+            # Get the current last scrape timestamp
+            last_scrape = forum_profile.get_last_scrape()
+
+            # Check posts that haven't reached maturatation
+            tracked_posts = []
+            for post in forum_profile.posts.filter(matured=False):
+                # Check if it's not due to mature yet
+                post_timestamp = post.timestamp.replace(tzinfo=None)
+                tdiff = timezone.now().replace(tzinfo=None) - post_timestamp
+                tdiff_hours = tdiff.total_seconds() / 3600
+                if tdiff_hours > config.MATURATION_PERIOD:
+                    post.matured = True
+                    post.date_matured = timezone.now()
+                    post.save()
+                else:
+                    tracked_posts.append(post.message_id)
+            # Get the latest posts from this forum profile
+            # Latest means posts in the last 24 hours
+            posts_scrape_start = last_scrape - timedelta(hours=24)
+            posts = scraper.scrape_posts(
+                forum_profile.forum_user_id,
+                start=posts_scrape_start.replace(tzinfo=None)
             )
-            if not post_check.exists():
-                forum_post = ForumPost(
-                    user_profile=forum_profile.user_profile,
+            # Save each new post
+            message_ids = []
+            for post in posts:
+                message_ids.append(post['message_id'])
+                post_check = ForumPost.objects.filter(
                     forum_profile=forum_profile,
-                    forum_rank=forum_profile.forum_rank,
                     topic_id=post['topic_id'],
                     message_id=post['message_id'],
-                    unique_content_length=post['content_length'],
-                    timestamp=post['timestamp']
+                )
+                if not post_check.exists():
+                    forum_post = ForumPost(
+                        user_profile=forum_profile.user_profile,
+                        forum_profile=forum_profile,
+                        forum_rank=forum_profile.forum_rank,
+                        topic_id=post['topic_id'],
+                        message_id=post['message_id'],
+                        unique_content_length=post['content_length'],
+                        timestamp=post['timestamp']
+                    )
+                    forum_post.save()
+            # Check for post deletion
+            deleted_posts = ForumPost.objects.filter(
+                forum_profile=forum_profile,
+                matured=False,
+                timestamp__gte=posts_scrape_start
+            ).exclude(
+                message_id__in=message_ids
+            )
+            for post in deleted_posts:
+                post.credited = False
+                post.monitoring = False
+                post.save()
+            # Update tracked posts by saving it, whic will trigger
+            # post save logic where the updates are done
+            for post in tracked_posts:
+                forum_post = ForumPost.objects.get(
+                    message_id=post,
+                    forum_profile=forum_profile
                 )
                 forum_post.save()
-        # Check for post deletion
-        deleted_posts = ForumPost.objects.filter(
-            forum_profile=forum_profile,
-            matured=False,
-            timestamp__gte=posts_scrape_start
-        ).exclude(
-            message_id__in=message_ids
-        )
-        for post in deleted_posts:
-            post.credited = False
-            post.monitoring = False
-            post.save()
-        # Update tracked posts
-        for post in tracked_posts:
-            forum_post = ForumPost.objects.get(
-                message_id=post,
-                forum_profile=forum_profile
+            # Update the forum_profile's last scrape timestamp
+            forum_profile.last_scrape = timezone.now()
+            forum_profile.save()
+    except ScraperError as exc:
+        log_opts = {
+            'level': 'error',
+            'meta': {
+                'forum_profile_id': str(forum_profile.id),
+                'forum_user_id': forum_profile.forum_user_id
+            }
+        }
+        num_retries = self.request.retries
+        if num_retries < self.max_retries:
+            message = '%s - Retrying forum profile scraping' % (num_retries + 1)
+            if fallback:
+                message += ' with fallback (%s)' % fallback
+            logger.info(message, log_opts)
+            scrape_forum_profile.retry(
+                exc=exc,
+                countdown=int(random.uniform(2, 4) ** num_retries)
             )
-            forum_post.save()
-        # Update the forum_profile's last scrape timestamp
-        forum_profile.last_scrape = timezone.now()
-        forum_profile.save()
+        else:
+            return 'pass'
 
 
 @shared_task(queue='scrapers')
@@ -173,8 +224,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
         expected_links,
         test_mode=config.TEST_MODE,
         test_signature=signature.test_signature)
-    status_code, page_ok, verified, posts, username, position = results
-    del status_code, posts, position
+    _, page_ok, verified, _, username, _, fallback = results
     if verified:
         # Save the forum username
         forum_profile.forum_username = username
@@ -188,7 +238,9 @@ def get_user_position(forum_site_id, profile_url, user_id):
     scraper = load_scraper(forum.scraper_name)
     forum_user_id = scraper.extract_user_id(profile_url)
     try:
-        status_code, position, username = scraper.get_user_position(forum_user_id)
+        status_code, position, username = scraper.get_user_position(
+            forum_user_id
+        )
         result = {
             'status_code': status_code,
             'found': True,
@@ -277,8 +329,8 @@ def compute_ranking():
     return {'total': global_total, 'points': user_points}
 
 
-@shared_task(queue='compute', bind=True, max_retries=600)
-def compute_points(*args, **kwargs):
+@shared_task(queue='compute')
+def compute_points():
     posts = ForumPost.objects.filter(
         forum_profile__user_profile__user__is_active=True,
         forum_profile__active=True,
@@ -308,13 +360,19 @@ def update_data(forum_profile_id=None):
             active=True,
             verified=True
         )
-    # Send scraping tasks to the queue
+    # Collect the forum profile scraping subtasks
     subtasks = []
     for profile in forum_profiles:
         subtasks.append(scrape_forum_profile.s(profile.id))
-
-    chord(subtasks)(compute_points.s())
-
+    # Execute the subtasks in parallel then trigger the
+    # compute_points task afterwards
+    chord(subtasks)(compute_points.si())
+    # Log initialization of forum profiles scraping
+    log_opts = {
+        'level': 'info',
+        'meta': {}
+    }
+    logger.info('Scraping %s forum_profiles' % len(subtasks), log_opts)
     return subtasks
 
 
