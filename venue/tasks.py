@@ -39,9 +39,9 @@ def test_task():
 
 
 def load_scraper(name):
+    from importlib import import_module
     name = name.strip('.py')
-    scraper = __import__('venue.scrapers.' + name, fromlist=[name])
-    return scraper
+    return import_module(f'venue.scrapers.{name}')
 
 
 def get_expected_links(code):
@@ -56,24 +56,25 @@ def get_expected_links(code):
 
 
 @shared_task(queue='scrapers')
-def scrape_forum_profile(forum_profile_id, test_mode=None):
+def scrape_forum_profile(forum_profile_id, campaign_id, test_mode=None):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     if test_mode is None:
         test_mode = config.TEST_MODE
     if forum_profile.dummy:
         pass
     else:
+        # get the last signature for the current profile and campaign
+        signature = forum_profile.signature.filter(campaign_id=campaign_id).last()
         scraper = load_scraper(forum_profile.forum.scraper_name)
-        expected_links = get_expected_links(forum_profile.signature.code)
+        expected_links = get_expected_links(signature.code)
         results = scraper.verify_and_scrape(
             forum_profile.id,
             forum_profile.forum_user_id,
             expected_links,
             vcode=forum_profile.verification_code,
             test_mode=test_mode,
-            test_signature=forum_profile.signature.test_signature)
-        status_code, page_ok, signature_found, total_posts, username, position = results
-        del username
+            test_signature=signature.test_signature)
+        status_code, page_ok, signature_found, total_posts, _, position = results
         # Update forum profile page status
         status_list = forum_profile.last_page_status
         if len(status_list):
@@ -133,7 +134,8 @@ def scrape_forum_profile(forum_profile_id, test_mode=None):
                     topic_id=post['topic_id'],
                     message_id=post['message_id'],
                     unique_content_length=post['content_length'],
-                    timestamp=post['timestamp']
+                    timestamp=post['timestamp'],
+                    campaign_id=campaign_id
                 )
                 forum_post.save()
         # Check for post deletion
@@ -310,7 +312,7 @@ def compute_points(self, subtasks=None):
 
 @shared_task(queue='scrapers')
 def update_data(forum_profile_id=None):
-    # Create a bakcground tasks workflow as a chain
+    # Create a background tasks workflow as a chain
     if forum_profile_id:
         forum_profiles = ForumProfile.objects.filter(id__in=[forum_profile_id])
     else:
@@ -326,6 +328,50 @@ def update_data(forum_profile_id=None):
         subtasks.append(job.id)
     compute_points.delay(subtasks)
     return subtasks
+
+
+@shared_task(queue='scrappers')
+def compute_points_campaign(campaign_id):
+    print(campaign_id)
+    return campaign_id
+
+
+def scrap_profiles():
+    pass
+
+
+@shared_task(queue='scrappers')
+def run_profiles_scrappers(campaign_id):
+    from venue.models import ForumProfile
+    forum_profiles = ForumProfile.objects.filter(
+        user_profile__campaign=campaign_id,
+        forum__forumsitecampaign__campaign=campaign_id,
+        user_profile__user__is_active=True,
+        active=True,
+        verified=True
+    )
+    subtasks = []
+    for profile in forum_profiles:
+        job = scrape_forum_profile.delay(profile.id, campaign_id)
+        subtasks.append(job.id)
+    compute_points.delay(subtasks)
+    return subtasks
+
+
+@shared_task(queue='scrapers')
+def update_campaigns_data():
+    from venue.models import Campaign
+    from venue.campaigns import get_campaign_by_type
+    from celery import chain, group
+
+    campaigns = Campaign.objects.active_campaigns().with_active_users()
+
+    update_jobs = []
+    for campaign in campaigns:
+        campaign_class = get_campaign_by_type(campaign.campaign_type)
+        update_jobs.append(campaign_class.update_data.delay(campaign.id))
+        # compute points for this job
+    # compute total points when job is done
 
 
 @shared_task(queue='control')
@@ -348,7 +394,7 @@ def set_scraping_rate(num_users=None):
     cmd += ' venue.tasks.scrape_forum_profile %s' % rate
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    return (rate, stdout.decode())
+    return rate, stdout.decode()
 
 
 # -----------------------------------

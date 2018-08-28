@@ -790,7 +790,7 @@ def get_stats(request):
         userlevel_stats = {}
         # Get the date string for the last seven days
         now = timezone.now()
-        days = [now - timedelta(days=x) for x in range(7)]
+        days = (now - timedelta(days=x) for x in range(7))
         days = [str(x.date()) for x in days]
         user_profile = UserProfile.objects.get(user=request.user)
         userlevel_stats['daily_stats'] = []

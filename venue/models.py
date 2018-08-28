@@ -44,6 +44,7 @@ class ForumUserRank(models.Model):
         default=0
     )
     allowed = models.BooleanField(default=False)
+    campaign = models.ForeignKey('ForumSiteCampaign', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -75,6 +76,7 @@ class Signature(models.Model):
     image = models.CharField(max_length=200)
     active = models.BooleanField(default=True)
     date_added = models.DateTimeField(default=timezone.now)
+    campaign = models.ForeignKey('ForumSiteCampaign', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -260,7 +262,7 @@ class ForumProfile(models.Model):
     forum_username = models.CharField(max_length=50, blank=True)
     forum_user_id = models.CharField(max_length=50, blank=True)
     profile_url = models.CharField(max_length=200, blank=True)
-    signature = models.ForeignKey(
+    signature = models.ManyToManyField(
         Signature, null=True, blank=True, related_name='users')
     verification_code = models.CharField(max_length=20, blank=True)
     active = models.BooleanField(default=False)
@@ -382,6 +384,7 @@ class ForumPost(models.Model):
     )
     valid_sig_minutes = models.IntegerField(default=0)
     invalid_sig_minutes = models.IntegerField(default=0)
+    campaign = models.ForeignKey('Campaign', default=None, blank=True, null=True)
 
     class Meta:
         get_latest_by = 'timestamp'
@@ -485,20 +488,50 @@ class Referral(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
-class CampaignType(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.TextField()
-    description = models.TextField()
+class CampaignQuerySet(models.QuerySet):
+    def active_campaigns(self):
+        now = timezone.now()
+        return self.filter(
+            models.Q(start_at__lte=now),
+            models.Q(end_at__isnull=True) | models.Q(end_at__gte=now),
+            models.Q(implemented=True)
+        )
 
-    def __str__(self):
-        return "{} ({})".format(self.name, self.description[:30])
+    def with_active_users(self):
+        # TODO: add a right filter
+        return self.filter(
+
+        )
+
+
+class CampaignManager(models.Manager):
+    def get_queryset(self):
+        return CampaignQuerySet(self.model, using=self._db)
+
+    def active_campaigns(self):
+        return self.get_queryset().active_campaigns()
 
 
 class Campaign(models.Model):
+    # we use a choice field because we have to
+    # write a behaviour for the new platforms. So we can't
+    # just create some new platform dynamically.
+
+    BITCOIN_TALK = 'bitcointalk'
+    FACEBOOK = 'facebook'
+    TWITTER = 'twitter'
+
+    CAMPAIGN_TYPE_CHOICES = (
+        (BITCOIN_TALK, 'Bitcoin Talk'),
+        (FACEBOOK, 'Facebook'),
+        (TWITTER, 'Twitter')
+    )
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.TextField()
     description = models.TextField()
-    campaign_type = models.ForeignKey(CampaignType, on_delete=models.CASCADE)
+    # max length 50 should be enough for any code in the future
+    campaign_type = models.CharField(choices=CAMPAIGN_TYPE_CHOICES, default=BITCOIN_TALK, max_length=50)
     implemented = models.BooleanField(default=False)
     meta = JSONField(default={}, null=True, blank=True)
     start_at = models.DateTimeField(default=None, null=True, blank=True)
@@ -508,8 +541,28 @@ class Campaign(models.Model):
     forum_site = models.ManyToManyField(ForumSite, through='ForumSiteCampaign')
     users = models.ManyToManyField(UserProfile, through='UserCampaign')
 
+    objects = CampaignManager()
+
     def __str__(self):
         return "{} ({})".format(self.name, self.description[:30])
+
+    @property
+    def is_active(self):
+        """
+        detect if a campaign is active
+        NB:
+        if started is not defined it means that the campaign is not started
+        if finished is not defined it means that the campaign is not finished
+        :return: bool
+        """
+        now = timezone.now()
+        started = False
+        not_ended = True
+        if self.start_at is not None:
+            started = self.start_at <= now
+        if self.end_at is not None:
+            not_ended = self.end_at >= now
+        return started and not_ended
 
 
 class UserCampaign(models.Model):
@@ -517,6 +570,9 @@ class UserCampaign(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     user_joined_at = models.DateTimeField(auto_created=True, editable=False, null=True, blank=True)
+    points = models.DecimalField(max_digits=5,
+                                 decimal_places=2,
+                                 default=0)
 
     class Meta:
         unique_together = (('user', 'campaign'),)
