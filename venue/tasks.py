@@ -6,10 +6,8 @@ from datetime import timedelta
 from operator import itemgetter
 
 import rollbar
-import celery
 from celery import chord, shared_task
 from celery.signals import task_failure
-from celery.exceptions import MaxRetriesExceededError
 from constance import config
 from django.conf import settings
 from django.template.loader import get_template
@@ -20,7 +18,7 @@ from ws4redis.redis_store import RedisMessage
 from venue.scrapers.exceptions import ScraperError
 
 from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank,
-                          Ranking, Signature, UserProfile)
+                          Ranking, Signature, UserProfile, Campaign)
 from venue.utils import translation_on
 
 logger = settings.LOGGER
@@ -351,6 +349,10 @@ def compute_points():
 
 @shared_task(queue='scrapers')
 def update_data(forum_profile_id=None):
+    # Do not proceed if there is no current campaign at all
+    current_campaign = Campaign.get_current()
+    if not current_campaign:
+        return 'no campaign'
     # Create a bakcground tasks workflow as a chain
     if forum_profile_id:
         forum_profiles = ForumProfile.objects.filter(id__in=[forum_profile_id])

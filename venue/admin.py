@@ -2,7 +2,7 @@ from django.http import HttpResponseRedirect
 
 from venue.models import (
     ForumSite, Signature, UserProfile, Ranking, ForumProfile,
-    ForumUserRank, ForumPost, Notification
+    ForumUserRank, ForumPost, Notification, Campaign
 )
 from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
@@ -135,3 +135,10 @@ class RankingAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Ranking, RankingAdmin)
+
+
+class CampaignAdmin(admin.ModelAdmin):
+    list_display = ['name', 'campaign_start', 'campaign_end']
+
+
+admin.site.register(Campaign, CampaignAdmin)

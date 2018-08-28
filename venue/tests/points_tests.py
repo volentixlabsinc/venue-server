@@ -1,10 +1,39 @@
 from venue.models import UserProfile, ForumProfile, ForumPost, \
-    ForumSite, ForumUserRank
+    ForumSite, ForumUserRank, Campaign
+from unittest.mock import patch
+from venue.tasks import update_data
 from django.test import TestCase
 from django.utils import timezone
+from datetime import timedelta
 from constance import config
 from model_mommy import mommy
 from model_mommy.recipe import Recipe
+
+
+class CampaignNonExistenceTest(TestCase):
+    """ Tests for behavior when campaigns do not exist """
+
+    def setUp(self):
+        # Create a campaign
+        dt_now = timezone.now()
+        start = dt_now - timedelta(days=1)
+        campaign_recipe = Recipe(
+            Campaign,
+            campaign_start=start
+        )
+        self.campaign = campaign_recipe.make()
+
+    @patch('venue.tasks.Campaign')
+    def test_no_data_update(self, campaign_mock):
+        campaign_mock.get_current.return_value = None
+        result = update_data.run()
+        self.assertEqual(result, 'no campaign')
+
+    @patch('venue.tasks.Campaign')
+    def test_data_update(self, campaign_mock):
+        campaign_mock.get_current.return_value = self.campaign
+        result = update_data.run()
+        self.assertEqual(type(result), list)
 
 
 class PointsCreditingTest(TestCase):
@@ -12,6 +41,14 @@ class PointsCreditingTest(TestCase):
     post is saved """
 
     def setUp(self):
+        # Create a campaign
+        dt_now = timezone.now()
+        start = dt_now - timedelta(days=1)
+        campaign_recipe = Recipe(
+            Campaign,
+            campaign_start=start
+        )
+        self.campaign = campaign_recipe.make()
         # Create a mock forum site
         forum_site = mommy.make(ForumSite)
         # Create a mock user profile
@@ -40,7 +77,9 @@ class PointsCreditingTest(TestCase):
             'timestamp': timezone.now()
         }
 
-    def test_points_crediting(self):
+    @patch('venue.models.Campaign')
+    def test_points_crediting(self, campaign_mock):
+        campaign_mock.get_current.return_value = self.campaign
         # Create a forum post
         forum_post = ForumPost(
             user_profile=self.user_profile,

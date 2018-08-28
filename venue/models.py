@@ -33,6 +33,31 @@ def dict_fetchall(cursor):
     ]
 
 
+class Campaign(models.Model):
+    """ Records of campaigns """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=50)
+    description = models.TextField()
+    campaign_start = models.DateTimeField(null=True)
+    campaign_end = models.DateTimeField(null=True)
+
+    @classmethod
+    def get_current(cls):
+        """
+        Retrieves the current campaign, if any
+        :return: None of Campaign object
+        """
+        try:
+            dt_now = timezone.now()
+            current = Campaign.objects.filter(
+                campaign_start__lt=dt_now,
+                campaign_end__gt=dt_now
+            )
+            return current.latest('campaign_start')
+        except Campaign.DoesNotExist:
+            return None
+
+
 class ForumSite(models.Model):
     """ Forum site names and addresses """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -421,53 +446,57 @@ class ForumPost(models.Model):
         return str(self.id)
 
     def save(self, *args, **kwargs):
-        # Credit the points immediately
-        if self._state.adding:
-            base_points = config.POST_POINTS_MULTIPLIER
-            bonus_pct = self.forum_profile.forum_rank.bonus_percentage
-            influence_bonus = base_points * (float(bonus_pct) / 100)
-            total_points = base_points + influence_bonus
-            self.base_points = base_points
-            self.influence_bonus_pct = bonus_pct
-            self.influence_bonus_pts = influence_bonus
-            self.total_points = total_points
-        # Track the valid and invalid minutes, if post is not matured yet
-        if not self.matured:
-            try:
-                current = ForumPost.objects.filter(
-                    message_id=self.message_id).latest()
-                last_scrape = self.forum_profile.get_last_scrape()
-                last_scrape = last_scrape.replace(tzinfo=None)
-                post_timestamp = self.timestamp.replace(tzinfo=None)
-                if not self.forum_profile.last_scrape:
-                    last_scrape = post_timestamp
-                dt_now = timezone.now().replace(tzinfo=None)
-                tdiff = dt_now - last_scrape
-                tdiff_minutes = tdiff.total_seconds() / 60
-                # Get status list, previous and current
-                page_status_list = self.forum_profile.last_page_status
-                if len(page_status_list) == 1:
-                    previous_status = None
-                    current_status = page_status_list[-1]
-                elif len(page_status_list) == 2:
-                    previous_status, current_status = page_status_list
-                # Get details of the current status
-                status_code = current_status.get('status_code')
-                page_ok = current_status.get('page_ok')
-                signature_found = current_status.get('signature_found')
-                invalidate = False
-                if status_code == 200:
-                    if page_ok:
-                        if not signature_found:
-                            invalidate = True
-                if invalidate:
-                    self.invalid_sig_minutes = current.invalid_sig_minutes
-                    self.invalid_sig_minutes += tdiff_minutes
-                else:
-                    self.valid_sig_minutes = current.valid_sig_minutes
-                    self.valid_sig_minutes += tdiff_minutes
-            except ForumPost.DoesNotExist:
-                pass
+        # Process this post only if it's posted later than the
+        # the start of the current campaign
+        campaign = Campaign.get_current()
+        if campaign and self.timestamp > campaign.campaign_start:
+            # Credit the points immediately
+            if self._state.adding:
+                base_points = config.POST_POINTS_MULTIPLIER
+                bonus_pct = self.forum_profile.forum_rank.bonus_percentage
+                influence_bonus = base_points * (float(bonus_pct) / 100)
+                total_points = base_points + influence_bonus
+                self.base_points = base_points
+                self.influence_bonus_pct = bonus_pct
+                self.influence_bonus_pts = influence_bonus
+                self.total_points = total_points
+            # Track the valid and invalid minutes, if post is not matured yet
+            if not self.matured:
+                try:
+                    current = ForumPost.objects.filter(
+                        message_id=self.message_id).latest()
+                    last_scrape = self.forum_profile.get_last_scrape()
+                    last_scrape = last_scrape.replace(tzinfo=None)
+                    post_timestamp = self.timestamp.replace(tzinfo=None)
+                    if not self.forum_profile.last_scrape:
+                        last_scrape = post_timestamp
+                    dt_now = timezone.now().replace(tzinfo=None)
+                    tdiff = dt_now - last_scrape
+                    tdiff_minutes = tdiff.total_seconds() / 60
+                    # Get status list, previous and current
+                    page_status_list = self.forum_profile.last_page_status
+                    if len(page_status_list) == 1:
+                        previous_status = None
+                        current_status = page_status_list[-1]
+                    elif len(page_status_list) == 2:
+                        previous_status, current_status = page_status_list
+                    # Get details of the current status
+                    status_code = current_status.get('status_code')
+                    page_ok = current_status.get('page_ok')
+                    signature_found = current_status.get('signature_found')
+                    invalidate = False
+                    if status_code == 200:
+                        if page_ok:
+                            if not signature_found:
+                                invalidate = True
+                    if invalidate:
+                        self.invalid_sig_minutes = current.invalid_sig_minutes
+                        self.invalid_sig_minutes += tdiff_minutes
+                    else:
+                        self.valid_sig_minutes = current.valid_sig_minutes
+                        self.valid_sig_minutes += tdiff_minutes
+                except ForumPost.DoesNotExist:
+                    pass
         super(ForumPost, self).save(*args, **kwargs)
 
 

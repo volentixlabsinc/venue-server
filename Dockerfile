@@ -1,7 +1,7 @@
 FROM python:3.6-alpine3.8
 RUN pip install --upgrade pip && \
     apk --no-cache -U add gcc build-base linux-headers  \
-    postgresql-dev ncurses-dev git gettext libffi-dev libressl-dev && \
+    postgresql-dev ncurses-dev git gettext libffi-dev libressl-dev mailcap && \
     pip install git+https://github.com/Supervisor/supervisor.git@363283c71ed11054bdd8756b78e7777f160dcf05 && \
     apk del git
 
