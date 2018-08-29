@@ -89,7 +89,7 @@ workflows:
     - deploy:
         requires:
         - build_and_test
-        - build_and_test
+        - build_image
         filters:
           branches:
             only: master
