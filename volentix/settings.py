@@ -347,7 +347,7 @@ options = {
     'env': config('ENV', default='dev'),
     'index_meta': True
 }
-print('options: ' + options)
+print('env: ' + options.env)
 handler = LogDNAHandler(LOGDNA_TOKEN, options)
 LOGGER = logging.getLogger('logdna')
 LOGGER.setLevel(logging.DEBUG)
