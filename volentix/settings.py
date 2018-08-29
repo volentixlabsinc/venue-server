@@ -340,12 +340,14 @@ CRAWLERA_PROXIES = {
 # LogDNA settings
 LOGGING_CONFIG = None
 LOGDNA_TOKEN = config('LOGDNA_TOKEN', default='this-token-does-not-work')
+print('logdna token: ' + LOGDNA_TOKEN)
 
 options = {
     'app': 'venue',
     'env': config('ENV', default='dev'),
     'index_meta': True
 }
+print('options: ' + options)
 handler = LogDNAHandler(LOGDNA_TOKEN, options)
 LOGGER = logging.getLogger('logdna')
 LOGGER.setLevel(logging.DEBUG)
