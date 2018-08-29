@@ -67,7 +67,12 @@ spec:
               secretKeyRef:
                 name: rollbar-credentials
                 key: token
-          - name: CRAWLERA_AUTH_TOKEN
+          - name: LOGDNA_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: logdna-credentials
+                key: token
+          - name: CRAWLERA_TOKEN
             valueFrom:
               secretKeyRef:
                 name: crawlera-credentials
