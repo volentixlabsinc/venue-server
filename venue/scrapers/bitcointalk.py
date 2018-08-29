@@ -284,7 +284,7 @@ def verify_and_scrape(forum_profile_id,
                 'response_status_code': scraper.status_code
             }
         }
-        message = 'Error in scraping forum profile page'
+        message = 'Error in scraping forum profile page ' + str(forum_profile_id)
         logger.info(message, log_opts)
         raise ScraperError(message)
     posts = scraper.get_total_posts()
@@ -302,7 +302,32 @@ def verify_and_scrape(forum_profile_id,
 
 def get_user_position(forum_user_id):
     scraper = BitcoinTalk()
-    scraper.get_profile(forum_user_id)
+    try:
+        scraper.get_profile(forum_user_id, fallback=None)
+    except ProfileDoesNotExist:
+        log_opts = {
+            'level': 'warning',
+            'meta': {
+                'response_status_code': scraper.status_code
+            }
+        }
+        message = 'Error in scraping forum user id ' + forum_user_id + '; retrying with crawlera'
+        logger.info(message, log_opts)
+
+        try: 
+            scrape.get_profile(forum_user_id, fallback='crawlera')
+        except ProfileDoesNotExist:
+            log_opts = {
+                'level': 'error',
+                'meta': {
+                    'response_status_code': scraper.status_code
+                }
+            }
+            message = 'Error in scraping forum user id ' + forum_user_id + '; bailing'
+            logger.info(message, log_opts)
+            raise ProfileDoesNotExist()
+
+        
     position = scraper.get_user_position()
     username = scraper.get_username()
     return (scraper.status_code, position, username)
