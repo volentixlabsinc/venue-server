@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import re
 import random
+from pytz import UTC
 from datetime import timedelta
 from operator import itemgetter
 
@@ -154,6 +155,11 @@ def scrape_forum_profile(self, forum_profile_id, test_mode=None,
                     message_id=post['message_id'],
                 )
                 if not post_check.exists():
+                    # Bitcointalk uses UTC timestamps, so well pass
+                    # that timezone info to the timestamp object
+                    post_timestamp = post['timestamp'].replace(
+                        tzinfo=UTC
+                    )
                     forum_post = ForumPost(
                         user_profile=forum_profile.user_profile,
                         forum_profile=forum_profile,
@@ -161,7 +167,7 @@ def scrape_forum_profile(self, forum_profile_id, test_mode=None,
                         topic_id=post['topic_id'],
                         message_id=post['message_id'],
                         unique_content_length=post['content_length'],
-                        timestamp=post['timestamp']
+                        timestamp=post_timestamp
                     )
                     forum_post.save()
             # Check for post deletion

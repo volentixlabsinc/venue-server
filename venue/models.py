@@ -37,9 +37,9 @@ class Campaign(models.Model):
     """ Records of campaigns """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=50)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     campaign_start = models.DateTimeField(null=True)
-    campaign_end = models.DateTimeField(null=True)
+    campaign_end = models.DateTimeField(null=True, blank=True)
 
     @classmethod
     def get_current(cls):
@@ -50,10 +50,13 @@ class Campaign(models.Model):
         try:
             dt_now = timezone.now()
             current = Campaign.objects.filter(
-                campaign_start__lt=dt_now,
-                campaign_end__gt=dt_now
+                campaign_start__lt=dt_now
             )
-            return current.latest('campaign_start')
+            current = current.latest('campaign_start')
+            if current.campaign_end:
+                if dt_now > current.campaign_end:
+                    return None
+            return current
         except Campaign.DoesNotExist:
             return None
 
