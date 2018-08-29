@@ -1,21 +1,9 @@
 import pytest
-from venue.tasks import multiplier, scrape_forum_profile
+from venue.tasks import scrape_forum_profile
 from venue.models import ForumProfile
 from unittest.mock import patch, PropertyMock
 from venue.scrapers.exceptions import ScraperError
 from django.conf import settings
-
-
-class TestBackgroundTaskExecution:
-
-    def test_task_execution(self):
-        # Send the task to queue
-        task = multiplier.delay(10, 10, ran_from_tests=True)
-        # Wait for the task to finish
-        task.get()
-        # Check results
-        assert task.status == 'SUCCESS'
-        assert task.result == 100
 
 
 class TestForumProfileScraping:
