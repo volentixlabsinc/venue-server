@@ -1,6 +1,12 @@
 class ProfileDoesNotExist(Exception):
-    pass
+    
+    def __init__(self, message, info={}):
+            self.message = message
+            self.info = info
 
 
 class ScraperError(Exception):
-    pass
+
+    def __init__(self, message, info={}):
+            self.message = message
+            self.info = info

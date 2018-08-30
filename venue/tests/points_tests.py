@@ -104,12 +104,12 @@ class PointsCreditingTest(TestCase):
         self.assertEqual(forum_post.total_points, expected_total)
 
 
-class SignatureMinutesMonitoringTest(TestCase):
-    """ Tests the monitoring and categorization of signature minutes that
-    happen every time a forum post is saved """
+# class SignatureMinutesMonitoringTest(TestCase):
+#     """ Tests the monitoring and categorization of signature minutes that
+#     happen every time a forum post is saved """
 
-    def setUp(self):
-        pass
+#     def setUp(self):
+#         pass
 
-    def test_sig_minutes_monitoring(self):
-        pass
+#     def test_sig_minutes_monitoring(self):
+#         pass

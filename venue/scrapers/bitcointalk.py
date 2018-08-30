@@ -1,12 +1,9 @@
-import time
 import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils import timezone
 from datetime import datetime
 from dateutil import parser
-# from selenium import webdriver
-# from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from .exceptions import ScraperError, ProfileDoesNotExist
 
 logger = settings.LOGGER
@@ -28,6 +25,7 @@ class BitcoinTalk(object):
         self.test = test
         self.test_signature = test_signature
         self.response_text = None
+        self.error_info = {}
 
     def list_forum_positions(self):
         positions = [
@@ -56,11 +54,13 @@ class BitcoinTalk(object):
         )
         self.response_text = response.text
         self.status_code = response.status_code
+        self.error_info['status_code'] = self.status_code
         self.soup = BeautifulSoup(response.content, 'html.parser')
 
     def get_profile(self, user_id, fallback=None, test_config=None):
         profile_url = self.base_url + '/index.php?action=profile;u='
         profile_url += str(user_id)
+        self.error_info['fallback'] = fallback
         if test_config:
             profile_url = test_config['profile_url']
         if fallback == 'crawlera':
@@ -78,7 +78,7 @@ class BitcoinTalk(object):
         if body_area:
             body_text = body_area.text
             if 'The user whose profile you are trying to view does not exist.' in body_text:
-                raise ProfileDoesNotExist()
+                raise ProfileDoesNotExist('Profile does not exist', self.error_info)
 
     def get_total_posts(self):
         row = self.soup.select('div#bodyarea tr')[4]
@@ -94,7 +94,7 @@ class BitcoinTalk(object):
                     pos_td = row.find_all('td')[1]
                     return pos_td.text.strip()
             if not found:
-                raise ScraperError('Cannot get user position')
+                raise ScraperError('Cannot get user position', self.error_info)
         except IndexError:
             return ''
 
@@ -109,7 +109,7 @@ class BitcoinTalk(object):
                     name_index = text_list.index('Name:')
                     return text_list[name_index + 1]
             if not found:
-                raise ScraperError('Cannot get username')
+                raise ScraperError('Cannot get username', self.error_info)
         except IndexError:
             return ''
 
@@ -284,7 +284,7 @@ def verify_and_scrape(forum_profile_id,
                 'response_status_code': scraper.status_code
             }
         }
-        message = 'Error in scraping forum profile page ' + str(forum_profile_id)
+        message = 'Error in scraping forum profile ' + str(forum_profile_id)
         logger.info(message, log_opts)
         raise ScraperError(message)
     posts = scraper.get_total_posts()
@@ -300,34 +300,9 @@ def verify_and_scrape(forum_profile_id,
     return data
 
 
-def get_user_position(forum_user_id):
+def get_user_position(forum_user_id, fallback=None):
     scraper = BitcoinTalk()
-    try:
-        scraper.get_profile(forum_user_id, fallback=None)
-    except ProfileDoesNotExist:
-        log_opts = {
-            'level': 'warning',
-            'meta': {
-                'response_status_code': scraper.status_code
-            }
-        }
-        message = 'Error in scraping forum user id ' + forum_user_id + '; retrying with crawlera'
-        logger.info(message, log_opts)
-
-        try: 
-            scrape.get_profile(forum_user_id, fallback='crawlera')
-        except ProfileDoesNotExist:
-            log_opts = {
-                'level': 'error',
-                'meta': {
-                    'response_status_code': scraper.status_code
-                }
-            }
-            message = 'Error in scraping forum user id ' + forum_user_id + '; bailing'
-            logger.info(message, log_opts)
-            raise ProfileDoesNotExist()
-
-        
+    scraper.get_profile(forum_user_id, fallback=fallback)
     position = scraper.get_user_position()
     username = scraper.get_username()
     return (scraper.status_code, position, username)
