@@ -92,15 +92,6 @@ def get_expected_links(code):
     return set(links)
 
 
-def count_retry(task):
-    """
-    function to have possibility test it
-    :param task:
-    :return:
-    """
-    return task.request.retries + 1
-
-
 @shared_task(queue='scrapers', max_retries=3)
 def scrape_forum_profile(forum_profile_id, test_mode=None,
                          test_scrape_config=None, max_retries=2, retries=0):
@@ -250,6 +241,15 @@ def scrape_forum_profile(forum_profile_id, test_mode=None,
                 'retry_task_id': task_id
             }
         else:
+            response_text = exc.info.get('response_text')
+            log_data = {
+                'forum_profile_id': str(forum_profile.id),
+                'forum_user_id': forum_profile.forum_user_id,
+                'status_code': exc.info.get('status_code'),
+                # Send only the first 500K bytes
+                'response_text': response_text[0:500000]
+            }
+            rollbar.report_exc_info(extra_data=log_data)
             return 'gave up'
 
 
@@ -344,6 +344,14 @@ def get_user_position(forum_site_id, forum_user_id,
                 'fallback': exc.info.get('fallback'),
                 'message': 'scraping_error'
             }
+            response_text = exc.info.get('response_text')
+            log_data = {
+                'forum_user_id': forum_user_id,
+                'status_code': exc.info.get('status_code'),
+                # Send only the first 500K bytes
+                'response_text': response_text[0:500000]
+            }
+            rollbar.report_exc_info(extra_data=log_data)
     return result
 
 
