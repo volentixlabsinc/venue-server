@@ -2668,7 +2668,8 @@ def send_emails_with_referral_code(request):
             language=user_profile.language,
             subject='Referral to Volentix Bitcointalk.org signature campaign',
             code=user_profile.referral_code,
-            referrer_name=request.user.username
+            referrer_name=request.user.username,
+            user_lang=user_profile.language
         )
         response_result = not emails_result.get('ErrorCode')
         # 200 if `ErrorCode` in payload == 0 else 422
