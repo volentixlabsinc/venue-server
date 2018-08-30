@@ -529,8 +529,15 @@ def check_profile(request):
             {
                 "found": <boolean: false>,
                 "forum_id": <int>,
-                "status_code": <int>
+                "status_code": <int>,
+                "message": <string>,
+                "num_retries": <int>,
+                "fallback": <string>
             }
+
+        * `message` - Error message: `scraping_error` or `profile_does_not_exist`
+        * `num_retries` - Number of retries before giving up
+        * `fallback` - Fallback scraping method used
     """
     data = request.query_params
     user = request.user
@@ -540,11 +547,16 @@ def check_profile(request):
         forum_id = str(forum_site.id)
     forum = ForumSite.objects.get(id=forum_id)
     response = {
-        'found': False,
         'forum_id': data.get('forum_id')
     }
-    resp_status = status.HTTP_400_BAD_REQUEST
-    info = get_user_position(forum.id, data.get('forum_user_id'), user.id)
+    task = get_user_position.delay(
+        forum.id,
+        data.get('forum_user_id'),
+        user.id
+    )
+    task.get()
+    info = task.result
+    response['found'] = info['found']
     if info['found']:
         if info['status_code'] == 200 and info['position']:
             resp_status = status.HTTP_200_OK
@@ -573,6 +585,9 @@ def check_profile(request):
                 response['with_signature'] = info['with_signature']
                 response['forum_profile_id'] = info['forum_profile_id']
         response['status_code'] = info['status_code']
+    else:
+        resp_status = status.HTTP_400_BAD_REQUEST
+        response.update(info)
     return Response(response, status=resp_status)
 
 
@@ -2045,6 +2060,7 @@ def create_forum_profile(request):
         forum_site = ForumSite.objects.get(name='bitcointalk.org')
         forum_id = str(forum_site.id)
     forum = ForumSite.objects.get(id=forum_id)
+    # TODO -- Reflect the accurate status of the checking
     info = get_user_position(
         forum_id,
         data['forum_user_id'],

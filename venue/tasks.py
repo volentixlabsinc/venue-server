@@ -16,7 +16,7 @@ from django.utils import timezone
 from postmarker.core import PostmarkClient
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
-from venue.scrapers.exceptions import ScraperError
+from venue.scrapers.exceptions import ProfileDoesNotExist, ScraperError
 
 from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank,
                           Ranking, Signature, UserProfile, Campaign)
@@ -236,14 +236,19 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     return verified
 
 
-@shared_task(queue='scrapers')
-def get_user_position(forum_site_id, profile_url, user_id):
+@shared_task(queue='control', bind=True, max_retries=3)
+def get_user_position(self, forum_site_id, forum_user_id, user_id, fallback=None):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
-    forum_user_id = scraper.extract_user_id(profile_url)
+    forum_user_id = scraper.extract_user_id(forum_user_id)
     try:
+        fallback = None
+        retries = count_retry(self)
+        if retries >= 1:
+            fallback = 'crawlera'
         status_code, position, username = scraper.get_user_position(
-            forum_user_id
+            forum_user_id,
+            fallback=fallback
         )
         result = {
             'status_code': status_code,
@@ -270,8 +275,24 @@ def get_user_position(forum_site_id, profile_url, user_id):
             result['verified'] = fp.verified
             if fp.signature and fp.verified:
                 result['with_signature'] = True
-    except scraper.ProfileDoesNotExist:
-        result = {'found': False}
+    except ProfileDoesNotExist as exc:
+        result = {
+            'found': False,
+            'status_code': exc.info.get('status_code'),
+            'message': 'profile_does_not_exist'
+        }
+    except ScraperError as exc:
+        num_retries = self.request.retries
+        if num_retries < self.max_retries:
+            self.retry(exc=exc, countdown=1)
+        else:
+            result = {
+                'found': False,
+                'status_code': exc.info.get('status_code'),
+                'num_retries': num_retries,
+                'fallback': exc.info.get('fallback'),
+                'message': 'scraping_error'
+            }
     return result
 
 

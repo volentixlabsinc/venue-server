@@ -1,9 +1,39 @@
 import pytest
-from venue.tasks import scrape_forum_profile
-from venue.models import ForumProfile
+from venue.tasks import scrape_forum_profile, get_user_position
+from venue.models import ForumProfile, ForumSite, User
 from unittest.mock import patch, PropertyMock
 from venue.scrapers.exceptions import ScraperError
 from django.conf import settings
+from django.test import TestCase
+
+
+class TestProfileChecking:
+
+    @pytest.mark.django_db
+    @patch('venue.scrapers.bitcointalk.requests')
+    def test_profile_checking(self, mock_request, scraper_headers):
+        mock_request.get.return_value = PropertyMock(
+            text='',
+            content=''
+        )
+        # Get forum site and user objects from pre-loaded dummy data
+        forum_site = ForumSite.objects.get(name='bitcointalk.org')
+        user = User.objects.get(username='wolverine')
+        with patch('venue.tasks.count_retry') as mock_count_retry:
+            mock_count_retry.return_value = 1
+            with pytest.raises(ScraperError):
+                get_user_position.run(
+                    str(forum_site.id),
+                    '0000',
+                    str(user.id)
+                )
+            url = 'https://bitcointalk.org/index.php?action=profile;u=0000'
+            mock_request.get.assert_called_once_with(
+                url,
+                headers=scraper_headers,
+                proxies=settings.CRAWLERA_PROXIES,
+                verify=False
+            )
 
 
 class TestForumProfileScraping:
@@ -23,7 +53,11 @@ class TestForumProfileScraping:
         }
 
         # check 1st retry for the scraper
-        mock_request.get.return_value = PropertyMock(text='', content='', status=200)
+        mock_request.get.return_value = PropertyMock(
+            text='',
+            content='',
+            status=200
+        )
         with patch('venue.tasks.count_retry') as mock_count_retry:
             mock_count_retry.return_value = 1
             with pytest.raises(ScraperError):
