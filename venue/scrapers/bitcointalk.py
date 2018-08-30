@@ -302,10 +302,22 @@ def verify_and_scrape(forum_profile_id,
 
 def get_user_position(forum_user_id, fallback=None):
     scraper = BitcoinTalk()
-    scraper.get_profile(forum_user_id, fallback=fallback)
-    position = scraper.get_user_position()
-    username = scraper.get_username()
-    return (scraper.status_code, position, username)
+    try:
+        scraper.get_profile(forum_user_id, fallback=fallback)
+        position = scraper.get_user_position()
+        username = scraper.get_username()
+        return (scraper.status_code, position, username)
+    except ScraperError as exc:
+        log_opts = {
+            'level': 'error',
+            'meta': {
+                'forum_user_id': forum_user_id,
+                'response_status_code': exc.info.get('status_code')
+            }
+        }
+        message = 'Error in scraping forum user ID ' + forum_user_id
+        logger.info(message, log_opts)
+        raise ScraperError(message, exc.info)
 
 
 def extract_user_id(profile_url):
