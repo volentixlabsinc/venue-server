@@ -306,11 +306,9 @@ if not DEBUG:
         environment=config('ENV', default='dev')
     )
 
-
     def celery_base_data_hook(request, data):
         del request
         data['framework'] = 'celery'
-
 
     rollbar.BASE_DATA_HOOK = celery_base_data_hook
 
