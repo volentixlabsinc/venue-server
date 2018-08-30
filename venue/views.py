@@ -35,7 +35,7 @@ from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Notifica
                      compute_total_points, Referral)
 from .tasks import (get_user_position, send_deletion_confirmation, send_email_change_confirmation,
                     send_email_confirmation, send_reset_password, set_scraping_rate, update_data,
-                    verify_profile_signature, send_email)
+                    verify_profile_signature, send_email, wait_for_results)
 from .utils import RedisTemp, decrypt_data, encrypt_data, check_language_exists, translation_on
 
 
@@ -554,8 +554,7 @@ def check_profile(request):
         data.get('forum_user_id'),
         user.id
     )
-    task.get()
-    info = task.result
+    info = wait_for_results(task.id)
     response['found'] = info['found']
     if info['found']:
         if info['status_code'] == 200 and info['position']:

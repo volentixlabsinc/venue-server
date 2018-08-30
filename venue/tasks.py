@@ -1,6 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
 import re
+import uuid
+import time
 import random
 from pytz import UTC
 from datetime import timedelta
@@ -8,6 +10,7 @@ from operator import itemgetter
 
 import rollbar
 from celery import chord, shared_task
+from celery.result import AsyncResult
 from celery.signals import task_failure
 from constance import config
 from django.conf import settings
@@ -25,6 +28,19 @@ from venue.utils import translation_on
 logger = settings.LOGGER
 
 
+def wait_for_results(task_id):
+    task = AsyncResult(task_id)
+    if task.status == 'SUCCESS':
+        if type(task.result) == dict:
+            if 'result' in task.result.keys():
+                if task.result['result'] == 'retried':
+                    task_id = task.result['retry_task_id']
+            else:
+                return task.result
+    time.sleep(0.25)
+    return wait_for_results(task_id)
+
+
 @task_failure.connect
 def handle_task_failure(**kw):
     rollbar.report_exc_info(extra_data=kw)
@@ -38,11 +54,25 @@ def multiplier(x, y, message='', ran_from_tests=False):
 
 
 @shared_task(queue='scrapers')
-def test_task():
-    import time
-    import random
-    time.sleep(2)
-    return random.randint(0, 100)
+def test_task(retries=0, max_retries=3):
+    try:
+        if random.randint(5, 20) > 10:
+            return True
+        else:
+            return 1 + ''
+    except TypeError as exc:
+        if retries < max_retries:
+            task_id = str(uuid.uuid4())
+            test_task.apply_async(
+                kwargs={'retries': retries+1},
+                task_id=task_id
+            )
+            return {
+                'result': 'retried',
+                'retry_task_id': task_id
+            }
+        else:
+            return 'gave up'
 
 
 def load_scraper(name):
@@ -71,9 +101,9 @@ def count_retry(task):
     return task.request.retries + 1
 
 
-@shared_task(queue='scrapers', bind=True, max_retries=3)
-def scrape_forum_profile(self, forum_profile_id, test_mode=None,
-                         test_scrape_config=None):
+@shared_task(queue='scrapers', max_retries=3)
+def scrape_forum_profile(forum_profile_id, test_mode=None,
+                         test_scrape_config=None, max_retries=2, retries=0):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     if test_mode is None:
         test_mode = config.TEST_MODE
@@ -85,8 +115,7 @@ def scrape_forum_profile(self, forum_profile_id, test_mode=None,
         scraper = load_scraper(forum_profile.forum.scraper_name)
         expected_links = get_expected_links(forum_profile.signature.code)
         # Trigger the use of fallback scraping method on the third retry
-        retries_count = count_retry(self)
-        if retries_count >= 3:
+        if retries >= 1:
             fallback = 'crawlera'
         # Call the scraper
         results = scraper.verify_and_scrape(
@@ -201,18 +230,27 @@ def scrape_forum_profile(self, forum_profile_id, test_mode=None,
                 'forum_user_id': forum_profile.forum_user_id
             }
         }
-        num_retries = self.request.retries
-        if num_retries < self.max_retries:
-            message = '%s - Retrying forum profile scraping' % (num_retries + 1)
+        if retries < max_retries:
+            message = '%s - Retrying forum profile scraping' % (retries)
             if fallback:
                 message += ' with fallback (%s)' % fallback
             logger.info(message, log_opts)
-            scrape_forum_profile.retry(
-                exc=exc,
-                countdown=int(random.uniform(2, 4) ** num_retries)
+            task_id = str(uuid.uuid4())
+            scrape_forum_profile.apply_async(
+                args=[forum_profile_id],
+                kwargs={
+                    'test_mode': test_mode,
+                    'test_scrape_config': test_scrape_config,
+                    'retries': retries+1,
+                },
+                task_id=task_id
             )
+            return {
+                'result': 'retried',
+                'retry_task_id': task_id
+            }
         else:
-            return 'pass'
+            return 'gave up'
 
 
 @shared_task(queue='scrapers')
@@ -236,14 +274,14 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     return verified
 
 
-@shared_task(queue='control', bind=True, max_retries=3)
-def get_user_position(self, forum_site_id, forum_user_id, user_id, fallback=None):
+@shared_task(queue='control')
+def get_user_position(forum_site_id, forum_user_id,
+                      user_id, max_retries=1, retries=0):
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
     forum_user_id = scraper.extract_user_id(forum_user_id)
     try:
         fallback = None
-        retries = count_retry(self)
         if retries >= 1:
             fallback = 'crawlera'
         status_code, position, username = scraper.get_user_position(
@@ -282,14 +320,27 @@ def get_user_position(self, forum_site_id, forum_user_id, user_id, fallback=None
             'message': 'profile_does_not_exist'
         }
     except ScraperError as exc:
-        num_retries = self.request.retries
-        if num_retries < self.max_retries:
-            self.retry(exc=exc, countdown=1)
+        # num_retries = self.request.retries
+        if retries < max_retries:
+            task_id = str(uuid.uuid4())
+            get_user_position.apply_async(
+                args=[
+                    forum_site_id,
+                    forum_user_id,
+                    user_id
+                ],
+                kwargs={'retries': retries+1},
+                task_id=task_id
+            )
+            result = {
+                'result': 'retried',
+                'retry_task_id': task_id
+            }
         else:
             result = {
                 'found': False,
                 'status_code': exc.info.get('status_code'),
-                'num_retries': num_retries,
+                'num_retries': retries,
                 'fallback': exc.info.get('fallback'),
                 'message': 'scraping_error'
             }
