@@ -241,7 +241,7 @@ def scrape_forum_profile(forum_profile_id, test_mode=None,
                 'retry_task_id': task_id
             }
         else:
-            response_text = exc.info.get('response_text')
+            response_text = exc.info.get('response_text') or ''
             log_data = {
                 'forum_profile_id': str(forum_profile.id),
                 'forum_user_id': forum_profile.forum_user_id,
@@ -344,7 +344,7 @@ def get_user_position(forum_site_id, forum_user_id,
                 'fallback': exc.info.get('fallback'),
                 'message': 'scraping_error'
             }
-            response_text = exc.info.get('response_text')
+            response_text = exc.info.get('response_text') or ''
             log_data = {
                 'forum_user_id': forum_user_id,
                 'status_code': exc.info.get('status_code'),
