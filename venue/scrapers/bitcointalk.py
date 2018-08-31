@@ -56,7 +56,7 @@ class BitcoinTalk(object):
         self.status_code = response.status_code
         self.error_info['status_code'] = self.status_code
         self.error_info['response_text'] = self.response_text
-        if self.status_code:
+        if self.status_code != 200:
             raise ScraperError('Request did not succeed', self.error_info)
         self.soup = BeautifulSoup(response.content, 'html.parser')
 
