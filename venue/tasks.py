@@ -247,7 +247,9 @@ def scrape_forum_profile(forum_profile_id, test_mode=None,
                 'forum_user_id': forum_profile.forum_user_id,
                 'status_code': exc.info.get('status_code'),
                 # Send only the first 500K bytes
-                'response_text': response_text[0:500000]
+                'response_text': response_text[0:500000],
+                'message': exc.info.get('message'),
+                'possible_cause': exc.info.get('possible_cause')
             }
             rollbar.report_exc_info(extra_data=log_data)
             return 'gave up'
@@ -349,7 +351,9 @@ def get_user_position(forum_site_id, forum_user_id,
                 'forum_user_id': forum_user_id,
                 'status_code': exc.info.get('status_code'),
                 # Send only the first 500K bytes
-                'response_text': response_text[0:500000]
+                'response_text': response_text[0:500000],
+                'message': exc.info.get('message'),
+                'possible_cause': exc.info.get('possible_cause')
             }
             rollbar.report_exc_info(extra_data=log_data)
     return result

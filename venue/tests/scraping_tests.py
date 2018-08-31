@@ -1,11 +1,13 @@
 import pytest
+from unittest.mock import patch, PropertyMock
 from venue.tasks import scrape_forum_profile, get_user_position
 from venue.models import ForumProfile, ForumSite, User
-from unittest.mock import patch, PropertyMock
+from venue.scrapers.bitcointalk import BitcoinTalk
+from venue.scrapers.exceptions import ScraperError
 from django.conf import settings
 
 
-class TestProfileChecking:
+class TestForumProfileScraping:
 
     @pytest.mark.django_db
     @patch('venue.scrapers.bitcointalk.requests')
@@ -30,9 +32,6 @@ class TestProfileChecking:
             proxies=settings.CRAWLERA_PROXIES,
             verify=False
         )
-
-
-class TestForumProfileScraping:
 
     @pytest.mark.django_db
     @patch('venue.scrapers.bitcointalk.requests')
@@ -79,3 +78,13 @@ class TestForumProfileScraping:
             proxies=settings.CRAWLERA_PROXIES,
             verify=False
         )
+
+    def test_catching_connection_error(self):
+        scraper = BitcoinTalk()
+        with pytest.raises(ScraperError):
+            scraper.get_profile(
+                'xxx',
+                test_config={
+                    'profile_url': 'http://www.non-existent-domain.xxx'
+                }
+            )

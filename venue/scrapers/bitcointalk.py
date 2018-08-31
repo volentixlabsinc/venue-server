@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import ConnectionError
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils import timezone
@@ -46,18 +47,25 @@ class BitcoinTalk(object):
         self.expected_links = expected_links
 
     def make_request(self, url, proxies=None, verify=True):
-        response = requests.get(
-            url,
-            headers=self.headers,
-            proxies=proxies,
-            verify=verify
-        )
+        try:
+            response = requests.get(
+                url,
+                headers=self.headers,
+                proxies=proxies,
+                verify=verify
+            )
+        except ConnectionError as exc:
+            self.error_info = {
+                'message': repr(exc),
+                'possible_cause': 'The site is temporarily unaivalable'
+            }
+            raise ScraperError('HTTP request failed', self.error_info)
         self.response_text = response.text
         self.status_code = response.status_code
         self.error_info['status_code'] = self.status_code
         self.error_info['response_text'] = self.response_text
         if self.status_code != 200:
-            raise ScraperError('Request did not succeed', self.error_info)
+            raise ScraperError('HTTP response not ok', self.error_info)
         self.soup = BeautifulSoup(response.content, 'html.parser')
 
     def get_profile(self, user_id, fallback=None, test_config=None):
@@ -155,12 +163,9 @@ class BitcoinTalk(object):
             for row in rows:
                 if 'Signature' in row.text.strip()[0:10]:
                     found = True
-                    # text_list = row.text.split()
-                    # name_index = text_list.index('Signature:')
                     sig = row
                     break
             if not found:
-                # raise ScraperError('Cannot find signature')
                 page_ok = False
         except IndexError:
             pass
@@ -278,18 +283,20 @@ def verify_and_scrape(forum_profile_id,
         username = scraper.get_username()
         position = scraper.get_user_position()
         page_ok, verified = scraper.check_signature(vcode=vcode)
-    except ScraperError:
+    except ScraperError as exc:
         log_opts = {
             'level': 'error',
             'meta': {
                 'forum_profile_id': str(forum_profile_id),
                 'forum_user_id': forum_user_id,
-                'response_status_code': scraper.status_code
+                'response_status_code': scraper.status_code,
+                'message': exc.info.get('message'),
+                'possible_cause': exc.info.get('possible_cause')
             }
         }
         message = 'Error in scraping forum profile ' + str(forum_profile_id)
         logger.info(message, log_opts)
-        raise ScraperError(message)
+        raise ScraperError(message, exc.info)
     posts = scraper.get_total_posts()
     data = (
         scraper.status_code,
@@ -315,7 +322,9 @@ def get_user_position(forum_user_id, fallback=None):
             'level': 'error',
             'meta': {
                 'forum_user_id': forum_user_id,
-                'response_status_code': exc.info.get('status_code')
+                'response_status_code': exc.info.get('status_code'),
+                'message': exc.info.get('message'),
+                'possible_cause': exc.info.get('possible_cause')
             }
         }
         message = 'Error in scraping forum user ID ' + forum_user_id
