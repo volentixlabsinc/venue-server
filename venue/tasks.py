@@ -159,10 +159,12 @@ def scrape_forum_profile(forum_profile_id, test_mode=None,
                 else:
                     tracked_posts.append(post.message_id)
             # Get the latest posts from this forum profile
-            # Latest means posts in the last 24 hours
+            # Latest means posts in the last 24 hours since
+            # the last scrape
             posts_scrape_start = last_scrape - timedelta(hours=24)
             posts = scraper.scrape_posts(
                 forum_profile.forum_user_id,
+                fallback=fallback,
                 start=posts_scrape_start.replace(tzinfo=None)
             )
             # Save each new post
@@ -246,10 +248,9 @@ def scrape_forum_profile(forum_profile_id, test_mode=None,
                 'forum_profile_id': str(forum_profile.id),
                 'forum_user_id': forum_profile.forum_user_id,
                 'status_code': exc.info.get('status_code'),
-                # Send only the first 500K bytes
+                # Send only the first 500K bytes of the response text
                 'response_text': response_text[0:500000],
-                'message': exc.info.get('message'),
-                'possible_cause': exc.info.get('possible_cause')
+                'message': exc.info.get('message')
             }
             rollbar.report_exc_info(extra_data=log_data)
             return 'gave up'
@@ -322,7 +323,6 @@ def get_user_position(forum_site_id, forum_user_id,
             'message': 'profile_does_not_exist'
         }
     except ScraperError as exc:
-        # num_retries = self.request.retries
         if retries < max_retries:
             task_id = str(uuid.uuid4())
             get_user_position.apply_async(
@@ -350,10 +350,9 @@ def get_user_position(forum_site_id, forum_user_id,
             log_data = {
                 'forum_user_id': forum_user_id,
                 'status_code': exc.info.get('status_code'),
-                # Send only the first 500K bytes
+                # Send only the first 500K bytes of the response text
                 'response_text': response_text[0:500000],
-                'message': exc.info.get('message'),
-                'possible_cause': exc.info.get('possible_cause')
+                'message': exc.info.get('message')
             }
             rollbar.report_exc_info(extra_data=log_data)
     return result

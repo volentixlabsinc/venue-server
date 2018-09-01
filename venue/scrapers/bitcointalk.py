@@ -46,18 +46,27 @@ class BitcoinTalk(object):
         self.forum_user_id = forum_user_id
         self.expected_links = expected_links
 
-    def make_request(self, url, proxies=None, verify=True):
+    def make_request(self, url, fallback=None, proxies=None, verify=True):
         try:
-            response = requests.get(
-                url,
-                headers=self.headers,
-                proxies=proxies,
-                verify=verify
-            )
+            if fallback == 'crawlera':
+                # try to get data using crawlera proxies
+                proxies = settings.CRAWLERA_PROXIES
+                response = requests.get(
+                    url,
+                    headers=self.headers,
+                    proxies=proxies,
+                    verify=verify
+                )
+            else:
+                response = requests.get(
+                    url,
+                    headers=self.headers,
+                    proxies=None,
+                    verify=verify
+                )
         except ConnectionError as exc:
             self.error_info = {
-                'message': repr(exc),
-                'possible_cause': 'The site is temporarily unaivalable'
+                'message': repr(exc)
             }
             raise ScraperError('HTTP request failed', self.error_info)
         self.response_text = response.text
@@ -74,20 +83,12 @@ class BitcoinTalk(object):
         self.error_info['fallback'] = fallback
         if test_config:
             profile_url = test_config['profile_url']
-        if fallback == 'crawlera':
-            # try to get data using crawlera
-            proxies = settings.CRAWLERA_PROXIES
-            self.make_request(url=profile_url, proxies=proxies, verify=False)
-        if fallback == 'crawlera+selenium':
-            # TODO -- This is a placeholder for the implementation of
-            # Crawlera+Selenium scraping fallback
-            pass
-        if not fallback:
-            self.make_request(url=profile_url, verify=False)
-        # Check if profile exists
+        # Send request and parse result
+        self.make_request(profile_url, fallback=fallback, verify=False)
         body_area = self.soup.find('div', {'id': 'bodyarea'})
         if body_area:
             body_text = body_area.text
+            # Check if profile exists in the forum site
             if 'The user whose profile you are trying to view does not exist.' in body_text:
                 raise ProfileDoesNotExist('Profile does not exist', self.error_info)
 
@@ -246,22 +247,30 @@ class BitcoinTalk(object):
     def scrape_posts(self, user_id, **kwargs):
         url = self.base_url + '/index.php?action=profile;u=%s;' % user_id
         url += 'sa=showPosts;start=0'
-        resp = requests.get(url)
-        soup = BeautifulSoup(resp.content, 'html.parser')
-        pages = soup.select('.navPages')
-        pages = [x.attrs['href'] for x in pages]
-        posts, start_reached = self._scrape_posts_page(soup, **kwargs)
-        if not start_reached:
-            for page in pages:
-                resp = requests.get(page)
-                soup = BeautifulSoup(resp.content, 'html.parser')
-                posts, start_reached = self._scrape_posts_page(
-                    soup,
-                    **kwargs
-                )
-                if start_reached:
-                    break
-        return posts
+        soup = self.make_request(url)
+        self.make_request(url, fallback=kwargs.get('fallback'), verify=False)
+        try:
+            pages = self.soup.select('.navPages')
+            pages = [x.attrs['href'] for x in pages]
+            posts, start_reached = self._scrape_posts_page(soup, **kwargs)
+            if not start_reached:
+                for page in pages:
+                    resp = requests.get(page)
+                    soup = BeautifulSoup(resp.content, 'html.parser')
+                    posts, start_reached = self._scrape_posts_page(
+                        soup,
+                        **kwargs
+                    )
+                    if start_reached:
+                        break
+            return posts
+        except (IndexError, TypeError) as exc:
+            message = 'Error in parsing forum posts of forum user ID '
+            message += user_id
+            self.error_info['status_code'] = self.status_code
+            self.error_info['reponse_text'] = self.response_text
+            self.error_info['message'] = repr(exc)
+            raise ScraperError(message, self.error_info)
 
 
 def verify_and_scrape(forum_profile_id,
@@ -284,17 +293,18 @@ def verify_and_scrape(forum_profile_id,
         position = scraper.get_user_position()
         page_ok, verified = scraper.check_signature(vcode=vcode)
     except ScraperError as exc:
+        # Send log to LogDNA
         log_opts = {
             'level': 'error',
             'meta': {
                 'forum_profile_id': str(forum_profile_id),
                 'forum_user_id': forum_user_id,
                 'response_status_code': scraper.status_code,
-                'message': exc.info.get('message'),
-                'possible_cause': exc.info.get('possible_cause')
+                'message': exc.info.get('message')
             }
         }
-        message = 'Error in scraping forum profile ' + str(forum_profile_id)
+        message = 'Error in scraping profile details from forum user ID '
+        message += str(forum_profile_id)
         logger.info(message, log_opts)
         raise ScraperError(message, exc.info)
     posts = scraper.get_total_posts()
@@ -318,16 +328,17 @@ def get_user_position(forum_user_id, fallback=None):
         username = scraper.get_username()
         return (scraper.status_code, position, username)
     except ScraperError as exc:
+        # Send log to LogDNA
         log_opts = {
             'level': 'error',
             'meta': {
                 'forum_user_id': forum_user_id,
                 'response_status_code': exc.info.get('status_code'),
-                'message': exc.info.get('message'),
-                'possible_cause': exc.info.get('possible_cause')
+                'message': exc.info.get('message')
             }
         }
-        message = 'Error in scraping forum user ID ' + forum_user_id
+        message = 'Error in scraping profile details from forum user ID '
+        message += forum_user_id
         logger.info(message, log_opts)
         raise ScraperError(message, exc.info)
 
@@ -340,5 +351,20 @@ def extract_user_id(profile_url):
 
 def scrape_posts(forum_user_id, **kwargs):
     scraper = BitcoinTalk()
-    posts = scraper.scrape_posts(forum_user_id, **kwargs)
-    return posts
+    try:
+        posts = scraper.scrape_posts(forum_user_id, **kwargs)
+        return posts
+    except ScraperError as exc:
+        # Send log to LogDNA
+        log_opts = {
+            'level': 'error',
+            'meta': {
+                'forum_user_id': forum_user_id,
+                'response_status_code': exc.info.get('status_code'),
+                'message': exc.info.get('message')
+            }
+        }
+        message = 'Error in scraping forum posts of forum user ID '
+        message += forum_user_id
+        logger.info(message, log_opts)
+        raise ScraperError(message, exc.info)
