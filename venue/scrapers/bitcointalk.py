@@ -202,7 +202,7 @@ class BitcoinTalk(object):
             sig_found = False
         return (page_ok, sig_found)
 
-    def _scrape_posts_page(soup, start=None, **kwargs):
+    def _scrape_posts_page(self, soup, start=None, **kwargs):
         post_details = []
         posts = soup.select('.post')
         check_datetime = timezone.now()
