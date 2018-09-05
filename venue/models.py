@@ -500,7 +500,7 @@ class ForumPost(models.Model):
                         self.valid_sig_minutes += tdiff_minutes
                 except ForumPost.DoesNotExist:
                     pass
-        super(ForumPost, self).save(*args, **kwargs)
+            super(ForumPost, self).save(*args, **kwargs)
 
 
 class Notification(models.Model):
