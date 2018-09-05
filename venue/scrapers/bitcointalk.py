@@ -247,12 +247,11 @@ class BitcoinTalk(object):
     def scrape_posts(self, user_id, **kwargs):
         url = self.base_url + '/index.php?action=profile;u=%s;' % user_id
         url += 'sa=showPosts;start=0'
-        soup = self.make_request(url)
         self.make_request(url, fallback=kwargs.get('fallback'), verify=False)
         try:
             pages = self.soup.select('.navPages')
             pages = [x.attrs['href'] for x in pages]
-            posts, start_reached = self._scrape_posts_page(soup, **kwargs)
+            posts, start_reached = self._scrape_posts_page(self.soup, **kwargs)
             if not start_reached:
                 for page in pages:
                     resp = requests.get(page)
