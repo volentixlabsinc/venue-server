@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,7 +8,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
     <!-- Bootstrap -->
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -16,124 +18,341 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
     <style type="text/css">
-        .content p.bold,body{font-family:Calibri,Helvetica,Arial,sans-serif}.content .background,.content .custom-btn{background-color:#3d0243}body{color:#000;font-size:14px;padding-top:60px;padding-bottom:40px}p{margin-bottom:0}a,a:hover,a:link,a:visited{color:#000;font-weight:700;text-decoration:underline}.logo img{margin:0 auto;width:250px}.content{padding:20px 40px}.content ul{padding-top:20px;padding-bottom:20px;margin-bottom:0}.content p.top-padding{padding-top:25px}.content .color_107_107_107{color:#6b6b6b}.content p.bold{font-size:22px;font-weight:700;color:#4f0357}.small-logo img.width-200px{width:200px!important}.content .small-bold{font-weight:700}.content .player-button{margin-top:10px}.content .player-button img{width:250px;margin:0 auto;padding:15px 0}.content .padding-top-10px{padding-top:10px}.content .padding-bottom-10px{padding-bottom:10px}.content .color-white{color:#fff}.content .small-logo img{width:150px;margin:0 auto;height:50px}.content .font-size-16px{font-size:16px!important}.content .font-size-18px{font-size:18px!important}.content .icons img{width:30px;margin:0 auto}.content .footer img{width:200px;padding-left:25px}.content .custom-btn{color:#fff;text-decoration:none;border:none;border-radius:0;outline:0;margin-top:15px;margin-left:25px;font-weight:700}@media only screen and (max-width:768px){.content{padding:20px}}
+        .content p.bold,
+        body {
+            font-family: Calibri, Helvetica, Arial, sans-serif
+        }
+
+        .content .background,
+        .content .custom-btn {
+            background-color: #3d0243
+        }
+
+        .content .background p {
+            margin: auto;
+            text-align: center;
+        }
+
+        .background {
+            margin-top: 2rem;
+        }
+
+        body {
+            color: #000;
+            font-size: 14px;
+            padding-top: 60px;
+            padding-bottom: 40px
+        }
+
+        p {
+            margin-bottom: 0
+        }
+
+        a,
+        a:hover,
+        a:link,
+        a:visited {
+            color: #000;
+            font-weight: 700;
+            text-decoration: underline
+        }
+        .logo {
+            width: 20%;
+            margin: auto;
+        }
+        .logo img {
+            margin: 0 auto;
+            width: 16rem;
+        }
+
+        .content {
+            padding-top: 3rem;
+            width: 45%;
+            margin: auto;
+        }
+
+        .content ul {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            margin-bottom: 0
+        }
+
+        .content p.top-padding {
+            padding-top: 2rem;
+        }
+
+        .content .color_107_107_107 {
+            color: #6b6b6b
+        }
+
+        .content p.bold {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #4f0357
+        }
+
+        .small-logo img {
+            height: 2rem !important;
+        }
+
+        .content .small-bold {
+            font-weight: 700
+        }
+
+        .content .player-button {
+            margin-top: 1rem;
+        }
+
+        .content .player-button img {
+            width: 16rem;
+            margin: 0 auto;
+            padding: 1rem 0
+        }
+
+        .content .padding-top-10px {
+            padding-top: 1rem
+        }
+
+        .content .padding-bottom-10px {
+            padding-bottom: 1rem
+        }
+
+        .content .color-white {
+            color: #fff
+        }
+
+        .content .font-size-16px {
+            font-size: 16px !important
+        }
+
+        .content .font-size-18px {
+            font-size: 18px !important
+        }
+
+        .content .icons {
+            text-align: center;
+        }
+
+        .content .icons img {
+            width: 2rem;
+        }
+
+        .icons .social-icon {
+            display: inline-block;
+            margin-left: 2rem;
+            margin-right: 2rem;
+        }
+
+        .content .footer img {
+            height: 2rem;
+            margin-left: 4rem;
+        }
+
+        .content .custom-btn {
+            color: #fff;
+            text-decoration: none;
+            border: none;
+            border-radius: 0;
+            outline: 0;
+            margin-top: 1rem;
+            margin-left: 2.5rem;
+            font-weight: 700;
+        }
+
+        .content .sign_up {
+            width: 75%;
+            margin: auto;
+        }
+
+        .player-button img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media only screen and (max-width:768px) {
+            .content {
+                padding: 20px
+            }
+        }
+
+        .volentix_logo_container {
+            text-align: center;
+        }
+
+        .volentix_logo_container .description_block {
+            padding-top: 1rem !important;
+            display: inline-block;
+            width: 47%;
+            padding-top: 0;
+            vertical-align:top;
+        }
+        .description_block p{
+            text-align: left;
+        }
+
+        .content .follow {
+            width: 40%;
+            margin: auto;
+        }
+
+        .footer div {
+            display: inline-block;
+            vertical-align: center;
+        }
+
+        .footer .btn {
+            margin-left: 16rem;
+            margin-right: 4rem;
+        }
     </style>
 </head>
+
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-offset-3 col-md-6">
-            <div class="logo">
-                <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/logo.png" class="img-responsive"/>
-            </div>
-            <div class="content">
-                {% if user_lang == 'tr' %}
-                <a href="{{ domain }}/tr/referralemail?referrer_name={{ referrer_name }}&code={{ code }}">Bu epostayı İngilizce olarak okumak için lütfen buraya tıklayın</a>
-                {% endif %}
-                <p>Hello,</p>
-                <p>Your information was provided by {{ referrer_name }} as someone who would be interested in The Volentix Project.</p>
-                <p>One of the ways you can get involved in <b>The Volentix Project</b> is by participating in a <a target="_blank" href="https://bitcointalk.org/">bitcointalk.org</a> signature campaign.</p>
-                <p><b>Bitcointalk</b> users who have accounts of the following levels can participate:</p>
-                <ul>
-                    <li>Member</li>
-                    <li>Full Member</li>
-                    <li>Sr. Member</li>
-                    <li>Hero Member</li>
-                    <li>Legendary</li>
-                </ul>
-                <p>Most signature bounty campaigns require manual tracking of posts with a signature, Venue automates tracking and displays live results in a leaderboard. Adding the Volentix signature is easy and the <b>Venue</b> interface gives you a live view of your <b>VTX</b> earnings making it more exciting and transparent to participate.</p>
-                <p class="top-padding">By signing up for the signature campaign {{ referrer_name }} will earn a referral bounty and you will earn VTX by participating in Volentix bounty campaigns. The reward will be proportional to the number of posts bearing a Volentix signature and the amount of time that the signatures have been posted.</p>
-                <p class="text-center top-padding bold"><a target="_blank" href="{{ domain }}/signup?code={{ code }}">Please click here to proceed with signup.</a></p>
-                <a target="_blank" href="https://www.youtube.com/watch?v=CUSy7bVnnVg">
-                    <p class="player-button background">
-                        <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/play-button.jpg" class="img-responsive" />
-                    </p>
-                </a>
-                <p class="text-center top-padding">If you would also like to refer friends to sign up for the Bitcointalk signature campaign on</p>
-                <p class="text-center">the Venue webapp, please go here <a target="_blank" href="https://venue.volentix.io/">venue.volentix.io</a> and after you’ve signed up, you can</p>
-                <p class="text-center padding-bottom-10px">send your own referral code to others.</p>
-                <div class="background text-center color-white">
-                    <p class="padding-top-10px font-size-16px small-bold">Volentix is a decentralized cryptocurrency based ecosystem powered by VTX</p>
-                    <p class="padding-bottom-10px font-size-16px small-bold">Below is a brief introduction of the Volentix ecosystem:</p>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-offset-3 col-md-6">
+                <div class="logo">
+                    <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/logo.png" class="img-responsive" />
                 </div>
-                <div class="col-md-6 padding-top-10px">
-                    <div class="small-logo padding-bottom-10px">
-                        <a target="_blank" href="https://venue.volentix.io/">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img1.png" class="img-responsive" />
-                        </a>
+                <div class="content">
+                    {% if user_lang == 'tr' %}
+                    <a href="{{ domain }}/tr/referralemail?referrer_name={{ referrer_name }}&code={{ code }}">Bu
+                        epostayı İngilizce olarak okumak için lütfen buraya tıklayın</a>
+                    {% endif %}
+                    <p>Hello,</p>
+                    <p>Your information was provided by {{ referrer_name }} as someone who would be interested in The
+                        Volentix Project.</p>
+                    <p>One of the ways you can get involved in <b>The Volentix Project</b> is by participating in a <a
+                            target="_blank" href="https://bitcointalk.org/">bitcointalk.org</a> signature campaign.</p>
+                    <p><b>Bitcointalk</b> users who have accounts of the following levels can participate:</p>
+                    <ul>
+                        <li>Member</li>
+                        <li>Full Member</li>
+                        <li>Sr. Member</li>
+                        <li>Hero Member</li>
+                        <li>Legendary</li>
+                    </ul>
+                    <p>Most signature bounty campaigns require manual tracking of posts with a signature, Venue
+                        automates tracking and displays live results in a leaderboard. Adding the Volentix signature is
+                        easy and the <b>Venue</b> interface gives you a live view of your <b>VTX</b> earnings making it
+                        more exciting and transparent to participate.</p>
+                    <p>By signing up for the signature campaign {{ referrer_name }} will earn a
+                        referral bounty and you will earn VTX by participating in Volentix bounty campaigns. The reward
+                        will be proportional to the number of posts bearing a Volentix signature and the amount of time
+                        that the signatures have been posted.</p>
+                    <p class="text-center top-padding bold sign_up"><a target="_blank" href="{{ domain }}/signup?code={{ code }}">Please
+                            click here to proceed with signup.</a></p>
+                    <a target="_blank" href="https://www.youtube.com/watch?v=CUSy7bVnnVg">
+                        <p class="player-button background">
+                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/play-button.jpg" class="img-responsive" />
+                        </p>
+                    </a>
+                    <p class="text-center top-padding">If you would also like to refer friends to sign up for the
+                        Bitcointalk signature campaign on the Venue webapp, please go here <a target="_blank" href="https://venue.volentix.io/">venue.volentix.io</a>
+                        and after you’ve signed up, you can send your own referral code to others.</p>
+                    <div class="background text-center color-white">
+                        <p class="padding-top-10px font-size-16px small-bold">Volentix is a decentralized
+                            cryptocurrency based ecosystem powered by VTX</p>
+                        <p class="padding-bottom-10px font-size-16px small-bold">Below is a brief introduction of the
+                            Volentix ecosystem:</p>
                     </div>
-                    <p class="padding-top-10px color_107_107_107">A dynamic community platform which allows users to earn VTX tokens in exchange for community building activities or contributions to the Volentix ecosystem for entire community benefit. Roadmap: Launch July 2018.</p>
-                </div>
-                <div class="col-md-6 padding-top-10px">
-                    <div class="small-logo padding-bottom-10px">
-                        <a target="_blank" href="https://s3.ca-central-1.amazonaws.com/volentix/VDexWhitePaper-v0.1.0.pdf">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img2.png" class="img-responsive" />
-                        </a>
+                    <br>
+                    <div class="volentix_logo_container">
+                        <div class="description_block">
+                            <div class="small-logo">
+                                <a target="_blank" href="https://venue.volentix.io/">
+                                    <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img1.png" class="img-responsive" />
+                                </a>
+                            </div>
+                            <p class="color_107_107_107">A dynamic community platform which allows users
+                                to earn VTX tokens in exchange for community building activities or contributions to the
+                                Volentix ecosystem for entire community benefit. Roadmap: Launch July 2018.</p>
+                        </div>
+                        <div class="description_block">
+                            <div class="small-logo">
+                                <a target="_blank" href="https://s3.ca-central-1.amazonaws.com/volentix/VDexWhitePaper-v0.1.0.pdf">
+                                    <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img2.png" class="img-responsive" />
+                                </a>
+                            </div>
+                            <p class="color_107_107_107">A decentralized cryptocurrency exchange tool
+                                built on EOS which enables crypto users to perform peer to peer transactions across
+                                different blockchains, without any central possession of assets or central possession of
+                                users information. <a target="_blank" href="https://s3.ca-central-1.amazonaws.com/volentix/VDexWhitePaper-v0.1.0.pdf">
+                                    VDEX white paper,</a> Roadmap:Q1 2019 for Beta .</p>
+                        </div>
                     </div>
-                    <p class="padding-top-10px color_107_107_107">A decentralized cryptocurrency exchange tool built on EOS which enables crypto users to perform peer to peer transactions across different blockchains, without any central possession of assets or central possession of users information. <a target="_blank" href="https://s3.ca-central-1.amazonaws.com/volentix/VDexWhitePaper-v0.1.0.pdf"> VDEX white paper,</a> Roadmap:Q1 2019 for Beta .</p>
-                </div>
-                <div class="clearfix padding-bottom-10px"></div>
-                <div class="col-md-6 padding-top-10px padding-bottom-10px">
-                    <div class="small-logo padding-bottom-10px">
-                        <a target="_blank" href="https://venue.volentix.io/">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img3.png" class="img-responsive" />
-                        </a>
+                    <br>
+                    <div class="volentix_logo_container">
+                        <div class="description_block">
+                            <div class="small-logo">
+                                <a target="_blank" href="https://venue.volentix.io/">
+                                    <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img3.png" class="img-responsive" />
+                                </a>
+                            </div>
+                            <p class="color_107_107_107">The native multicurrency wallet which plugs into
+                                VDEX and the other pillar DApps in the Volentix Ecosystem. Roadmap: see <a target="_blank"
+                                    href="https://s3.ca-central-1.amazonaws.com/volentix/VDexWhitePaper-v0.1.0.pdf">VDEX
+                                    white paper.</a> </p>
+                        </div>
+                        <div class="description_block">
+                            <div class="small-logo">
+                                <a target="_blank" href="https://s3.ca-central-1.amazonaws.com/volentix/VDexWhitePaper-v0.1.0.pdf">
+                                    <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img4.png" class="img-responsive width-200px" />
+                                </a>
+                            </div>
+                            <p class="color_107_107_107">An analytical engine which uses machine learning
+                                algorithms to analyze cryptocurrency projects based on: Market Data, Social sentiment
+                                analysis, Technical analysis. Roadmap: Whitepaper summer 2018.</p>
+                        </div>
                     </div>
-                    <p class="padding-top-10px color_107_107_107">The native multicurrency wallet which plugs into VDEX and the other pillar DApps in the Volentix Ecosystem. Roadmap: see <a target="_blank" href="https://s3.ca-central-1.amazonaws.com/volentix/VDexWhitePaper-v0.1.0.pdf">VDEX white paper.</a> </p>
-                </div>
-                <div class="col-md-6 padding-top-10px">
-                    <div class="small-logo padding-bottom-10px">
-                        <a target="_blank" href="https://s3.ca-central-1.amazonaws.com/volentix/VDexWhitePaper-v0.1.0.pdf">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img4.png" class="img-responsive width-200px" />
-                        </a>
+                    <div class="clearfix padding-bottom-10px"></div>
+                    <p class="bold padding-top-10px padding-bottom-10px text-center font-size-18px follow">Follow Us on Social
+                        Media</p>
+                    <div class="icons text-center padding-top-10px padding-bottom-10px">
+                        <div class="social-icon">
+                            <a target="_blank" href="https://twitter.com/Volentix">
+                                <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon1.png" class="img-responsive" />
+                            </a>
+                        </div>
+                        <div class="social-icon">
+                            <a target="_blank" href="https://t.me/volentix">
+                                <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon2.png" class="img-responsive" />
+                            </a>
+                        </div>
+                        <div class="social-icon">
+                            <a target="_blank" href="https://github.com/Volentix">
+                                <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon3.png" class="img-responsive" />
+                            </a>
+                        </div>
+                        <div class="social-icon">
+                            <a target="_blank" href="https://www.linkedin.com/company/volentix-labs/">
+                                <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon4.png" class="img-responsive" />
+                            </a>
+                        </div>
+                        <div class="social-icon">
+                            <a target="_blank" href="https://www.youtube.com/channel/UCGjUbCE-kht1gK6y5neD1cQ">
+                                <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon5.png" class="img-responsive" />
+                            </a>
+                        </div>
                     </div>
-                    <p class="padding-top-10px color_107_107_107">An analytical engine which uses machine learning algorithms to analyze cryptocurrency projects based on: Market Data, Social sentiment analysis, Technical analysis. Roadmap: Whitepaper summer 2018.</p>
-                </div>
-                <div class="clearfix padding-bottom-10px"></div>
-                <p class="bold padding-top-10px padding-bottom-10px text-center font-size-18px">Follow Us on Social Media</p>
-                <div class="icons text-center padding-top-10px padding-bottom-10px">
-                    <div class="col-xs-offset-1 col-xs-2">
-                        <a target="_blank" href="https://twitter.com/Volentix">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon1.png" class="img-responsive" />
-                        </a>
-                    </div>
-                    <div class="col-xs-2">
-                        <a target="_blank" href="https://t.me/volentix">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon2.png" class="img-responsive" />
-                        </a>
-                    </div>
-                    <div class="col-xs-2">
-                        <a target="_blank" href="https://github.com/Volentix">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon3.png" class="img-responsive" />
-                        </a>
-                    </div>
-                    <div class="col-xs-2">
-                        <a target="_blank" href="https://www.linkedin.com/company/volentix-labs/">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon4.png" class="img-responsive" />
-                        </a>
-                    </div>
-                    <div class="col-xs-2">
-                        <a target="_blank" href="https://www.youtube.com/channel/UCGjUbCE-kht1gK6y5neD1cQ">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/icon5.png" class="img-responsive" />
-                        </a>
-                    </div>
-                </div>
 
-                <div class="clearfix padding-bottom-10px"></div>
+                    <br>
 
-                <div class="footer padding-top-10px">
-                    <div class="col-md-offset-1 col-md-6 padding-top-10px">
-                        <a target="_blank" href="https://volentix.io/">
-                            <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img5.png" />
-                        </a>
-                    </div>
-                    <div class="col-md-5">
-                        <a href="https://volentix.io/" class="btn btn-primary custom-btn">Volentix.io</a>
+                    <div class="footer padding-top-10px">
+                        <div>
+                            <a target="_blank" href="https://volentix.io/">
+                                <img src="https://dm7lsapjc0ehv.cloudfront.net/referral-email/img5.png" />
+                            </a>
+                        </div>
+                        <div>
+                            <a href="https://volentix.io/" class="btn btn-primary custom-btn">Volentix.io</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 </body>
+
 </html>
