@@ -468,7 +468,7 @@ def update_data(forum_profile_id=None):
         'level': 'info',
         'meta': {}
     }
-    logger.info('Scraping %s forum_profiles' % len(subtasks), log_opts)
+    logger.info('Scraping %s forum profiles' % len(subtasks), log_opts)
     return subtasks
 
 
