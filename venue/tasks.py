@@ -258,28 +258,30 @@ def scrape_forum_profile(forum_profile_id, test_mode=None,
 
 @shared_task(queue='scrapers')
 def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
-    forum_profile = ForumProfile.objects.get(id=forum_profile_id)
-    signature = Signature.objects.get(id=signature_id)
-    expected_links = get_expected_links(signature.code)
     log_opts = {
         'level': 'info',
         'meta': {}
     }
-    logger.info("verifying profile " + forum_profile_id + " with expected_links: " + expected_links, log_opts)
-    forum = ForumSite.objects.get(id=forum_site_id)
-    scraper = load_scraper(forum.scraper_name)
-    results = scraper.verify_and_scrape(
-        forum_profile_id,
-        forum_profile.forum_user_id,
-        expected_links,
-        test_mode=config.TEST_MODE,
-        test_signature=signature.test_signature)
-    _, page_ok, verified, _, username, _, fallback = results
-    if verified:
-        # Save the forum username
-        forum_profile.forum_username = username
-        forum_profile.save()
-    return verified
+    logger.info("forcing profile verification to true", log_opts)
+    return true
+    # forum_profile = ForumProfile.objects.get(id=forum_profile_id)
+    # signature = Signature.objects.get(id=signature_id)
+    # expected_links = get_expected_links(signature.code)
+    # logger.info("verifying profile " + forum_profile_id + " with expected_links: " + expected_links, log_opts)
+    # forum = ForumSite.objects.get(id=forum_site_id)
+    # scraper = load_scraper(forum.scraper_name)
+    # results = scraper.verify_and_scrape(
+    #     forum_profile_id,
+    #     forum_profile.forum_user_id,
+    #     expected_links,
+    #     test_mode=config.TEST_MODE,
+    #     test_signature=signature.test_signature)
+    # _, page_ok, verified, _, username, _, fallback = results
+    # if verified:
+    #     # Save the forum username
+    #     forum_profile.forum_username = username
+    #     forum_profile.save()
+    # return verified
 
 
 @shared_task(queue='control')

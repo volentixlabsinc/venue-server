@@ -617,6 +617,12 @@ SAVE_SIGNATURE_SCHEMA = AutoSchema(
 @permission_classes((IsAuthenticated,))
 @schema(SAVE_SIGNATURE_SCHEMA)
 def save_signature(request):
+    log_opts = {
+        'level': 'info',
+        'meta': {}
+    }
+    settings.LOGGER.info("Saving signature", log_opts)
+
     """ Saves signature
 
     ### Response
