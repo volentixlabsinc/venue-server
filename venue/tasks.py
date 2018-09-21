@@ -261,7 +261,7 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     signature = Signature.objects.get(id=signature_id)
     expected_links = get_expected_links(signature.code)
-    logger.debug("verifying profile " + forum_profile_id + " with expected_links: " + expected_links)
+    logger.info("verifying profile " + forum_profile_id + " with expected_links: " + expected_links)
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
     results = scraper.verify_and_scrape(
