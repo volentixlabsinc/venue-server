@@ -130,7 +130,6 @@ class BitcoinTalk(object):
                      expected_links,
                      scraped_signature=None):
         log_opts = {
-            'level': 'debug',
             'meta': {
                 'scraped_links': scraped_links,
                 'expected_links': expected_links
@@ -167,7 +166,6 @@ class BitcoinTalk(object):
         return (verified, vcode)
 
     def check_signature(self, vcode=None):
-        # logger.debug("check signature with vcode: " + vcode)
         sig = None
         page_ok = False
         if 'icons/profile_sm.gif' in self.response_text:
