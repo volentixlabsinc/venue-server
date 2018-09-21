@@ -91,7 +91,7 @@ def get_expected_links(code):
             link = term.split('url=')[1]
             if link:
                 links.append(link)
-    logger.debug("< get_expected_links", { 'meta': { 'links': links, 'linksSet': set(links) } })
+    # logger.debug("< get_expected_links", { 'meta': { 'links': links, 'linksSet': set(links) } })
     return set(links)
 
 
