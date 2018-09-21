@@ -147,18 +147,21 @@ class BitcoinTalk(object):
             return (verified, scraped_signature)
         else:
             if scraped_links:
-                links = []
-                for link in scraped_links:
-                    try:
-                        if 'vcode=' in link: 
-                            clean_link, vcode = link.split('vcode=')
-                            vcode = vcode.split('&')[0]
-                        else:
-                            clean_link = link
-                        links.append(clean_link.replace('?', ''))
-                    except ValueError:
-                        pass
-                if set(links) == set(expected_links):
+                # TODO Match vcode, which is supposed to be used for link tracking but
+                # has never been implemented correctly
+                #
+                # links = []
+                # for link in scraped_links:
+                #     try:
+                #         if 'vcode=' in link: 
+                #             clean_link, vcode = link.split('vcode=')
+                #             vcode = vcode.split('&')[0]
+                #         else:
+                #             clean_link = link
+                #         links.append(clean_link.replace('?', ''))
+                #     except ValueError:
+                #         pass
+                if set(scraped_links) == set(expected_links):
                     verified = True
         logger.debug("Result of verification: " + verified)
 
