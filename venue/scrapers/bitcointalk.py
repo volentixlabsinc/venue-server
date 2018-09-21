@@ -129,8 +129,19 @@ class BitcoinTalk(object):
                      scraped_links,
                      expected_links,
                      scraped_signature=None):
-        logger.debug("verifying scraped_links: " + scraped_links)
-        logger.debug("expected_links: " + expected_links)
+        logger.info("verify_links")
+        logger.debug("verify_links")
+        log_opts = {
+            'level': 'info'
+        }
+        logger.info("verify_links with options", log_opts)
+        log_opts2 = {
+            'level': 'debug'
+        }
+        logger.debug("verify_links with options", log_opts2)
+
+        # logger.debug("verifying scraped_links: " + scraped_links)
+        # logger.debug("expected_links: " + expected_links)
         verified = False
         vcode = None
         if self.test:
@@ -156,7 +167,7 @@ class BitcoinTalk(object):
         return (verified, vcode)
 
     def check_signature(self, vcode=None):
-        logger.debug("check signature with vcode: " + vcode)
+        # logger.debug("check signature with vcode: " + vcode)
         sig = None
         page_ok = False
         if 'icons/profile_sm.gif' in self.response_text:
@@ -176,7 +187,7 @@ class BitcoinTalk(object):
         if sig:
             # Find links and check their integrity
             links = sig.find_all('a')
-            logger.debug("found links: " + links)
+            # logger.debug("found links: " + links)
             if links:
                 links = [x.attrs['href'] for x in links]
             else:
