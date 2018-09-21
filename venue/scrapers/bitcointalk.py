@@ -161,7 +161,7 @@ class BitcoinTalk(object):
                 if set(links) == set(expected_links):
                     verified = True
         logger.debug("Result of verification: " + verified)
-        
+
         return (verified, vcode)
 
     def check_signature(self, vcode=None):
@@ -185,7 +185,6 @@ class BitcoinTalk(object):
         if sig:
             # Find links and check their integrity
             links = sig.find_all('a')
-            # logger.debug("found links: " + links)
             if links:
                 links = [x.attrs['href'] for x in links]
             else:
