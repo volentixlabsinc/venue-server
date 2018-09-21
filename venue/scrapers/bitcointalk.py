@@ -129,19 +129,15 @@ class BitcoinTalk(object):
                      scraped_links,
                      expected_links,
                      scraped_signature=None):
-        logger.info("verify_links")
-        logger.debug("verify_links")
         log_opts = {
-            'level': 'info'
+            'level': 'debug',
+            'meta': {
+                'scraped_links': scraped_links,
+                'expected_links': expected_links
+            }
         }
-        logger.info("verify_links with options", log_opts)
-        log_opts2 = {
-            'level': 'debug'
-        }
-        logger.debug("verify_links with options", log_opts2)
+        logger.debug("verify_links", log_opts)
 
-        # logger.debug("verifying scraped_links: " + scraped_links)
-        # logger.debug("expected_links: " + expected_links)
         verified = False
         vcode = None
         if self.test:
