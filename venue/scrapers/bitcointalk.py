@@ -163,7 +163,6 @@ class BitcoinTalk(object):
                 #         pass
                 if set(scraped_links) == set(expected_links):
                     verified = True
-        logger.debug("Result of verification: " + verified)
 
         return (verified, vcode)
 
