@@ -84,14 +84,14 @@ def load_scraper(name):
 def get_expected_links(code):
     logger.debug("> get_expected_links", { 'meta': { 'code': code } })
     terms = re.split('[\[\]]', code)
+    logger.debug("parsed data", { 'meta': { 'terms': terms } })
     links = []
     for term in terms:
-        logger.debug(" iteration", { 'meta': { 'term': term } })
         if 'url=' in term:
             link = term.split('url=')[1]
             if link:
                 links.append(link)
-    # logger.debug("< get_expected_links", { 'meta': { 'links': links, 'linksSet': set(links) } })
+    logger.debug("< get_expected_links", { 'meta': { 'links': links } })
     return set(links)
 
 
