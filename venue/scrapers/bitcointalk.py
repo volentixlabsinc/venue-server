@@ -160,6 +160,8 @@ class BitcoinTalk(object):
                         pass
                 if set(links) == set(expected_links):
                     verified = True
+        logger.debug("Result of verification: " + verified)
+        
         return (verified, vcode)
 
     def check_signature(self, vcode=None):
