@@ -621,7 +621,6 @@ def save_signature(request):
         'level': 'info',
         'meta': {}
     }
-    settings.LOGGER.info("Saving signature", log_opts)
 
     """ Saves signature
 
