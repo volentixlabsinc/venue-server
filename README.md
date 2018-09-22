@@ -147,8 +147,6 @@ sudo systemctl restart docker
 ```
 Run docker again after restarting the daemon and the error should be fixed.
 
-
-
 ### Testing
 
 Run the tests
@@ -156,9 +154,6 @@ Run the tests
 docker-compose up  # If the containers are not running yet
 docker exec -it venue-server_web_1 pytest
 ```
-
-
-
 
 ## Bitcointalk Signature Campaign
 
