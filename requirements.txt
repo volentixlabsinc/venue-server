@@ -15,7 +15,7 @@ chardet==3.0.4
 coreapi==2.3.3
 coreschema==0.0.4
 decorator==4.1.2
-Django==1.11.6
+Django==1.11.16
 django-constance==2.0.0
 django-cors-headers==2.1.0
 django-extensions==1.9.8
@@ -41,7 +41,7 @@ mccabe==0.6.1
 meld3==1.0.2
 model-mommy==1.6.0
 olefile==0.44
-paramiko==2.4.1
+paramiko==2.4.2
 parso==0.1.0
 pexpect==4.2.1
 pickleshare==0.7.4
@@ -67,7 +67,7 @@ python-dateutil==2.6.1
 python-decouple==3.1
 pytz==2017.2
 redis==2.10.6
-requests==2.18.4
+requests==2.20.0
 rncryptor==3.2.0
 rollbar==0.13.18
 selenium==3.11.0
