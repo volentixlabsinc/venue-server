@@ -16,7 +16,6 @@ services:
       POSTGRES_PASSWORD: 'badpassword'
   web:
     build: .
-    restart: 'always'
     expose:
       - '8000'
       - '9000'

@@ -1,83 +1,40 @@
 import pytest
-from unittest.mock import patch, PropertyMock
 from venue.tasks import scrape_forum_profile, get_user_position
 from venue.models import ForumProfile, ForumSite, User
 from venue.scrapers.bitcointalk import BitcoinTalk
 from venue.scrapers.exceptions import ScraperError
-from django.conf import settings
+from django.core.management import call_command
 
 
-class TestForumProfileScraping:
+class TestScrapingRetries:
 
-    @pytest.mark.django_db
-    @patch('venue.scrapers.bitcointalk.requests')
-    def test_profile_checking(self, mock_request, scraper_headers):
-        mock_request.get.return_value = PropertyMock(
-            text='',
-            content=''
-        )
-        # Get forum site and user objects from pre-loaded dummy data
-        forum_site = ForumSite.objects.get(name='bitcointalk.org')
+    @pytest.mark.django_db(transaction=True)
+    def test_get_user_position(self, celery_app, celery_worker, capfd):
+        call_command('loaddata', 'fixtures/test_data.json')
+        forum_site = ForumSite.objects.all()[0]
         user = User.objects.get(username='wolverine')
-        get_user_position.run(
+        job = get_user_position.delay(
             str(forum_site.id),
             '0000',
             str(user.id),
-            retries=1
         )
-        url = 'https://bitcointalk.org/index.php?action=profile;u=0000'
-        mock_request.get.assert_called_once_with(
-            url,
-            headers=scraper_headers,
-            proxies=settings.CRAWLERA_PROXIES,
-            verify=False
-        )
+        job.get()
+        assert not job.result['found']
+        out, err = capfd.readouterr()
+        assert 'Retry 3' in out
 
-    @pytest.mark.django_db
-    @patch('venue.scrapers.bitcointalk.requests')
-    def test_fallback_trigger(self, mock_request, scraper_headers):
-        # setup test data
+    @pytest.mark.django_db(transaction=True)
+    def test_fallback_trigger(self, celery_app, celery_worker, capfd):
+        call_command('loaddata', 'fixtures/test_data.json')
         forum_profile = ForumProfile.objects.all()[0]
         forum_profile.dummy = False
         forum_profile.save()
-        # Give an obviously wrong profile URL to trigger
-        # the fallback scraping using crawlera
-        url = "https://bitcointalk.org/index.php?action=login"
-        config = {
-            'profile_url': url
-        }
-
-        # check 1st retry for the scraper
-        mock_request.get.return_value = PropertyMock(
-            text='',
-            content='',
-            status=200
+        job = scrape_forum_profile.delay(
+            str(forum_profile.id)
         )
-        scrape_forum_profile.run(
-            str(forum_profile.id),
-            test_scrape_config=config,
-            retries=0
-        )
-        mock_request.get.assert_called_once_with(
-            url,
-            headers=scraper_headers,
-            proxies=None,
-            verify=False
-        )
-
-        # check 4th retry for the scraper
-        mock_request.get.reset_mock()
-        scrape_forum_profile.run(
-            str(forum_profile.id),
-            test_scrape_config=config,
-            retries=1
-        )
-        mock_request.get.assert_called_once_with(
-            url,
-            headers=scraper_headers,
-            proxies=settings.CRAWLERA_PROXIES,
-            verify=False
-        )
+        job.get()
+        out, err = capfd.readouterr()
+        assert 'Retry 3' in out
 
     def test_catching_connection_error(self):
         scraper = BitcoinTalk()

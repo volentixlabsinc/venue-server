@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import sys
 import redis
 import rollbar
 import logging
@@ -324,30 +325,41 @@ VENUE_DOMAIN = config('VENUE_DOMAIN', default='http://localhost:8000')
 VENUE_FRONTEND = config('VENUE_FRONTEND', default='http://localhost:3000')
 
 
-# crawlera settings
-CRAWLERA_TOKEN = config('CRAWLERA_TOKEN', default='this-token-does-not-work')
-CRAWLERA_PROXY_HOST = 'proxy.crawlera.com'
-CRAWLERA_PROXY_PORT = '8010'
-
-CRAWLERA_PROXIES = {
-    "https": f"https://{CRAWLERA_TOKEN}:@{CRAWLERA_PROXY_HOST}:{CRAWLERA_PROXY_PORT}/",
-    "http": f"http://{CRAWLERA_TOKEN}:@{CRAWLERA_PROXY_HOST}:{CRAWLERA_PROXY_PORT}/"
-}
-# EOF crawlera settings
-
-# LogDNA settings
-LOGGING_CONFIG = None
-LOGDNA_TOKEN = config('LOGDNA_TOKEN', default='this-token-does-not-work')
-
-options = {
-    'app': 'venue',
-    'env': config('ENV', default='dev'),
-    'index_meta': True
-}
-handler = LogDNAHandler(LOGDNA_TOKEN, options)
-LOGGER = logging.getLogger('logdna')
-LOGGER.setLevel(logging.DEBUG)
-LOGGER.addHandler(handler)
-# EOF LogDNA settings
-
 FIXTURE_DIRS = [os.path.join(BASE_DIR, 'fixtures')]
+
+
+# Check if ran in test mode with pytest
+TESTING = os.path.basename(sys.argv[0]) in ('pytest', 'py.test')
+
+if TESTING:
+    BITCOINTALK_URL = 'http://localhost:5000/bitcointalk'
+    CRAWLERA_PROXIES = {}
+    LOGGER = logging.getLogger()
+else:
+    BITCOINTALK_URL = 'https://bitcointalk.org'
+
+    # crawlera settings
+    CRAWLERA_TOKEN = config('CRAWLERA_TOKEN', default='this-token-does-not-work')
+    CRAWLERA_PROXY_HOST = 'proxy.crawlera.com'
+    CRAWLERA_PROXY_PORT = '8010'
+
+    CRAWLERA_PROXIES = {
+        "https": f"https://{CRAWLERA_TOKEN}:@{CRAWLERA_PROXY_HOST}:{CRAWLERA_PROXY_PORT}/",
+        "http": f"http://{CRAWLERA_TOKEN}:@{CRAWLERA_PROXY_HOST}:{CRAWLERA_PROXY_PORT}/"
+    }
+    # EOF crawlera settings
+
+    # LogDNA settings
+    LOGGING_CONFIG = None
+    LOGDNA_TOKEN = config('LOGDNA_TOKEN', default='this-token-does-not-work')
+
+    options = {
+        'app': 'venue',
+        'env': config('ENV', default='dev'),
+        'index_meta': True
+    }
+    handler = LogDNAHandler(LOGDNA_TOKEN, options)
+    LOGGER = logging.getLogger('logdna')
+    LOGGER.setLevel(logging.DEBUG)
+    LOGGER.addHandler(handler)
+    # EOF LogDNA settings
