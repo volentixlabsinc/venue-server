@@ -63,6 +63,7 @@ def points_to_percentage(points, category=None):
 
 @ensure_csrf_cookie
 def frontend_app(request):
+    print('Home page loaded')
     return HttpResponse('Volentix Venue API Server')
 
 

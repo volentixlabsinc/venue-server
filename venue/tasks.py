@@ -440,6 +440,7 @@ def compute_points():
 
 @shared_task(queue='scrapers')
 def update_data(forum_profile_id=None):
+    print('Periodic update_data task')
     # Do not proceed if there is no current campaign at all
     current_campaign = Campaign.get_current()
     if not current_campaign:
