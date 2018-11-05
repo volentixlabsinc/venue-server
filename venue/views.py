@@ -2700,6 +2700,81 @@ def send_emails_with_referral_code(request):
         )
 
 
+ASSIGN_VERTO_ADDRESS_SCHEMA = AutoSchema(
+    manual_fields=[
+        coreapi.Field(
+            'username',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Username')
+        ),
+        coreapi.Field(
+            'password',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Password')
+        ),
+        coreapi.Field(
+            'verto_address',
+            required=True,
+            location='form',
+            schema=coreschema.String(description='Verto address')
+        )
+    ]
+)
+
+
+@api_view(['POST'])
+@schema(ASSIGN_VERTO_ADDRESS_SCHEMA)
+def assign_verto_address(request):
+    data = request.data
+    response = {'success': False}
+    error_code = 'unknown_error'
+    resp_status = status.HTTP_400_BAD_REQUEST
+    try:
+        verto_address = data['verto_address']
+        username = data['username']
+        password = data['password']
+    except KeyError:
+        response['error_code'] = 'wrong_credentials'
+        return Response(response, status=resp_status)
+    try:
+        if '@' in data['username']:
+            user = User.objects.get(
+                email__iexact=username
+            )
+        else:
+            user = User.objects.get(
+                username__iexact=data['username']
+            )
+        pass_check = user.check_password(password)
+        if pass_check:
+            if user.is_active:
+                profile = user.profiles.first()
+                proceed = False
+                if profile.email_confirmed:
+                    proceed = True
+                else:
+                    error_code = 'email_verification_required'
+                    resp_status = status.HTTP_403_FORBIDDEN
+                if proceed:
+                    user_profile = user.profiles.first()
+                    user_profile.verto_address = verto_address
+                    user_profile.save()
+                    response = {'success': True}
+                    resp_status = status.HTTP_200_OK
+            else:
+                error_code = 'user_deactivated'
+                resp_status = status.HTTP_403_FORBIDDEN
+        else:
+            error_code = 'wrong_credentials'
+    except User.DoesNotExist:
+        error_code = 'wrong_credentials'
+    if not response['success']:
+        response['error_code'] = error_code
+    return Response(response, status=resp_status)
+
+
 # ------------------------
 # Debugging view functions
 # ------------------------

@@ -42,9 +42,10 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'email_confirmed', 'receive_emails', 'user_email']
     fields = ['user', 'language', 'otp_secret',
               'enabled_2fa', 'email_confirmed',
-              'receive_emails', 'user_email']
+              'receive_emails', 'user_email',
+              'verto_address']
     change_list_template = 'admin/userprofile_change_list.html'
-    readonly_fields = ('user_email', )
+    readonly_fields = ('user_email', 'verto_address')
 
     def get_urls(self):
         from functools import update_wrapper
