@@ -30,6 +30,7 @@ from rest_framework.decorators import api_view, permission_classes, schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
+from django.db import IntegrityError
 
 from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Notification, Signature, UserProfile,
                      compute_total_points, Referral)
@@ -2759,10 +2760,13 @@ def assign_verto_address(request):
                     resp_status = status.HTTP_403_FORBIDDEN
                 if proceed:
                     user_profile = user.profiles.first()
-                    user_profile.verto_address = verto_address
-                    user_profile.save()
-                    response = {'success': True}
-                    resp_status = status.HTTP_200_OK
+                    try:
+                        user_profile.verto_address = verto_address
+                        user_profile.save()
+                        response = {'success': True}
+                        resp_status = status.HTTP_200_OK
+                    except IntegrityError:
+                        error_code = 'verto_address_not_unique'
             else:
                 error_code = 'user_deactivated'
                 resp_status = status.HTTP_403_FORBIDDEN

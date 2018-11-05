@@ -138,7 +138,12 @@ class UserProfile(models.Model):
     email_confirmed = models.BooleanField(default=False)
     receive_emails = models.BooleanField(default=False)
     referral_code = models.UUIDField(default=uuid.uuid4, unique=True)
-    verto_address = models.CharField(max_length=70, blank=True)
+    verto_address = models.CharField(
+        max_length=70,
+        null=True,
+        unique=True,
+        blank=True
+    )
 
     def __str__(self):
         return self.user.username
