@@ -12,6 +12,7 @@ import coreschema
 import pyotp
 import shortuuid
 import rollbar
+import boto3
 
 from celery.result import AsyncResult
 from constance import config
@@ -39,6 +40,12 @@ from .tasks import (get_user_position, send_deletion_confirmation, send_email_ch
                     verify_profile_signature, send_email)
 from .utils import RedisTemp, decrypt_data, encrypt_data, check_language_exists, translation_on
 
+logger = settings.LOGGER
+
+idp = boto3.client('cognito-idp',
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    region_name=settings.COGNITO_USER_POOL_REGION)
 
 def generate_token_salt(user):
     token = AuthToken.objects.create(user=user)
@@ -135,62 +142,79 @@ def authenticate(request):
     response = {'success': False}
     error_code = 'unknown_error'
     resp_status = status.HTTP_400_BAD_REQUEST
+
     try:
-        if '@' in data['username']:
-            user = User.objects.get(
-                email__iexact=data['username']
-            )
+        authResponse = idp.initiate_auth(
+            ClientId=settings.COGNITO_USER_POOL_CLIENT_ID,
+            AuthFlow='USER_PASSWORD_AUTH',
+            AuthParameters={
+                'USERNAME': data['username'],
+                'PASSWORD': data['password']
+            })
+        if 'AuthenticationResult' not in authResponse:
+            log_opts = {
+                'level': 'error',
+                'meta': {
+                    'username': data['username'],
+                    'response': authResponse
+                }
+            }
+            logger.info("Unknown error logging in user", log_opts)
         else:
-            user = User.objects.get(
-                username__iexact=data['username']
+            # We've successfully authenticated! Now retrieve the user
+            cognitoUser = idp.get_user(
+                AccessToken=authResponse['AuthenticationResult']['AccessToken']
             )
-        pass_check = user.check_password(data['password'])
-        if pass_check:
-            if user.is_active:
-                profile = user.profiles.first()
-                proceed = False
-                if profile.email_confirmed:
-                    if profile.enabled_2fa:
-                        if data['otpCode']:
-                            secret = decrypt_data(
-                                profile.otp_secret,
-                                settings.SECRET_KEY
-                            )
-                            totp = pyotp.TOTP(secret)
-                            verified = totp.verify(data['otpCode'])
-                            if verified:
-                                proceed = True
-                            else:
-                                error_code = 'wrong_otp'
-                        else:
-                            error_code = 'otp_required'
-                    else:
-                        proceed = True
-                else:
-                    error_code = 'email_verification_required'
-                    resp_status = status.HTTP_403_FORBIDDEN
-                if proceed:
-                    token = AuthToken.objects.create(user=user)
-                    user.last_login = timezone.now()
-                    user.save()
-                    user_profile = user.profiles.first()
-                    response = {
-                        'success': True,
-                        'token': token,
-                        'username': user.username,
-                        'email': user.email,
-                        'user_profile_id': user_profile.id,
-                        'email_confirmed': user_profile.email_confirmed,
-                        'language': user_profile.language
-                    }
-                    resp_status = status.HTTP_200_OK
-            else:
-                error_code = 'user_deactivated'
+            print("Found Cognito user", cognitoUser)
+
+            # Don't send token unless the email has been verified
+            email_verified = False
+            for attr in cognitoUser['UserAttributes']:
+                if attr['Name'] == 'email_verified':
+                    email_verified = attr['Value']
+                    break
+
+            if (email_verified == False):
+                error_code = 'email_verification_required'
                 resp_status = status.HTTP_403_FORBIDDEN
-        else:
-            error_code = 'wrong_credentials'
-    except User.DoesNotExist:
+            else:
+                response['success'] = True
+                response['email_confirmed'] = email_verified
+                resp_status = status.HTTP_200_OK
+
+                # Copy the returned fields from Cognito
+                for attr in cognitoUser['UserAttributes']:
+                    if attr['Name'] == 'preferred_username':
+                        response['username'] = attr['Value']
+                    elif attr['Name'] == 'locale':
+                        response['language'] = attr['Value']
+                    elif attr['Name'] == 'email':
+                        response['email'] = attr['Value']
+                    elif attr['Name'] == 'custom:legacy_id':
+                        response['user_profile_id'] = attr['Value']
+                
+                # Must provide a Django-style user for Knox to create a token
+                try:
+                    if '@' in data['username']:
+                        user = User.objects.get(
+                            email__iexact=data['username'])
+                    else:        
+                        user = User.objects.get(
+                            username__iexact=data['username'])
+                except User.DoesNotExist:
+                    user = User.objects.create_user({
+                        'username': data['username'],
+                        'password': data['password'],
+                        'email': response['email']
+                    })
+
+                response['token'] = AuthToken.objects.create(user=user)
+
+    except idp.exceptions.UserNotFoundException:
         error_code = 'wrong_credentials'
+    except idp.exceptions.NotAuthorizedException:
+        error_code = 'wrong_credentials'
+
     if not response['success']:
         response['error_code'] = error_code
     return Response(response, status=resp_status)

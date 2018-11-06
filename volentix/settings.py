@@ -177,6 +177,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Authenticate via AWS Cognito
+AWS_ACCESS_KEY_ID=config('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY=config('AWS_SECRET_ACCESS_KEY')
+COGNITO_USER_POOL_CLIENT_ID=config('COGNITO_USER_POOL_CLIENT_ID')
+COGNITO_USER_POOL_REGION=config('COGNITO_USER_POOL_REGION')
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
