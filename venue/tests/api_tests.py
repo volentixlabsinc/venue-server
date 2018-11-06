@@ -10,7 +10,7 @@ def test_assign_verto_address(rf):
         'password': 'default2018',
         'verto_address': 'xxx'
     }
-    request = rf.post('/internal/api/assign-verto-address', payload)
+    request = rf.post('/api/assign-verto-address', payload)
     response = assign_verto_address(request)
     assert response.status_code == 200
     user = UserProfile.objects.get(
@@ -23,7 +23,7 @@ def test_assign_verto_address(rf):
         'password': 'default2018',
         'verto_address': 'xxx'
     }
-    request = rf.post('/internal/api/assign-verto-address', payload)
+    request = rf.post('/api/assign-verto-address', payload)
     response = assign_verto_address(request)
     assert response.status_code == 400
     assert response.data['error_code'] == 'verto_address_not_unique'

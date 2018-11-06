@@ -79,7 +79,7 @@ urlpatterns = [
     url(r'^api/manage/dismiss-notification/', dismiss_notification),
     url(r'^api/manage/send-referrals/', send_emails_with_referral_code),
 
-    url(r'^internal/api/assign-verto-address', assign_verto_address)
+    url(r'^api/assign-verto-address', assign_verto_address)
 ]
 
 
