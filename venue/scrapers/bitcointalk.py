@@ -13,7 +13,7 @@ logger = settings.LOGGER
 class BitcoinTalk(object):
 
     def __init__(self, test=False, test_signature=None):
-        self.base_url = 'https://bitcointalk.org'
+        self.base_url = settings.BITCOINTALK_URL
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) '
                 'AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8',
@@ -64,6 +64,10 @@ class BitcoinTalk(object):
                     proxies=None,
                     verify=verify
                 )
+            if response.status_code != 200:
+                self.error_info['status_code'] = response.status_code
+                self.error_info['response_text'] = response.text
+                raise ScraperError('HTTP response not ok', self.error_info)
         except ConnectionError as exc:
             self.error_info = {
                 'message': repr(exc)

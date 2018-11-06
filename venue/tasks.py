@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import re
 import uuid
 import time
-import random
 from pytz import UTC
 from datetime import timedelta
 from operator import itemgetter
@@ -20,25 +19,13 @@ from postmarker.core import PostmarkClient
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
 from venue.scrapers.exceptions import ProfileDoesNotExist, ScraperError
+from celery.exceptions import MaxRetriesExceededError
 
 from venue.models import (ForumPost, ForumProfile, ForumSite, ForumUserRank,
                           Ranking, Signature, UserProfile, Campaign)
 from venue.utils import translation_on
 
 logger = settings.LOGGER
-
-
-def wait_for_results(task_id):
-    task = AsyncResult(task_id)
-    if task.status == 'SUCCESS':
-        if type(task.result) == dict:
-            if 'result' in task.result.keys():
-                if task.result['result'] == 'retried':
-                    task_id = task.result['retry_task_id']
-            else:
-                return task.result
-    time.sleep(0.25)
-    return wait_for_results(task_id)
 
 
 @task_failure.connect
@@ -53,25 +40,22 @@ def multiplier(x, y, message='', ran_from_tests=False):
     return x * y
 
 
-@shared_task(queue='scrapers')
-def test_task(retries=0, max_retries=3):
+# Do not remove this task, this is used by pytest
+@shared_task(name='celery.ping')
+def ping():
+    """Simple task that just returns 'pong'."""
+    return 'pong'
+
+
+@shared_task(bind=True, queue='scrapers', max_retries=10)
+def test_task(self):
     try:
-        if random.randint(5, 20) > 10:
-            return True
-        else:
-            return 1 + ''
-    except TypeError as exc:
-        if retries < max_retries:
-            task_id = str(uuid.uuid4())
-            test_task.apply_async(
-                kwargs={'retries': retries+1},
-                task_id=task_id
-            )
-            return {
-                'result': 'retried',
-                'retry_task_id': task_id
-            }
-        else:
+        return 1 + ''
+    except TypeError:
+        print('Retrying %s' % self.request.retries)
+        try:
+            raise self.retry(countdown=1)
+        except MaxRetriesExceededError:
             return 'gave up'
 
 
@@ -94,17 +78,20 @@ def get_expected_links(code):
     return links
 
 
-@shared_task(queue='scrapers', max_retries=3)
-def scrape_forum_profile(forum_profile_id, test_mode=None,
-                         test_scrape_config=None, max_retries=2, retries=0):
+@shared_task(bind=True, queue='scrapers', max_retries=3)
+def scrape_forum_profile(self, forum_profile_id, test_mode=None,
+                         test_scrape_config=None):
+    retries = self.request.retries
+    # Don't remove this print statement, it's used by pytest
+    print('Retry', retries)
     forum_profile = ForumProfile.objects.get(id=forum_profile_id)
     if test_mode is None:
         test_mode = config.TEST_MODE
     if not test_scrape_config:
         if forum_profile.dummy:
             return 'dummy'
+    fallback = None
     try:
-        fallback = None
         scraper = load_scraper(forum_profile.forum.scraper_name)
         expected_links = get_expected_links(forum_profile.signature.code)
         # Trigger the use of fallback scraping method on the third retry
@@ -218,33 +205,20 @@ def scrape_forum_profile(forum_profile_id, test_mode=None,
             forum_profile.last_scrape = timezone.now()
             forum_profile.save()
     except ScraperError as exc:
-        log_opts = {
-            'level': 'error',
-            'meta': {
-                'forum_profile_id': str(forum_profile.id),
-                'forum_user_id': forum_profile.forum_user_id
-            }
-        }
-        if retries < max_retries:
+        try:
             message = '%s - Retrying forum profile scraping' % (retries)
             if fallback:
                 message += ' with fallback (%s)' % fallback
-            logger.info(message, log_opts)
-            task_id = str(uuid.uuid4())
-            scrape_forum_profile.apply_async(
-                args=[forum_profile_id],
-                kwargs={
-                    'test_mode': test_mode,
-                    'test_scrape_config': test_scrape_config,
-                    'retries': retries+1,
-                },
-                task_id=task_id
-            )
-            return {
-                'result': 'retried',
-                'retry_task_id': task_id
+            log_opts = {
+                'level': 'error',
+                'meta': {
+                    'forum_profile_id': str(forum_profile.id),
+                    'forum_user_id': forum_profile.forum_user_id
+                }
             }
-        else:
+            logger.info(message, log_opts)
+            raise self.retry(countdown=1)
+        except MaxRetriesExceededError:
             response_text = exc.info.get('response_text') or ''
             log_data = {
                 'forum_profile_id': str(forum_profile.id),
@@ -255,7 +229,6 @@ def scrape_forum_profile(forum_profile_id, test_mode=None,
                 'message': exc.info.get('message')
             }
             rollbar.report_exc_info(extra_data=log_data)
-            return 'gave up'
 
 
 @shared_task(queue='scrapers')
@@ -279,9 +252,11 @@ def verify_profile_signature(forum_site_id, forum_profile_id, signature_id):
     return verified
 
 
-@shared_task(queue='control')
-def get_user_position(forum_site_id, forum_user_id,
-                      user_id, max_retries=1, retries=0):
+@shared_task(bind=True, queue='control', max_retries=3)
+def get_user_position(self, forum_site_id, forum_user_id, user_id):
+    retries = self.request.retries
+    # Don't remove this print statement, it's used by pytest
+    print('Retry', retries)
     forum = ForumSite.objects.get(id=forum_site_id)
     scraper = load_scraper(forum.scraper_name)
     forum_user_id = scraper.extract_user_id(forum_user_id)
@@ -325,22 +300,9 @@ def get_user_position(forum_site_id, forum_user_id,
             'message': 'profile_does_not_exist'
         }
     except ScraperError as exc:
-        if retries < max_retries:
-            task_id = str(uuid.uuid4())
-            get_user_position.apply_async(
-                args=[
-                    forum_site_id,
-                    forum_user_id,
-                    user_id
-                ],
-                kwargs={'retries': retries+1},
-                task_id=task_id
-            )
-            result = {
-                'result': 'retried',
-                'retry_task_id': task_id
-            }
-        else:
+        try:
+            raise self.retry(countdown=1)
+        except MaxRetriesExceededError:
             result = {
                 'found': False,
                 'status_code': exc.info.get('status_code'),
