@@ -24,7 +24,7 @@ from venue.views import (
     get_forum_sites, get_forum_profiles, get_signatures, get_points_breakdown,
     confirm_email_change, trigger_data_update, check_task_status, logout_user,
     send_emails_with_referral_code, get_information_about_referrals,
-    assign_verto_address
+    assign_verto_address, authenticate_local
 )
 from rest_framework.documentation import include_docs_urls
 from django.conf.urls import url
@@ -42,6 +42,7 @@ urlpatterns = [
     )),
 
     url(r'^api/authenticate/', authenticate),
+    url(r'^api/authenticate-local/', authenticate_local),
     url(r'^api/logout/', logout_user),
 
     url(r'^api/create/signature/', save_signature),

@@ -105,7 +105,7 @@ AUTHENTICATE_SCHEMA = AutoSchema(
 @api_view(['POST'])
 @schema(AUTHENTICATE_SCHEMA)
 def authenticate(request):
-    """ Authenticates a user
+    """ Authenticates a user using AWS Cognito
 
     ### Response
 
@@ -118,6 +118,7 @@ def authenticate(request):
                 "email": <string>,
                 "user_profile_id": <string>,
                 "email_confirmed": <boolean>,
+                "referral_code": <string>,
                 "language": <string>
             }
 
@@ -161,6 +162,7 @@ def authenticate(request):
             }
             logger.info("Unknown error logging in user", log_opts)
         else:
+            
             # We've successfully authenticated! Now retrieve the user
             cognitoUser = idp.get_user(
                 AccessToken=authResponse['AuthenticationResult']['AccessToken']
@@ -191,14 +193,14 @@ def authenticate(request):
                         response['email'] = attr['Value']
                     elif attr['Name'] == 'custom:legacy_id':
                         response['user_profile_id'] = attr['Value']
+                    # custom:referral_code takes precidence
+                    elif attr['Name'] == 'custom:referral_code':
+                        response['referral_code'] = attr['Value']
+                    elif attr['Name'] == 'sub' and 'referral_code' not in response:
+                        response['referral_code'] = attr['Value']
                 
                 # Must provide a Django-style user for Knox to create a token
-                user = User.objects.get_or_create(
-                    username=response['username'],
-                    password=data['password'],
-                    email=response['email']
-                )
-
+                user = User.objects.get_or_create(username__iexact=response['username'])
                 response['token'] = AuthToken.objects.create(user=user)
 
     except idp.exceptions.UserNotFoundException:
@@ -211,6 +213,100 @@ def authenticate(request):
     return Response(response, status=resp_status)
 
 
+@api_view(['POST'])
+@schema(AUTHENTICATE_SCHEMA)
+def authenticate_local(request):
+    """ Authenticates a user only using the local user store
+    ### Response
+    * Status code 200
+            {
+                "success": <boolean: true>,
+                "token": <string>,
+                "username": <string>,
+                "email": <string>,
+                "user_profile_id": <string>,
+                "email_confirmed": <boolean>,
+                "referral_code": <string>,
+                "language": <string>
+            }
+        * `success` - Whether authentication was successful or not
+        * `token` - Authentication token string
+        * `username` - User's username
+        * `email` - User's email
+        * `user_profile_id` - Profile ID of the user in the DB
+        * `email_confirmed` - Whether user's email is confirmed or not
+        * `language` - User's selected language code or system's default
+    * Status code 400
+            {
+                "success": <boolean: false>,
+                "error_code": <string>
+            }
+        * `error_code` - Code of the error
+    """
+    data = request.data
+    response = {'success': False}
+    error_code = 'unknown_error'
+    resp_status = status.HTTP_400_BAD_REQUEST
+    try:
+        if '@' in data['username']:
+            user = User.objects.get(
+                email__iexact=data['username']
+            )
+        else:
+            user = User.objects.get(
+                username__iexact=data['username']
+            )
+        pass_check = user.check_password(data['password'])
+        if pass_check:
+            if user.is_active:
+                profile = user.profiles.first()
+                proceed = False
+                if profile.email_confirmed:
+                    if profile.enabled_2fa:
+                        if data['otpCode']:
+                            secret = decrypt_data(
+                                profile.otp_secret,
+                                settings.SECRET_KEY
+                            )
+                            totp = pyotp.TOTP(secret)
+                            verified = totp.verify(data['otpCode'])
+                            if verified:
+                                proceed = True
+                            else:
+                                error_code = 'wrong_otp'
+                        else:
+                            error_code = 'otp_required'
+                    else:
+                        proceed = True
+                else:
+                    error_code = 'email_verification_required'
+                    resp_status = status.HTTP_403_FORBIDDEN
+                if proceed:
+                    token = AuthToken.objects.create(user=user)
+                    user.last_login = timezone.now()
+                    user.save()
+                    user_profile = user.profiles.first()
+                    response = {
+                        'success': True,
+                        'token': token,
+                        'username': user.username,
+                        'email': user.email,
+                        'user_profile_id': user_profile.id,
+                        'email_confirmed': user_profile.email_confirmed,
+                        'language': user_profile.language,
+                        'referral_code': user_profile.referral_code
+                    }
+                    resp_status = status.HTTP_200_OK
+            else:
+                error_code = 'user_deactivated'
+                resp_status = status.HTTP_403_FORBIDDEN
+        else:
+            error_code = 'wrong_credentials'
+    except User.DoesNotExist:
+        error_code = 'wrong_credentials'
+    if not response['success']:
+        response['error_code'] = error_code
+    return Response(response, status=resp_status)
 # ---------------
 # Logout endpoint
 # ---------------
