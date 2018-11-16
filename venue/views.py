@@ -180,13 +180,12 @@ def authenticate(request):
             else:
                 response['success'] = True
                 response['email_confirmed'] = email_verified
+                response['username'] = data['username']
                 resp_status = status.HTTP_200_OK
 
                 # Copy the returned fields from Cognito
                 for attr in cognitoUser['UserAttributes']:
-                    if attr['Name'] == 'preferred_username':
-                        response['username'] = attr['Value']
-                    elif attr['Name'] == 'locale':
+                    if attr['Name'] == 'locale':
                         response['language'] = attr['Value']
                     elif attr['Name'] == 'email':
                         response['email'] = attr['Value']
@@ -194,19 +193,11 @@ def authenticate(request):
                         response['user_profile_id'] = attr['Value']
                 
                 # Must provide a Django-style user for Knox to create a token
-                try:
-                    if '@' in data['username']:
-                        user = User.objects.get(
-                            email__iexact=data['username'])
-                    else:        
-                        user = User.objects.get(
-                            username__iexact=data['username'])
-                except User.DoesNotExist:
-                    user = User.objects.create_user({
-                        'username': data['username'],
-                        'password': data['password'],
-                        'email': response['email']
-                    })
+                user = User.objects.get_or_create(
+                    username=response['username'],
+                    password=data['password'],
+                    email=response['email']
+                )
 
                 response['token'] = AuthToken.objects.create(user=user)
 
