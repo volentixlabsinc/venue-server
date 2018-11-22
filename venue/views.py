@@ -32,12 +32,18 @@ from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
 from django.db import IntegrityError
 
-from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Notification, Signature, UserProfile,
-                     compute_total_points, Referral)
-from .tasks import (get_user_position, send_deletion_confirmation, send_email_change_confirmation,
-                    send_email_confirmation, send_reset_password, set_scraping_rate, update_data,
-                    verify_profile_signature, send_email)
-from .utils import RedisTemp, decrypt_data, encrypt_data, check_language_exists, translation_on
+from .models import (
+    ForumPost, ForumProfile, ForumSite, ForumUserRank, Notification,
+    Signature, UserProfile, compute_total_points, Referral
+)
+from .tasks import (
+    get_user_position, send_deletion_confirmation, send_email_change_confirmation,
+    send_email_confirmation, send_reset_password, set_scraping_rate, update_data,
+    verify_profile_signature, send_email)
+from .utils import (
+    RedisTemp, decrypt_data, encrypt_data, check_language_exists,
+    translation_on, send_to_constant_contact
+)
 
 
 def generate_token_salt(user):
@@ -465,6 +471,11 @@ def confirm_email(request):
         user_profile = UserProfile.objects.get(user=token.user)
         user_profile.email_confirmed = True
         user_profile.save()
+        # Send email to Constant Contact
+        send_to_constant_contact(
+            user_profile.user.username,
+            user_profile.user.email
+        )
     except AuthToken.DoesNotExist:
         return Response(
             {'success': False, 'message': 'not_found'},

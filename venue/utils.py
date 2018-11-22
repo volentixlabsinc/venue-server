@@ -6,6 +6,7 @@ import redis
 import rncryptor
 from django.utils import translation
 from django.conf import settings
+import requests
 
 
 class RedisTemp(object):
@@ -71,3 +72,30 @@ def check_language_exists(language_code):
     :return: bool
     """
     return language_code in [l[0] for l in settings.LANGUAGES]
+
+
+# ---------------------------------
+# Constant Contact helper functions
+# ---------------------------------
+
+
+def send_to_constant_contact(username, email):
+    API_KEY = '8ac797fe-583e-4f8b-a0d0-104992af8f9b'
+    ACCESS_TOKEN = '4sahxwfafhy2xy97hq7dgqjz'
+    payload = {
+        'first_name': username,
+        'email_addresses': [{
+            'email_address': email,
+            'confirm_status': 'CONFIRMED'
+        }],
+        'lists': [{
+            'id': '1360368441'  # ID of `Venue webapp` list in Constant Contact
+        }]
+    }
+    url = 'https://api.constantcontact.com/v2/contacts?action_by=ACTION_BY_OWNER&api_key='
+    url += ACCESS_TOKEN
+    headers = {
+        'Authorization': 'Bearer ' + API_KEY
+    }
+    resp = requests.post(url, json=payload, headers=headers)
+    return resp
