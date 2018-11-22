@@ -80,8 +80,6 @@ def check_language_exists(language_code):
 
 
 def send_to_constant_contact(username, email):
-    API_KEY = '8ac797fe-583e-4f8b-a0d0-104992af8f9b'
-    ACCESS_TOKEN = '4sahxwfafhy2xy97hq7dgqjz'
     payload = {
         'first_name': username,
         'email_addresses': [{
@@ -89,13 +87,13 @@ def send_to_constant_contact(username, email):
             'confirm_status': 'CONFIRMED'
         }],
         'lists': [{
-            'id': '1360368441'  # ID of `Venue webapp` list in Constant Contact
+            'id': str(settings.CONSTANT_CONTACT_LIST_ID)
         }]
     }
     url = 'https://api.constantcontact.com/v2/contacts?action_by=ACTION_BY_OWNER&api_key='
-    url += ACCESS_TOKEN
+    url += settings.CONSTANT_CONTACT_ACCESS_TOKEN
     headers = {
-        'Authorization': 'Bearer ' + API_KEY
+        'Authorization': 'Bearer ' + settings.CONSTANT_CONTACT_API_KEY
     }
     resp = requests.post(url, json=payload, headers=headers)
     return resp
