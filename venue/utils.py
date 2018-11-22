@@ -79,21 +79,58 @@ def check_language_exists(language_code):
 # ---------------------------------
 
 
+def get_contstant_contact_record(email):
+    url = 'https://api.constantcontact.com/v2/contacts'
+    params = {
+        'email': email,
+        'status': 'ALL',
+        'api_key': settings.CONSTANT_CONTACT_API_KEY
+    }
+    headers = {
+        'Authorization': 'Bearer ' + settings.CONSTANT_CONTACT_ACCESS_TOKEN
+    }
+    resp = requests.get(url, params=params, headers=headers)
+    return resp
+
+
+def update_constant_contact_email(id, username, new_email):
+    url = 'https://api.constantcontact.com/v2/contacts/' + str(id)
+    payload = {
+        'first_name': username,
+        'email_addresses': [
+            {
+                'email_address': new_email
+            }
+        ],
+        'lists': [{
+            'id': str(settings.CONSTANT_CONTACT_LIST_ID)
+        }]
+    }
+    params = {
+        'action_by': 'ACTION_BY_OWNER',
+        'api_key': settings.CONSTANT_CONTACT_API_KEY
+    }
+    headers = {
+        'Authorization': 'Bearer ' + settings.CONSTANT_CONTACT_ACCESS_TOKEN
+    }
+    resp = requests.put(url, params=params, json=payload, headers=headers)
+    return resp
+
+
 def send_to_constant_contact(username, email):
     payload = {
         'first_name': username,
         'email_addresses': [{
-            'email_address': email,
-            'confirm_status': 'CONFIRMED'
+            'email_address': email
         }],
         'lists': [{
             'id': str(settings.CONSTANT_CONTACT_LIST_ID)
         }]
     }
     url = 'https://api.constantcontact.com/v2/contacts?action_by=ACTION_BY_OWNER&api_key='
-    url += settings.CONSTANT_CONTACT_ACCESS_TOKEN
+    url += settings.CONSTANT_CONTACT_API_KEY
     headers = {
-        'Authorization': 'Bearer ' + settings.CONSTANT_CONTACT_API_KEY
+        'Authorization': 'Bearer ' + settings.CONSTANT_CONTACT_ACCESS_TOKEN
     }
     resp = requests.post(url, json=payload, headers=headers)
     return resp
