@@ -363,3 +363,17 @@ else:
     LOGGER.setLevel(logging.DEBUG)
     LOGGER.addHandler(handler)
     # EOF LogDNA settings
+
+
+CONSTANT_CONTACT_API_KEY = config(
+    'CONSTANT_CONTACT_API_KEY',
+    default='cc-api-key'
+)
+CONSTANT_CONTACT_ACCESS_TOKEN = config(
+    'CONSTANT_CONTACT_ACCESS_TOKEN',
+    default='cc-access-token'
+)
+CONSTANT_CONTACT_LIST_ID = config(
+    'CONSTANT_CONTACT_LIST_ID',
+    default='cc-list-id'
+)

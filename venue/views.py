@@ -32,12 +32,19 @@ from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
 from django.db import IntegrityError
 
-from .models import (ForumPost, ForumProfile, ForumSite, ForumUserRank, Notification, Signature, UserProfile,
-                     compute_total_points, Referral)
-from .tasks import (get_user_position, send_deletion_confirmation, send_email_change_confirmation,
-                    send_email_confirmation, send_reset_password, set_scraping_rate, update_data,
-                    verify_profile_signature, send_email)
-from .utils import RedisTemp, decrypt_data, encrypt_data, check_language_exists, translation_on
+from .models import (
+    ForumPost, ForumProfile, ForumSite, ForumUserRank, Notification,
+    Signature, UserProfile, compute_total_points, Referral
+)
+from .tasks import (
+    get_user_position, send_deletion_confirmation, send_email_change_confirmation,
+    send_email_confirmation, send_reset_password, set_scraping_rate, update_data,
+    verify_profile_signature, send_email)
+from .utils import (
+    RedisTemp, decrypt_data, encrypt_data, check_language_exists,
+    translation_on, get_constant_contact_record, send_to_constant_contact,
+    update_constant_contact_email
+)
 
 
 def generate_token_salt(user):
@@ -465,6 +472,11 @@ def confirm_email(request):
         user_profile = UserProfile.objects.get(user=token.user)
         user_profile.email_confirmed = True
         user_profile.save()
+        # Send email to Constant Contact
+        send_to_constant_contact(
+            user_profile.user.username,
+            user_profile.user.email
+        )
     except AuthToken.DoesNotExist:
         return Response(
             {'success': False, 'message': 'not_found'},
@@ -1191,8 +1203,25 @@ def confirm_email_change(request):
         new_email = rtemp.retrieve(code)
         if code and new_email:
             try:
+                # Update user's email in the DB
                 User.objects.filter(id=token.user.id).update(email=new_email)
                 rtemp.remove(code)
+                # Update/add the email in Constant Contact
+                resp = get_constant_contact_record(token.user.email)
+                if resp.status_code == 200:
+                    resp_json = resp.json()
+                    if len(resp_json['results']) > 0:
+                        cc_id = resp_json['results'][0]['id']
+                        update_constant_contact_email(
+                            cc_id,
+                            token.user.username,
+                            new_email
+                        )
+                    else:
+                        send_to_constant_contact(
+                            token.user.username,
+                            new_email
+                        )
                 return redirect('%s/#/settings/?updated_email=1' % settings.VENUE_FRONTEND)
             except User.DoesNotExist:
                 response['error_code'] = 'user_not_found'
