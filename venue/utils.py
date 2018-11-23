@@ -79,7 +79,7 @@ def check_language_exists(language_code):
 # ---------------------------------
 
 
-def get_contstant_contact_record(email):
+def get_constant_contact_record(email):
     url = 'https://api.constantcontact.com/v2/contacts'
     params = {
         'email': email,

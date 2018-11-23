@@ -42,7 +42,7 @@ from .tasks import (
     verify_profile_signature, send_email)
 from .utils import (
     RedisTemp, decrypt_data, encrypt_data, check_language_exists,
-    translation_on, get_contstant_contact_record, send_to_constant_contact,
+    translation_on, get_constant_contact_record, send_to_constant_contact,
     update_constant_contact_email
 )
 
@@ -1202,18 +1202,26 @@ def confirm_email_change(request):
         token = AuthToken.objects.get(salt=code)
         new_email = rtemp.retrieve(code)
         if code and new_email:
-            # Update the email in Constant Contact
-            resp = get_contstant_contact_record(token.user.email)
-            if resp.status_code == 200 and len(resp.json()['results']) > 0:
-                cc_id = resp.json()['results'][0]['id']
-                update_constant_contact_email(
-                    cc_id,
-                    token.user.username,
-                    new_email
-                )
             try:
+                # Update user's email in the DB
                 User.objects.filter(id=token.user.id).update(email=new_email)
                 rtemp.remove(code)
+                # Update/add the email in Constant Contact
+                resp = get_constant_contact_record(token.user.email)
+                resp_json = resp.json()
+                if resp.status_code == 200:
+                    if len(resp_json['results']) > 0:
+                        cc_id = resp_json['results'][0]['id']
+                        update_constant_contact_email(
+                            cc_id,
+                            token.user.username,
+                            new_email
+                        )
+                    else:
+                        send_to_constant_contact(
+                            token.user.username,
+                            new_email
+                        )
                 return redirect('%s/#/settings/?updated_email=1' % settings.VENUE_FRONTEND)
             except User.DoesNotExist:
                 response['error_code'] = 'user_not_found'
