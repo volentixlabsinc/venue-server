@@ -1208,8 +1208,8 @@ def confirm_email_change(request):
                 rtemp.remove(code)
                 # Update/add the email in Constant Contact
                 resp = get_constant_contact_record(token.user.email)
-                resp_json = resp.json()
                 if resp.status_code == 200:
+                    resp_json = resp.json()
                     if len(resp_json['results']) > 0:
                         cc_id = resp_json['results'][0]['id']
                         update_constant_contact_email(

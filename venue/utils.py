@@ -9,6 +9,9 @@ from django.conf import settings
 import requests
 
 
+logger = settings.LOGGER
+
+
 class RedisTemp(object):
 
     def __init__(self, namespace):
@@ -90,6 +93,11 @@ def get_constant_contact_record(email):
         'Authorization': 'Bearer ' + settings.CONSTANT_CONTACT_ACCESS_TOKEN
     }
     resp = requests.get(url, params=params, headers=headers)
+    code = resp.status_code
+    if code != 200:
+        logger.warning(
+            'API call to Constant Contacts failed with status code %s' % code
+        )
     return resp
 
 
@@ -114,6 +122,11 @@ def update_constant_contact_email(id, username, new_email):
         'Authorization': 'Bearer ' + settings.CONSTANT_CONTACT_ACCESS_TOKEN
     }
     resp = requests.put(url, params=params, json=payload, headers=headers)
+    code = resp.status_code
+    if code != 200:
+        logger.warning(
+            'API call to Constant Contacts failed with status code %s' % code
+        )
     return resp
 
 
@@ -133,4 +146,9 @@ def send_to_constant_contact(username, email):
         'Authorization': 'Bearer ' + settings.CONSTANT_CONTACT_ACCESS_TOKEN
     }
     resp = requests.post(url, json=payload, headers=headers)
+    code = resp.status_code
+    if code != 200:
+        logger.warning(
+            'API call to Constant Contacts failed with status code %s' % code
+        )
     return resp
