@@ -76,4 +76,19 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: crawlera-credentials
-                key: token
+                key: token                  
+          - name: CONSTANT_CONTACT_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: constantcontact-credentials
+                key: apikey                 
+          - name: CONSTANT_CONTACT_ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: constantcontact-credentials
+                key: accessToken                 
+          - name: CONSTANT_CONTACT_LIST_ID
+            valueFrom:
+              secretKeyRef:
+                name: constantcontact-credentials
+                key: listId   
