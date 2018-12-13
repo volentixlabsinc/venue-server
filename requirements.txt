@@ -79,7 +79,7 @@ tornado==4.5.2
 traitlets==4.3.2
 typing==3.6.2
 uritemplate==3.0.0
-urllib3==1.22
+urllib3==1.24
 uWSGI==2.0.17
 vine==1.1.4
 wcwidth==0.1.7
