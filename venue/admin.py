@@ -39,7 +39,7 @@ admin.site.register(Signature)
 
 
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'email_confirmed', 'receive_emails', 'user_email']
+    list_display = ['user', 'user_email', 'email_confirmed', 'verto_address']
     fields = ['user', 'language', 'otp_secret',
               'enabled_2fa', 'email_confirmed',
               'receive_emails', 'user_email',
