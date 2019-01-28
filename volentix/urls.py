@@ -24,7 +24,7 @@ from venue.views import (
     get_forum_sites, get_forum_profiles, get_signatures, get_points_breakdown,
     confirm_email_change, trigger_data_update, check_task_status, logout_user,
     send_emails_with_referral_code, get_information_about_referrals,
-    assign_verto_address
+    assign_verto_address, check_campaigns
 )
 from rest_framework.documentation import include_docs_urls
 from django.conf.urls import url
@@ -51,6 +51,7 @@ urlpatterns = [
     url(r'^api/check/profile/', check_profile),
     url(r'^api/check/email-exists/', check_email_exists),
     url(r'^api/check/username-exists/', check_username_exists),
+    url(r'^api/check/campaigns/', check_campaigns),
 
     url(r'^api/retrieve/user/', get_user),
     url(r'^api/retrieve/signature-code/', get_signature_code),

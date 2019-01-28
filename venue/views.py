@@ -34,7 +34,7 @@ from django.db import IntegrityError
 
 from .models import (
     ForumPost, ForumProfile, ForumSite, ForumUserRank, Notification,
-    Signature, UserProfile, compute_total_points, Referral
+    Signature, UserProfile, compute_total_points, Referral, Campaign
 )
 from .tasks import (
     get_user_position, send_deletion_confirmation, send_email_change_confirmation,
@@ -2807,6 +2807,33 @@ def assign_verto_address(request):
     if not response['success']:
         response['error_code'] = error_code
     return Response(response, status=resp_status)
+
+
+@api_view(['GET'])
+def check_campaigns(request):
+    """ Checks for the status of all the campaigns """
+    campaigns = Campaign.objects.all()
+    campaign_handles = [
+        'bounty',
+        'bitcointalk',
+        'twitter',
+        'youtube',
+        'telegram',
+        'community_manager'
+    ]
+    response = {}
+    for campaign in campaigns:
+        for handle in campaign_handles:
+            handle_str = ' '.join(handle.split('_'))
+            if campaign.name.lower().startswith(handle_str):
+                status = 'not-started'
+                if campaign.campaign_start < timezone.now():
+                    if campaign.campaign_end is None or campaign.campaign_end > timezone.now():
+                        status = 'active'
+                    else:
+                        status = 'completed'
+                response[handle] = status
+    return Response(response)
 
 
 # ------------------------
